@@ -1803,15 +1803,21 @@ async function smartFetch(url) {
 }
 
 async function testConnection() {
-  if (API_URL === "https://script.google.com/macros/s/AKfycbzvle2iD4YRQLmjnNx-wC8v0FfG2ZuUIc5ABrAdXd9qhrSH689YX3h90k--noBmEcMW/exec") return false;
+  // শুধু placeholder থাকলে skip করো
+  if (!API_URL || API_URL.indexOf('script.google.com') === -1) {
+    console.log('No valid API_URL set');
+    return false;
+  }
   try {
     const data = await smartFetch(`${API_URL}?action=divisions`);
     apiConnected = (data && data.status === 'ok');
     if (apiConnected) {
       document.getElementById('conn-banner').classList.remove('show');
       const badge = document.querySelector('.live-badge');
-      badge.innerHTML = '<div class="live-dot"></div>Connected';
-      badge.style.color = 'var(--green)';
+      if (badge) {
+        badge.innerHTML = '<div class="live-dot"></div>Connected';
+        badge.style.color = 'var(--green)';
+      }
       showToast('✅ Google Sheets connected!', 'success');
     }
     return apiConnected;
@@ -1822,7 +1828,7 @@ async function testConnection() {
 }
 
 async function fetchFromAPI(action, params = {}) {
-  if (API_URL === "https://script.google.com/macros/s/AKfycbzvle2iD4YRQLmjnNx-wC8v0FfG2ZuUIc5ABrAdXd9qhrSH689YX3h90k--noBmEcMW/exec") return null;
+  if (!API_URL || API_URL.indexOf('script.google.com') === -1) return null;
   try {
     let url = `${API_URL}?action=${action}`;
     Object.keys(params).forEach(k => url += `&${k}=${encodeURIComponent(params[k])}`);
@@ -1838,7 +1844,7 @@ async function fetchFromAPI(action, params = {}) {
 
 // POST data — Google Apps Script এ POST করার সঠিক পদ্ধতি
 async function postToAPI(payload) {
-  if (API_URL === "https://script.google.com/macros/s/AKfycbzvle2iD4YRQLmjnNx-wC8v0FfG2ZuUIc5ABrAdXd9qhrSH689YX3h90k--noBmEcMW/exec") {
+  if (!API_URL || API_URL.indexOf('script.google.com') === -1) {
     showToast('Google Sheets connect হয়নি — Demo mode', 'info');
     return false;
   }
@@ -2806,7 +2812,7 @@ window.onload = async function() {
   setTimeout(drawChart, 100);
 
   // STEP 3: Test Google Sheets connection
-  if (API_URL !== "https://script.google.com/macros/s/AKfycbzvle2iD4YRQLmjnNx-wC8v0FfG2ZuUIc5ABrAdXd9qhrSH689YX3h90k--noBmEcMW/exec") {
+  if (API_URL && API_URL.indexOf('script.google.com') !== -1) {
     showToast('Google Sheets-এ connect হচ্ছে...', 'info');
     const connected = await testConnection();
     if (connected) {
