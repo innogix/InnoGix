@@ -726,7 +726,7 @@ tbody td.muted{color:var(--text3);}
   <div class="sidebar-section">Main</div>
   <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">📊</span>Dashboard</div>
   <div class="nav-item" onclick="showPage('sales',this)"><span class="nav-icon">🛒</span>Sales & Orders<span class="nav-badge" id="sales-badge">—</span></div>
-  <div class="nav-item" onclick="showPage('inventory',this)"><span class="nav-icon">📦</span>Inventory<span class="nav-badge red" style="background:var(--red);">3</span></div>
+  <div class="nav-item" onclick="showPage('inventory',this)"><span class="nav-icon">📦</span>Inventory<span class="nav-badge red" id="inv-badge" style="background:var(--red);">—</span></div>
   <div class="nav-item" onclick="showPage('expense',this)"><span class="nav-icon">💸</span>Expenses</div>
   <div class="nav-item" onclick="showPage('partner',this)"><span class="nav-icon">🤝</span>Partners</div>
   <div class="nav-item" onclick="showPage('crm',this)"><span class="nav-icon">👥</span>Customers</div>
@@ -890,7 +890,7 @@ tbody td.muted{color:var(--text3);}
 
       <!-- Alerts -->
       <div class="alert-box danger">⚠️ <strong>3 products</strong> are below minimum stock level — check Inventory for details.</div>
-      <div class="alert-box warn">📋 <strong>12 orders</strong> are pending processing. Last update: 2 hours ago.</div>
+      <div class="alert-box warn" id="pending-alert">📋 <strong id="pending-alert-count">—</strong> orders are pending processing. Last update: <span id="pending-alert-time">checking...</span></div>
       <div class="alert-box success">✅ System is running correctly. All formulas are active.</div>
     </div>
 
@@ -990,7 +990,7 @@ tbody td.muted{color:var(--text3);}
         <p>Real-time stock levels, product database and supplier tracking</p>
       </div>
 
-      <div class="alert-box danger">⚠️ <strong>Amanah Alarm System</strong> and 2 other products are critically low on stock.</div>
+      <div class="alert-box danger" id="inv-low-alert" style="display:none;">⚠️ <strong id="inv-low-alert-text">—</strong></div>
 
       <div class="inv-grid" id="inv-cards"></div>
 
@@ -1039,7 +1039,7 @@ tbody td.muted{color:var(--text3);}
           </div>
         </div>
         <div class="filter-bar">
-          <select class="filter-select">
+          <select class="filter-select" onchange="filterExpenses()">
             <option>All Categories</option>
             <option>Marketing / Ad Spend</option>
             <option>Product Sourcing</option>
@@ -1048,10 +1048,12 @@ tbody td.muted{color:var(--text3);}
             <option>Staff / Labor</option>
             <option>Other</option>
           </select>
-          <select class="filter-select">
+          <select class="filter-select" onchange="filterExpenses()">
             <option>All Months</option>
             <option>January</option><option>February</option><option>March</option>
             <option>April</option><option>May</option><option>June</option>
+            <option>July</option><option>August</option><option>September</option>
+            <option>October</option><option>November</option><option>December</option>
           </select>
         </div>
         <div class="table-scroll">
@@ -1821,7 +1823,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwxQEcBJx3j4RuM0cvZOuuX7vJWY19F5cQ1f2twDHH9Q8Ury5K7tyhVcw2SI5FHsRI_hQ/exec";
+const API_URL = https://script.google.com/macros/s/AKfycbynPfVTSLwyZNd7re6E4TuesSsEeXHVUas3PmK215Rcs4v8oAOFNG4h73a7VCe0QfaRyQ/exec
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -2154,9 +2156,12 @@ function populateInventory(){
 
 function populateExpenses(){
   if (apiConnected) {
-    // When connected, show loading state — actual data will come from loadLiveExpenses
-    document.getElementById('exp-body').innerHTML=`<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text3);">⏳ Google Sheets থেকে data load হচ্ছে...</td></tr>`;
+    // When connected, NEVER show demo data — show loading state only
+    // liveExpenseData will be populated by loadLiveExpenses()
+    document.getElementById('exp-body').innerHTML='<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text3);">⏳ Google Sheets থেকে data load হচ্ছে...</td></tr>';
     const el=document.getElementById('exp-total'); if(el) el.textContent='0';
+    // Reset category cards to zero
+    updateExpenseCats([]);
     return;
   }
   updateExpenseCats(sampleExpenses);
@@ -2211,6 +2216,14 @@ function renderSalesRows(rows){
 }
 
 function renderInventoryData(rows){
+  // Normalize stock values to integers before any comparison
+  rows = rows.map(p=>({...p,
+    current: parseInt(Number(p.current)||0),
+    alert:   parseInt(Number(p.alert)||5),
+    opening: parseInt(Number(p.opening)||0),
+    in:      parseInt(Number(p.in)||0),
+    sold:    parseInt(Number(p.sold)||0),
+  }));
   // Cards
   document.getElementById('inv-cards').innerHTML = rows.map(p=>{
     const pct = Math.round((p.current/Math.max(p.opening+p.in,1))*100);
@@ -2225,6 +2238,26 @@ function renderInventoryData(rows){
       ${p.current<=p.alert?'<div class="low-badge">⚠ Low Stock</div>':''}
     </div>`;
   }).join('');
+  // Update sidebar low-stock badge
+  const lowCount = rows.filter(p=>p.current<=p.alert).length;
+  const invBadge = document.getElementById('inv-badge');
+  if(invBadge){ invBadge.textContent=lowCount>0?lowCount:''; }
+  // Update dynamic low-stock alert bar
+  const lowAlert = document.getElementById('inv-low-alert');
+  const lowAlertText = document.getElementById('inv-low-alert-text');
+  if(lowAlert && lowAlertText){
+    const lowProds = rows.filter(p=>p.current<=p.alert);
+    if(lowProds.length > 0){
+      const firstName = lowProds[0].name;
+      const others = lowProds.length - 1;
+      lowAlertText.innerHTML = others > 0
+        ? `<strong>${firstName}</strong> and ${others} other product${others>1?'s':''} are critically low on stock.`
+        : `<strong>${firstName}</strong> is critically low on stock.`;
+      lowAlert.style.display='';
+    } else {
+      lowAlert.style.display='none';
+    }
+  }
   // Table
   document.getElementById('inv-body').innerHTML = rows.map(p=>{
     const margin = p.sell>0?Math.round((p.sell-p.cost)/p.sell*100):0;
@@ -2388,7 +2421,18 @@ async function loadLiveDashboard(){
 }
 async function loadLiveSales(){
   const data=await fetchFromAPI('sales'); if(!data||!data.data) return;
-  const rows=data.data.slice(1).map((r,i)=>{ // skip header row
+  // Determine whether first row is a header row (strings like "ID","Date","Customer"…)
+  // If it looks like a header, skip it; otherwise include all rows
+  const rawRows = data.data;
+  const firstRow = rawRows[0] || [];
+  const isHeader = firstRow.length > 0 && typeof firstRow[0] === 'string' &&
+    (String(firstRow[0]).toLowerCase().includes('id') ||
+     String(firstRow[0]).toLowerCase().includes('order') ||
+     String(firstRow[0]).toLowerCase() === '#' ||
+     String(firstRow[1]||'').toLowerCase().includes('date') ||
+     String(firstRow[3]||'').toLowerCase().includes('customer'));
+  const rowsToProcess = isHeader ? rawRows.slice(1) : rawRows;
+  const rows=rowsToProcess.map((r,i)=>{
     // Parse date — Google Sheets sends ISO or serial date
     let dateStr='', timeStr='';
     const rawDT = r[1]||'';
@@ -2414,14 +2458,18 @@ async function loadLiveSales(){
       } catch(e){ dateStr=rawDT; timeStr=r[2]||''; }
     } else { dateStr=r[1]||''; timeStr=r[2]||''; }
     return {
-      id:r[0]||String(i+1).padStart(3,'0'), date:dateStr, time:timeStr, rawDate:rawDT,
-      customer:r[3]||'', phone:r[4]||'', div:r[5]||'', dist:r[6]||'', thana:r[7]||'', address:r[8]||'',
-      product:r[9]||'', qty:r[10]||0, price:r[11]||0, total:r[12]||0,
-      paid:r[13]||0, due:r[14]||0, delivery:r[15]||0,
-      status:r[16]||'Pending', payment:r[17]||'Cash',
-      courier:r[18]||'', tracking:r[19]||'', notes:r[21]||'',
+      id:String(r[0]||String(i+1).padStart(3,'0')), date:dateStr, time:timeStr,
+      rawDate:rawDT, rawDateISO:String(rawDT||''),
+      customer:String(r[3]||''), phone:String(r[4]||''),
+      div:String(r[5]||''), dist:String(r[6]||''),
+      thana:String(r[7]||''), address:String(r[8]||''),
+      product:String(r[9]||''), qty:Number(r[10])||0,
+      price:Number(r[11])||0, total:Number(r[12])||0,
+      paid:Number(r[13])||0, due:Number(r[14])||0, delivery:Number(r[15])||0,
+      status:String(r[16]||'Pending'), payment:String(r[17]||'Cash'),
+      courier:String(r[18]||''), tracking:String(r[19]||''), notes:String(r[21]||''),
     };
-  }).filter(r=>r.customer); // skip empty rows
+  }).filter(r=>r.customer && r.customer.trim()); // skip empty rows
   liveSalesData = rows; // cache for filter
   renderSalesRows(rows);
   document.getElementById('sales-count').textContent = rows.length+' records';
@@ -2431,35 +2479,105 @@ async function loadLiveSales(){
 }
 async function loadLiveInventory(){
   const data=await fetchFromAPI('inventory'); if(!data||!data.data) return;
-  const rows=data.data.slice(1).map(r=>({id:r[0]||'',name:r[1]||'',cat:r[2]||'',cost:r[3]||0,sell:r[4]||0,opening:r[6]||0,in:r[7]||0,sold:r[8]||0,current:r[9]||0,alert:r[10]||5,supplier:r[12]||''})).filter(r=>r.name);
+  const rawRows = data.data;
+  const firstRow = rawRows[0] || [];
+  const isHeader = firstRow.length > 0 && (
+    String(firstRow[0]||'').toLowerCase().includes('id') ||
+    String(firstRow[0]||'').toLowerCase() === 'p' ||
+    String(firstRow[1]||'').toLowerCase().includes('name') ||
+    String(firstRow[1]||'').toLowerCase().includes('product')
+  );
+  const rowsToProcess = isHeader ? rawRows.slice(1) : rawRows;
+  const rows = rowsToProcess.map(r=>({
+    id: String(r[0]||''),
+    name: String(r[1]||''),
+    cat: String(r[2]||''),
+    cost: Number(r[3])||0,
+    sell: Number(r[4])||0,
+    opening: Number(r[6])||0,
+    in: Number(r[7])||0,
+    sold: Number(r[8])||0,
+    // CRITICAL: parse current stock as integer — Google Sheets may send string or float
+    current: parseInt(Number(r[9])||0),
+    alert: parseInt(Number(r[10])||5),
+    supplier: String(r[12]||''),
+    supplierPhone: String(r[13]||''),
+  })).filter(r=>r.name && r.name.trim());
   liveInventoryData = rows;
   renderInventoryData(rows); showToast('Inventory loaded ✅','success');
 }
+// Format ISO / serial date to Bangladesh readable: DD-MMM-YYYY HH:MM AM/PM
+function formatBDDate(rawDT){
+  if(!rawDT) return '';
+  try {
+    let dt;
+    if(typeof rawDT === 'number'){
+      // Google Sheets serial date (days since Dec 30 1899)
+      dt = new Date((rawDT - 25569) * 86400 * 1000);
+    } else {
+      dt = new Date(rawDT);
+    }
+    if(isNaN(dt.getTime())) return String(rawDT);
+    const opts = {timeZone:'Asia/Dhaka'};
+    const day   = new Intl.DateTimeFormat('en-GB',{...opts,day:'2-digit'}).format(dt);
+    const month = new Intl.DateTimeFormat('en-GB',{...opts,month:'short'}).format(dt);
+    const year  = new Intl.DateTimeFormat('en-GB',{...opts,year:'numeric'}).format(dt);
+    const time  = new Intl.DateTimeFormat('en-GB',{...opts,hour:'2-digit',minute:'2-digit',hour12:true}).format(dt);
+    return `${day}-${month}-${year} ${time}`;
+  } catch(e){ return String(rawDT); }
+}
+let liveExpenseData = [];
 async function loadLiveExpenses(){
   const data=await fetchFromAPI('expenses'); if(!data||!data.data) return;
-  const rows=data.data.map((r,i)=>({id:i+1,date:r[1]||'',cat:r[2]||'',desc:r[3]||'',amount:r[4]||0,payment:r[5]||'',vendor:r[6]||'',invoice:r[7]||'',notes:r[8]||''}));
+  const rawRows = data.data;
+  const firstRow = rawRows[0] || [];
+  const isHeader = firstRow.length > 0 && (
+    String(firstRow[0]||'').toLowerCase().includes('id') ||
+    String(firstRow[1]||'').toLowerCase().includes('date') ||
+    String(firstRow[2]||'').toLowerCase().includes('cat')
+  );
+  const rowsToProcess = isHeader ? rawRows.slice(1) : rawRows;
+  const rows = rowsToProcess.map((r,i)=>({
+    id: r[0]||i+1,
+    // Format raw date into BD local readable format
+    date: formatBDDate(r[1]),
+    rawDate: String(r[1]||''),
+    cat: String(r[2]||''),
+    desc: String(r[3]||''),
+    amount: Number(r[4])||0,
+    payment: String(r[5]||''),
+    vendor: String(r[6]||''),
+    invoice: String(r[7]||''),
+    notes: String(r[8]||''),
+  })).filter(r=>r.cat && String(r.cat).trim() && Number(r.amount)>=0);
+  liveExpenseData = rows; // cache so filter works on live data
   renderExpenseRows(rows); updateExpenseCats(rows); showToast('Expenses loaded ✅','success');
 }
 async function loadLivePartners(){
   const data=await fetchFromAPI('partners'); if(!data||!data.data) return;
-  const rows=data.data.slice(1).map((r,i)=>{
-    let dateStr='';
+  const rawRows = data.data;
+  const firstRow = rawRows[0] || [];
+  const isHeader = firstRow.length > 0 && (
+    String(firstRow[0]||'').toLowerCase().includes('id') ||
+    String(firstRow[1]||'').toLowerCase().includes('partner') ||
+    String(firstRow[2]||'').toLowerCase().includes('type')
+  );
+  const rowsToProcess = isHeader ? rawRows.slice(1) : rawRows;
+  const rows=rowsToProcess.map((r,i)=>{
+    // Use formatBDDate helper for consistent BD formatting
     const rawDT=r[3]||r[0]||'';
-    if(rawDT){
-      try{
-        let dt;
-        if(typeof rawDT==='number') dt=new Date((rawDT-25569)*86400*1000);
-        else dt=new Date(rawDT);
-        if(!isNaN(dt)){
-          const opts={timeZone:'Asia/Dhaka'};
-          const d=new Intl.DateTimeFormat('en-BD',{...opts,day:'2-digit',month:'short',year:'numeric'}).format(dt);
-          const t=new Intl.DateTimeFormat('en-BD',{...opts,hour:'2-digit',minute:'2-digit',hour12:true}).format(dt);
-          dateStr=d+' '+t;
-        } else dateStr=rawDT;
-      } catch(e){ dateStr=rawDT; }
-    }
-    return {id:i+1,date:dateStr,partner:r[1]||'',type:r[2]||'',amount:r[4]||0,method:r[5]||'',desc:r[6]||''};
-  }).filter(r=>r.partner);
+    const dateStr = formatBDDate(rawDT);
+    return {
+      id: i+1,
+      date: dateStr,
+      rawDate: String(rawDT||''),
+      partner: String(r[1]||''),
+      type: String(r[2]||''),
+      amount: Number(r[4])||0,
+      method: String(r[5]||''),
+      desc: String(r[6]||''),
+    };
+  }).filter(r=>r.partner && r.partner.trim());
   renderPartnerSummary(rows);
   livePartnerData = rows;
   renderPartnerTxns(rows); showToast('Partners loaded ✅','success');
@@ -2712,17 +2830,19 @@ async function updateExpense(){
   }
 }
 
-// Expense daily/monthly filter
+// Expense filter — always uses live data when connected, demo otherwise
 function filterExpenses(){
   const monthSel=document.querySelector('#page-expense .filter-bar .filter-select:nth-child(2)');
   const catSel=document.querySelector('#page-expense .filter-bar .filter-select:nth-child(1)');
   const month=monthSel?monthSel.value:'';
   const cat=catSel?catSel.value:'';
   const monthMap={'January':'Jan','February':'Feb','March':'Mar','April':'Apr','May':'May','June':'Jun','July':'Jul','August':'Aug','September':'Sep','October':'Oct','November':'Nov','December':'Dec'};
-  let filtered=sampleExpenses.filter(e=>{
-    const catMatch=!cat||cat==='All Categories'||e.cat===cat;
+  // CRITICAL FIX: use live cached data when connected — never revert to demo
+  const source = (apiConnected && liveExpenseData.length > 0) ? liveExpenseData : sampleExpenses;
+  let filtered=source.filter(e=>{
+    const catMatch=!cat||cat==='All Categories'||String(e.cat||'')===cat;
     const mKey=monthMap[month]||'';
-    const monthMatch=!mKey||e.date.includes(mKey)||e.date.includes(month);
+    const monthMatch=!mKey||String(e.date||'').includes(mKey)||String(e.date||'').includes(month);
     return catMatch&&monthMatch;
   });
   renderExpenseRows(filtered);
@@ -2884,7 +3004,7 @@ function openViewCustomer(c){
   const ordersHTML=allOrders.length>0?`
     <div style="margin-top:16px;">
       <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase;">Order History</div>
-      <div style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;">
+      <div style="display:flex;flex-direction:column;gap:6px;">
         ${allOrders.map(o=>`<div style="background:var(--bg4);border-radius:6px;padding:8px 12px;font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
           <div><strong>${o.product||'—'}</strong> × ${o.qty||1}</div>
           <div style="color:var(--text3);">${o.date||''} ${o.time||''}</div>
@@ -2935,18 +3055,88 @@ function openViewCustomer(c){
 
 // ─── CUSTOMER CARD PNG DOWNLOAD ──────────────────────────────
 function downloadCustomerCard(){
-  const card=document.getElementById('customer-card-print');
-  if(!card){ showToast('Card পাওয়া যায়নি','error'); return; }
   showToast('PNG তৈরি হচ্ছে...','info');
-  const doCapture=()=>{
-    html2canvas(card,{backgroundColor:'#161B22',scale:2,useCORS:true,logging:false}).then(canvas=>{
-      const link=document.createElement('a');
-      link.download=`Customer_Card_${bdDate()}.png`;
-      link.href=canvas.toDataURL('image/png');
-      link.click();
-      showToast('✅ PNG ডাউনলোড হয়েছে!','success');
-    }).catch(e=>showToast('PNG error: '+e.message,'error'));
+  const doCapture = () => {
+    // Capture the entire modal body (not just inner card) to include order history
+    const modalBody = document.getElementById('customer-detail-body');
+    if(!modalBody){ showToast('Card পাওয়া যায়নি','error'); return; }
+
+    // Temporarily expand any hidden overflow so full content renders
+    const savedStyles = [];
+    const overflowEls = modalBody.querySelectorAll('*');
+    overflowEls.forEach(el => {
+      const s = window.getComputedStyle(el);
+      if(s.overflow==='hidden'||s.overflowY==='hidden'||s.overflowY==='auto'||s.overflowY==='scroll'){
+        savedStyles.push({el, overflow:el.style.overflow, overflowY:el.style.overflowY,
+                          maxHeight:el.style.maxHeight, height:el.style.height});
+        el.style.overflow='visible';
+        el.style.overflowY='visible';
+        el.style.maxHeight='none';
+      }
+    });
+
+    // Also expand modal body itself
+    const savedBodyOverflow = modalBody.style.overflowY;
+    const savedBodyMax = modalBody.style.maxHeight;
+    modalBody.style.overflowY='visible';
+    modalBody.style.maxHeight='none';
+
+    // Small delay to allow DOM reflow
+    setTimeout(()=>{
+      const bgColor = document.body.classList.contains('light') ? '#ffffff' : '#161B22';
+      html2canvas(modalBody, {
+        backgroundColor: bgColor,
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        // Ensure full scroll height is captured
+        height: modalBody.scrollHeight,
+        windowHeight: modalBody.scrollHeight + 200,
+        onclone: (clonedDoc) => {
+          // In the clone, ensure all overflow is visible and heights are full
+          const clonedBody = clonedDoc.getElementById('customer-detail-body');
+          if(clonedBody){
+            clonedBody.style.overflow='visible';
+            clonedBody.style.maxHeight='none';
+            clonedBody.style.height='auto';
+            clonedBody.querySelectorAll('*').forEach(el=>{
+              const cs=window.getComputedStyle(el);
+              if(cs.overflowY==='auto'||cs.overflowY==='scroll'||cs.overflowY==='hidden'){
+                el.style.overflowY='visible';
+                el.style.maxHeight='none';
+              }
+            });
+          }
+        }
+      }).then(canvas=>{
+        // Restore original styles
+        savedStyles.forEach(({el, overflow, overflowY, maxHeight, height})=>{
+          el.style.overflow=overflow;
+          el.style.overflowY=overflowY;
+          el.style.maxHeight=maxHeight;
+          el.style.height=height;
+        });
+        modalBody.style.overflowY=savedBodyOverflow;
+        modalBody.style.maxHeight=savedBodyMax;
+
+        const link=document.createElement('a');
+        link.download=`Customer_Card_${bdDate()}.png`;
+        link.href=canvas.toDataURL('image/png');
+        link.click();
+        showToast('✅ PNG ডাউনলোড হয়েছে!','success');
+      }).catch(e=>{
+        // Restore on error too
+        savedStyles.forEach(({el, overflow, overflowY, maxHeight, height})=>{
+          el.style.overflow=overflow; el.style.overflowY=overflowY;
+          el.style.maxHeight=maxHeight; el.style.height=height;
+        });
+        modalBody.style.overflowY=savedBodyOverflow;
+        modalBody.style.maxHeight=savedBodyMax;
+        showToast('PNG error: '+e.message,'error');
+      });
+    }, 150);
   };
+
   if(typeof html2canvas!=='undefined'){ doCapture(); return; }
   const script=document.createElement('script');
   script.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
@@ -2957,20 +3147,29 @@ function downloadCustomerCard(){
 
 // ─── UPDATE PENDING BADGE FROM REAL DATA ─────────────────────
 function updatePendingBadge(rows){
-  // Count actual pending/processing orders from real data
-  const pendingCount = rows.filter(r=>{
-    const s=(r.status||'').toLowerCase();
+  // Filter empty rows first, then count pending/processing from real data only
+  const validRows = rows.filter(r => r.customer && String(r.customer).trim());
+  const pendingCount = validRows.filter(r=>{
+    const s=String(r.status||'').toLowerCase().trim();
     return s==='pending'||s==='processing'||s==='in transit'||s==='intransit';
   }).length;
   // Update sidebar badge
   const badge=document.getElementById('sales-badge');
-  if(badge){ badge.textContent=pendingCount>0?pendingCount:''; badge.style.display=pendingCount>0?'':'none'; }
-  // Update dashboard alert box
+  if(badge){ badge.textContent=pendingCount; }
+  // Update dashboard alert box elements
+  const alertCount=document.getElementById('pending-alert-count');
+  const alertTime=document.getElementById('pending-alert-time');
+  if(alertCount) alertCount.textContent=pendingCount;
+  if(alertTime){
+    const now=new Intl.DateTimeFormat('en-BD',{timeZone:'Asia/Dhaka',hour:'2-digit',minute:'2-digit',hour12:true}).format(new Date());
+    alertTime.textContent=now;
+  }
+  // Fallback: also update any .alert-box.warn that still has hardcoded text
   const alertBoxes = document.querySelectorAll('.alert-box.warn');
   alertBoxes.forEach(b=>{
-    if(b.textContent.includes('pending processing')||b.textContent.includes('orders')){
+    if(!b.id && (b.textContent.includes('pending processing')||b.textContent.includes('orders'))){
       const now=new Intl.DateTimeFormat('en-BD',{timeZone:'Asia/Dhaka',hour:'2-digit',minute:'2-digit',hour12:true}).format(new Date());
-      b.innerHTML=`📋 <strong>${pendingCount} orders</strong> are pending processing. Last update: ${now}`;
+      b.innerHTML='📋 <strong>'+pendingCount+' orders</strong> are pending processing. Last update: '+now;
     }
   });
   // Update KPI pending card
@@ -2983,21 +3182,31 @@ function updatePendingBadge(rows){
 function filterSales(){
   const selects=document.querySelectorAll('#page-sales .filter-bar .filter-select');
   const statusF=selects[0]?.value||'', divF=selects[1]?.value||'', prodF=selects[2]?.value||'';
-  const searchF=document.querySelector('#page-sales .filter-bar .filter-input')?.value.toLowerCase()||'';
+  const searchF=(document.querySelector('#page-sales .filter-bar .filter-input')?.value||'').toLowerCase().trim();
   const dateF=document.querySelector('#page-sales .filter-bar input[type="date"]')?.value||'';
   // Use live data if connected, otherwise sample data
   const data=apiConnected? liveSalesData : sampleSales;
   const filtered=data.filter(r=>{
-    const statusMatch=!statusF||r.status===statusF;
-    const divMatch=!divF||r.div===divF;
-    const prodMatch=!prodF||r.product===prodF;
-    const searchMatch=!searchF||(r.customer||'').toLowerCase().includes(searchF)||(r.phone||'').includes(searchF);
+    // SAFE: always stringify before comparison — Google Sheets may send numbers
+    const rStatus=String(r.status||'');
+    const rDiv=String(r.div||'');
+    const rProd=String(r.product||'');
+    const rCust=String(r.customer||'').toLowerCase();
+    const rPhone=String(r.phone||'');
+    const statusMatch=!statusF||statusF==='All Status'||rStatus===statusF;
+    const divMatch=!divF||divF==='All Division'||rDiv===divF;
+    const prodMatch=!prodF||prodF==='All Products'||rProd===prodF;
+    const searchMatch=!searchF||rCust.includes(searchF)||rPhone.includes(searchF)||rProd.toLowerCase().includes(searchF);
     let dateMatch=true;
     if(dateF){
-      // Compare date string — r.date is BD formatted, dateF is yyyy-mm-dd
-      const dParts=dateF.split('-'); // [yyyy, mm, dd]
-      const dStr=dParts[2]+'-'+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(dParts[1])-1]+'-'+dParts[0];
-      dateMatch=(r.date||'').includes(dStr)||(r.rawDate||'')===dateF;
+      // Build short month string from yyyy-mm-dd input
+      const dParts=dateF.split('-');
+      const monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const dStr=dParts[2]+'-'+monthNames[parseInt(dParts[1])-1]+'-'+dParts[0];
+      // Also try ISO prefix match (2026-05-24)
+      const isoPrefix=dateF;
+      const rawISO=String(r.rawDateISO||r.rawDate||'');
+      dateMatch=String(r.date||'').includes(dStr)||rawISO.startsWith(isoPrefix)||rawISO===dateF;
     }
     return statusMatch&&divMatch&&prodMatch&&searchMatch&&dateMatch;
   });
@@ -3053,7 +3262,12 @@ function globalSearch(q){
   if(!q||q.length<2) return;
   q=q.toLowerCase();
   const data=apiConnected? liveSalesData : sampleSales;
-  const matches=data.filter(r=>(r.customer||'').toLowerCase().includes(q)||(r.phone||'').includes(q)||(r.product||'').toLowerCase().includes(q)||(r.id||'').includes(q));
+  // SAFE: stringify all fields before search — Google Sheets may return numbers
+  const matches=data.filter(r=>
+    String(r.customer||'').toLowerCase().includes(q)||
+    String(r.phone||'').includes(q)||
+    String(r.product||'').toLowerCase().includes(q)||
+    String(r.id||'').includes(q));
   if(matches.length>0){
     showPage('sales',document.querySelector('.nav-item:nth-child(2)'));
     renderSalesRows(matches);
@@ -3093,10 +3307,11 @@ document.addEventListener('keydown', e=>{
   if(e.ctrlKey&&e.key==='l'){ e.preventDefault(); lockApp(); }
 });
 
-// ─── EXPENSE FILTER — wire up selects ─────────────────────────
+// ─── EXPENSE FILTER — onchange wired in HTML (inline onchange="filterExpenses()") ─────
+// DOMContentLoaded listener kept as backup for any dynamically added selects
 document.addEventListener('DOMContentLoaded', ()=>{
   document.querySelectorAll('#page-expense .filter-bar .filter-select').forEach(sel=>{
-    sel.addEventListener('change', filterExpenses);
+    if(!sel.getAttribute('onchange')) sel.addEventListener('change', filterExpenses);
   });
 });
 
