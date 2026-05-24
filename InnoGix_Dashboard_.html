@@ -725,7 +725,7 @@ tbody td.muted{color:var(--text3);}
 
   <div class="sidebar-section">Main</div>
   <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">📊</span>Dashboard</div>
-  <div class="nav-item" onclick="showPage('sales',this)"><span class="nav-icon">🛒</span>Sales & Orders<span class="nav-badge">12</span></div>
+  <div class="nav-item" onclick="showPage('sales',this)"><span class="nav-icon">🛒</span>Sales & Orders<span class="nav-badge" id="sales-badge">—</span></div>
   <div class="nav-item" onclick="showPage('inventory',this)"><span class="nav-icon">📦</span>Inventory<span class="nav-badge red" style="background:var(--red);">3</span></div>
   <div class="nav-item" onclick="showPage('expense',this)"><span class="nav-icon">💸</span>Expenses</div>
   <div class="nav-item" onclick="showPage('partner',this)"><span class="nav-icon">🤝</span>Partners</div>
@@ -924,7 +924,7 @@ tbody td.muted{color:var(--text3);}
             <option>Returned</option>
             <option>Cancelled</option>
           </select>
-          <select class="filter-select">
+          <select class="filter-select" onchange="filterSales()">
             <option value="">All Division</option>
             <option>Dhaka</option>
             <option>Chittagong</option>
@@ -935,15 +935,15 @@ tbody td.muted{color:var(--text3);}
             <option>Rangpur</option>
             <option>Mymensingh</option>
           </select>
-          <select class="filter-select">
+          <select class="filter-select" onchange="filterSales()">
             <option value="">All Products</option>
             <option>Amanah Door Lock Pro</option>
             <option>Amanah CCTV Kit</option>
             <option>Amanah Alarm System</option>
             <option>Amanah Smart Lock</option>
           </select>
-          <input class="filter-input" type="text" placeholder="Search customer, phone...">
-          <input class="filter-input" type="date" style="width:140px;">
+          <input class="filter-input" type="text" placeholder="Search customer, phone..." oninput="filterSales()">
+          <input class="filter-input" type="date" style="width:140px;" onchange="filterSales()">
         </div>
         <div class="table-scroll">
           <table id="sales-table">
@@ -999,7 +999,7 @@ tbody td.muted{color:var(--text3);}
           <span class="table-title">Product Database</span>
           <div class="table-actions">
             <button class="btn primary" onclick="openModal('add-product')">+ Add Product</button>
-            <button class="btn">📦 Stock In</button>
+            <button class="btn" onclick="openModal('stock-in')">📦 Stock In</button>
             <button class="btn">⬇ Export</button>
           </div>
         </div>
@@ -1087,14 +1087,14 @@ tbody td.muted{color:var(--text3);}
           </div>
         </div>
         <div class="filter-bar">
-          <select class="filter-select">
-            <option>All Partners</option>
+          <select class="filter-select" onchange="filterPartners()">
+            <option value="">All Partners</option>
             <option>Md Ismail Hosen</option>
             <option>Ashikur Rahman</option>
             <option>Golam Rabbi</option>
           </select>
-          <select class="filter-select">
-            <option>All Types</option>
+          <select class="filter-select" onchange="filterPartners()">
+            <option value="">All Types</option>
             <option>Investment</option>
             <option>Drawings</option>
             <option>Profit Share</option>
@@ -1652,6 +1652,42 @@ tbody td.muted{color:var(--text3);}
   </div>
 </div>
 
+<!-- MODAL: STOCK IN -->
+<div class="modal-overlay" id="modal-stock-in">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <span class="modal-title">📦 Stock In — স্টক যোগ করুন</span>
+      <button class="modal-close" onclick="closeModal('stock-in')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label class="form-label">Product *</label>
+          <select class="form-select" id="stockin-product">
+            <option value="">— Product বেছে নিন —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Stock In Quantity *</label>
+          <input class="form-input" id="stockin-qty" type="number" placeholder="0" min="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Supplier Name</label>
+          <input class="form-input" id="stockin-supplier" type="text" placeholder="Supplier name">
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Notes</label>
+          <textarea class="form-textarea" id="stockin-notes" placeholder="Optional — batch no., purchase details..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('stock-in')">Cancel</button>
+      <button class="btn primary" onclick="submitStockIn()">✅ Stock যোগ করুন</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: EDIT PRODUCT -->
 <div class="modal-overlay" id="modal-edit-product">
   <div class="modal">
@@ -2034,7 +2070,6 @@ let dark=true;
 function toggleTheme(){ dark=!dark; document.body.classList.toggle('light',!dark); showToast('Theme: '+(dark?'Dark':'Light'),'info'); }
 
 // ─── MODALS ──────────────────────────────────────────────────
-function openModal(id){ document.getElementById('modal-'+id).classList.add('open'); }
 function closeModal(id){ document.getElementById('modal-'+id).classList.remove('open'); }
 document.addEventListener('click', e => { if(e.target.classList.contains('modal-overlay')) e.target.classList.remove('open'); });
 
@@ -2118,7 +2153,12 @@ function populateInventory(){
 }
 
 function populateExpenses(){
-  if (apiConnected) { return; }
+  if (apiConnected) {
+    // When connected, show loading state — actual data will come from loadLiveExpenses
+    document.getElementById('exp-body').innerHTML=`<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text3);">⏳ Google Sheets থেকে data load হচ্ছে...</td></tr>`;
+    const el=document.getElementById('exp-total'); if(el) el.textContent='0';
+    return;
+  }
   updateExpenseCats(sampleExpenses);
   renderExpenseRows(sampleExpenses);
   const total = sampleExpenses.reduce((s,e)=>s+e.amount,0);
@@ -2127,7 +2167,10 @@ function populateExpenses(){
 }
 
 function populatePartners(){
-  if (apiConnected) { return; }
+  if (apiConnected) {
+    document.getElementById('partner-body').innerHTML=`<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text3);">⏳ Google Sheets থেকে data load হচ্ছে...</td></tr>`;
+    return;
+  }
   renderPartnerSummary(samplePartner);
   renderPartnerTxns(samplePartner);
 }
@@ -2345,21 +2388,51 @@ async function loadLiveDashboard(){
 }
 async function loadLiveSales(){
   const data=await fetchFromAPI('sales'); if(!data||!data.data) return;
-  const rows=data.data.map((r,i)=>({
-    id:r[0]||String(i+1).padStart(3,'0'), date:r[1]||'', time:r[2]||'',
-    customer:r[3]||'', phone:r[4]||'', div:r[5]||'', dist:r[6]||'', thana:r[7]||'', address:r[8]||'',
-    product:r[9]||'', qty:r[10]||0, price:r[11]||0, total:r[12]||0,
-    paid:r[13]||0, due:r[14]||0, delivery:r[15]||0,
-    status:r[16]||'Pending', payment:r[17]||'Cash',
-    courier:r[18]||'', tracking:r[19]||'', notes:r[21]||'',
-  }));
+  const rows=data.data.slice(1).map((r,i)=>{ // skip header row
+    // Parse date — Google Sheets sends ISO or serial date
+    let dateStr='', timeStr='';
+    const rawDT = r[1]||'';
+    if(rawDT){
+      try{
+        // Handle ISO string like "2026-05-23T18:00:00.000Z" or serial number
+        let dt;
+        if(typeof rawDT==='number'){
+          // Google Sheets serial date (days since Dec 30 1899)
+          dt=new Date((rawDT-25569)*86400*1000);
+        } else {
+          dt=new Date(rawDT);
+        }
+        if(!isNaN(dt)){
+          // Convert to Asia/Dhaka timezone
+          const opts={timeZone:'Asia/Dhaka'};
+          const d=new Intl.DateTimeFormat('en-BD',{...opts,day:'2-digit',month:'short',year:'numeric'}).format(dt);
+          const t=new Intl.DateTimeFormat('en-BD',{...opts,hour:'2-digit',minute:'2-digit',hour12:true}).format(dt);
+          dateStr=d; timeStr=t;
+        } else {
+          dateStr=rawDT; timeStr=r[2]||'';
+        }
+      } catch(e){ dateStr=rawDT; timeStr=r[2]||''; }
+    } else { dateStr=r[1]||''; timeStr=r[2]||''; }
+    return {
+      id:r[0]||String(i+1).padStart(3,'0'), date:dateStr, time:timeStr, rawDate:rawDT,
+      customer:r[3]||'', phone:r[4]||'', div:r[5]||'', dist:r[6]||'', thana:r[7]||'', address:r[8]||'',
+      product:r[9]||'', qty:r[10]||0, price:r[11]||0, total:r[12]||0,
+      paid:r[13]||0, due:r[14]||0, delivery:r[15]||0,
+      status:r[16]||'Pending', payment:r[17]||'Cash',
+      courier:r[18]||'', tracking:r[19]||'', notes:r[21]||'',
+    };
+  }).filter(r=>r.customer); // skip empty rows
+  liveSalesData = rows; // cache for filter
   renderSalesRows(rows);
   document.getElementById('sales-count').textContent = rows.length+' records';
   showToast('Sales loaded ✅','success');
+  // Update dashboard pending badge with real count
+  updatePendingBadge(rows);
 }
 async function loadLiveInventory(){
   const data=await fetchFromAPI('inventory'); if(!data||!data.data) return;
-  const rows=data.data.map(r=>({id:r[0]||'',name:r[1]||'',cat:r[2]||'',cost:r[3]||0,sell:r[4]||0,opening:r[6]||0,in:r[7]||0,sold:r[8]||0,current:r[9]||0,alert:r[10]||5,supplier:r[12]||''}));
+  const rows=data.data.slice(1).map(r=>({id:r[0]||'',name:r[1]||'',cat:r[2]||'',cost:r[3]||0,sell:r[4]||0,opening:r[6]||0,in:r[7]||0,sold:r[8]||0,current:r[9]||0,alert:r[10]||5,supplier:r[12]||''})).filter(r=>r.name);
+  liveInventoryData = rows;
   renderInventoryData(rows); showToast('Inventory loaded ✅','success');
 }
 async function loadLiveExpenses(){
@@ -2369,8 +2442,27 @@ async function loadLiveExpenses(){
 }
 async function loadLivePartners(){
   const data=await fetchFromAPI('partners'); if(!data||!data.data) return;
-  const rows=data.data.map((r,i)=>({id:i+1,date:r[3]||'',partner:r[1]||'',type:r[2]||'',amount:r[4]||0,method:r[5]||'',desc:r[6]||''}));
-  renderPartnerSummary(rows); renderPartnerTxns(rows); showToast('Partners loaded ✅','success');
+  const rows=data.data.slice(1).map((r,i)=>{
+    let dateStr='';
+    const rawDT=r[3]||r[0]||'';
+    if(rawDT){
+      try{
+        let dt;
+        if(typeof rawDT==='number') dt=new Date((rawDT-25569)*86400*1000);
+        else dt=new Date(rawDT);
+        if(!isNaN(dt)){
+          const opts={timeZone:'Asia/Dhaka'};
+          const d=new Intl.DateTimeFormat('en-BD',{...opts,day:'2-digit',month:'short',year:'numeric'}).format(dt);
+          const t=new Intl.DateTimeFormat('en-BD',{...opts,hour:'2-digit',minute:'2-digit',hour12:true}).format(dt);
+          dateStr=d+' '+t;
+        } else dateStr=rawDT;
+      } catch(e){ dateStr=rawDT; }
+    }
+    return {id:i+1,date:dateStr,partner:r[1]||'',type:r[2]||'',amount:r[4]||0,method:r[5]||'',desc:r[6]||''};
+  }).filter(r=>r.partner);
+  renderPartnerSummary(rows);
+  livePartnerData = rows;
+  renderPartnerTxns(rows); showToast('Partners loaded ✅','success');
 }
 async function loadLiveCRM(){
   const data=await fetchFromAPI('crm'); if(!data||!data.data) return;
@@ -2727,11 +2819,83 @@ async function submitExpense(){
   }
 }
 
-// ─── VIEW CUSTOMER POPUP ─────────────────────────────────────
+// ─── STOCK IN ────────────────────────────────────────────────
+function openModal(id){
+  const overlay=document.getElementById('modal-'+id);
+  if(!overlay) return;
+  overlay.classList.add('open');
+  // Special setup for stock-in: populate product dropdown
+  if(id==='stock-in'){
+    const sel=document.getElementById('stockin-product');
+    const currentData=apiConnected? liveSalesData : sampleInventory;
+    // Use inventory data for product names
+    const invData=apiConnected? liveInventoryData : sampleInventory;
+    sel.innerHTML='<option value="">— Product বেছে নিন —</option>';
+    invData.forEach(p=>{ const o=document.createElement('option'); o.value=p.id||p.name; o.textContent=p.name; sel.appendChild(o); });
+    if(sel.options.length<=1){
+      // fallback: use known products
+      ['Amanah Door Lock Pro','Amanah CCTV Kit','Amanah Alarm System','Amanah Smart Lock'].forEach(name=>{
+        const o=document.createElement('option'); o.value=name; o.textContent=name; sel.appendChild(o);
+      });
+    }
+  }
+}
+
+let liveInventoryData = [];
+
+async function submitStockIn(){
+  const product=document.getElementById('stockin-product').value;
+  const qty=parseInt(document.getElementById('stockin-qty').value)||0;
+  const supplier=document.getElementById('stockin-supplier').value;
+  const notes=document.getElementById('stockin-notes').value;
+  if(!product){ showToast('Product বেছে নিন','error'); return; }
+  if(qty<=0){ showToast('Quantity দিন (1 বা বেশি)','error'); return; }
+  closeModal('stock-in');
+  // Clear form
+  document.getElementById('stockin-product').value='';
+  document.getElementById('stockin-qty').value='';
+  document.getElementById('stockin-supplier').value='';
+  document.getElementById('stockin-notes').value='';
+
+  const payload={action:'stockIn', product, qty, supplier, notes};
+  const ok=await postToAPI(payload);
+  if(ok){
+    showToast(`✅ ${product} — ${qty}টি Stock যোগ হয়েছে!`,'success');
+    setTimeout(loadLiveInventory,1500);
+  } else {
+    // Demo mode — update locally
+    const idx=sampleInventory.findIndex(p=>p.id===product||p.name===product);
+    if(idx>=0){
+      sampleInventory[idx].in=(sampleInventory[idx].in||0)+qty;
+      sampleInventory[idx].current=(sampleInventory[idx].current||0)+qty;
+      renderInventoryData(sampleInventory);
+      showToast(`✅ ${product} — ${qty}টি Stock যোগ হয়েছে! (demo mode)`,'success');
+    } else {
+      showToast('Product পাওয়া যায়নি','error');
+    }
+  }
+}
+
+
 function openViewCustomer(c){
   const body=document.getElementById('customer-detail-body');
+  // Build orders list from live or demo sales
+  const allOrders=(apiConnected? liveSalesData : sampleSales).filter(r=>(r.phone||'')===(c.phone||'')||(r.customer||'')===(c.name||''));
+  const ordersHTML=allOrders.length>0?`
+    <div style="margin-top:16px;">
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase;">Order History</div>
+      <div style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;">
+        ${allOrders.map(o=>`<div style="background:var(--bg4);border-radius:6px;padding:8px 12px;font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+          <div><strong>${o.product||'—'}</strong> × ${o.qty||1}</div>
+          <div style="color:var(--text3);">${o.date||''} ${o.time||''}</div>
+          <div style="color:var(--green);font-family:'IBM Plex Mono',monospace;">৳${Number(o.total||0).toLocaleString()}</div>
+          <span class="status ${(o.status||'').toLowerCase().replace(/ /g,'')}" style="font-size:10px;">${o.status||'—'}</span>
+        </div>`).join('')}
+      </div>
+    </div>`:'';
+  const descHTML=c.desc?`<div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;margin-top:4px;"><span style="color:var(--text3);width:90px;flex-shrink:0;">📝 Notes</span><span style="color:var(--text2);">${c.desc}</span></div>`:'';
   body.innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div id="customer-card-print" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
       <div>
         <div style="font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;">${c.name}</div>
         <div style="font-size:13px;color:var(--text3);margin-bottom:20px;">${c.type} Customer</div>
@@ -2740,6 +2904,7 @@ function openViewCustomer(c){
           <div style="display:flex;gap:8px;align-items:center;font-size:13px;"><span style="color:var(--text3);width:90px;">🗺️ Division</span><strong>${c.div}</strong></div>
           <div style="display:flex;gap:8px;align-items:center;font-size:13px;"><span style="color:var(--text3);width:90px;">📍 District</span><strong>${c.dist}</strong></div>
           <div style="display:flex;gap:8px;align-items:center;font-size:13px;"><span style="color:var(--text3);width:90px;">📅 Last Order</span><strong>${c.last||'—'}</strong></div>
+          ${descHTML}
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:12px;">
@@ -2760,22 +2925,97 @@ function openViewCustomer(c){
     <div style="margin-top:16px;padding:12px 16px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--text3);">
       Avg Order Value: <strong style="color:var(--text);">৳${Number(c.avg||0).toLocaleString()}</strong>
       &nbsp;·&nbsp; Customer Since: <strong style="color:var(--text);">${c.last||'—'}</strong>
+    </div>
+    ${ordersHTML}
+    <div style="margin-top:14px;text-align:right;">
+      <button class="btn success" onclick="downloadCustomerCard()">📥 PNG ডাউনলোড</button>
     </div>`;
   openModal('view-customer');
 }
 
-// ─── FILTER & SORT ───────────────────────────────────────────
+// ─── CUSTOMER CARD PNG DOWNLOAD ──────────────────────────────
+function downloadCustomerCard(){
+  const card=document.getElementById('customer-card-print');
+  if(!card){ showToast('Card পাওয়া যায়নি','error'); return; }
+  showToast('PNG তৈরি হচ্ছে...','info');
+  const doCapture=()=>{
+    html2canvas(card,{backgroundColor:'#161B22',scale:2,useCORS:true,logging:false}).then(canvas=>{
+      const link=document.createElement('a');
+      link.download=`Customer_Card_${bdDate()}.png`;
+      link.href=canvas.toDataURL('image/png');
+      link.click();
+      showToast('✅ PNG ডাউনলোড হয়েছে!','success');
+    }).catch(e=>showToast('PNG error: '+e.message,'error'));
+  };
+  if(typeof html2canvas!=='undefined'){ doCapture(); return; }
+  const script=document.createElement('script');
+  script.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+  script.onload=doCapture;
+  script.onerror=()=>showToast('PNG library load হয়নি — Ctrl+Shift+I দিয়ে screenshot নিন','error');
+  document.head.appendChild(script);
+}
+
+// ─── UPDATE PENDING BADGE FROM REAL DATA ─────────────────────
+function updatePendingBadge(rows){
+  // Count actual pending/processing orders from real data
+  const pendingCount = rows.filter(r=>{
+    const s=(r.status||'').toLowerCase();
+    return s==='pending'||s==='processing'||s==='in transit'||s==='intransit';
+  }).length;
+  // Update sidebar badge
+  const badge=document.getElementById('sales-badge');
+  if(badge){ badge.textContent=pendingCount>0?pendingCount:''; badge.style.display=pendingCount>0?'':'none'; }
+  // Update dashboard alert box
+  const alertBoxes = document.querySelectorAll('.alert-box.warn');
+  alertBoxes.forEach(b=>{
+    if(b.textContent.includes('pending processing')||b.textContent.includes('orders')){
+      const now=new Intl.DateTimeFormat('en-BD',{timeZone:'Asia/Dhaka',hour:'2-digit',minute:'2-digit',hour12:true}).format(new Date());
+      b.innerHTML=`📋 <strong>${pendingCount} orders</strong> are pending processing. Last update: ${now}`;
+    }
+  });
+  // Update KPI pending card
+  const kpiPending=document.getElementById('kpi-pending');
+  if(kpiPending) kpiPending.textContent=pendingCount;
+}
+
+
+
 function filterSales(){
   const selects=document.querySelectorAll('#page-sales .filter-bar .filter-select');
   const statusF=selects[0]?.value||'', divF=selects[1]?.value||'', prodF=selects[2]?.value||'';
   const searchF=document.querySelector('#page-sales .filter-bar .filter-input')?.value.toLowerCase()||'';
-  const data=apiConnected?[]:sampleSales;
-  const filtered=data.filter(r=>
-    (!statusF||r.status===statusF)&&(!divF||r.div===divF)&&(!prodF||r.product===prodF)&&
-    (!searchF||r.customer.toLowerCase().includes(searchF)||r.phone.includes(searchF))
-  );
+  const dateF=document.querySelector('#page-sales .filter-bar input[type="date"]')?.value||'';
+  // Use live data if connected, otherwise sample data
+  const data=apiConnected? liveSalesData : sampleSales;
+  const filtered=data.filter(r=>{
+    const statusMatch=!statusF||r.status===statusF;
+    const divMatch=!divF||r.div===divF;
+    const prodMatch=!prodF||r.product===prodF;
+    const searchMatch=!searchF||(r.customer||'').toLowerCase().includes(searchF)||(r.phone||'').includes(searchF);
+    let dateMatch=true;
+    if(dateF){
+      // Compare date string — r.date is BD formatted, dateF is yyyy-mm-dd
+      const dParts=dateF.split('-'); // [yyyy, mm, dd]
+      const dStr=dParts[2]+'-'+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(dParts[1])-1]+'-'+dParts[0];
+      dateMatch=(r.date||'').includes(dStr)||(r.rawDate||'')===dateF;
+    }
+    return statusMatch&&divMatch&&prodMatch&&searchMatch&&dateMatch;
+  });
   renderSalesRows(filtered);
   document.getElementById('sales-count').textContent=filtered.length+' records';
+}
+
+// ─── PARTNER FILTER ──────────────────────────────────────────
+let livePartnerData = [];
+
+function filterPartners(){
+  const selects=document.querySelectorAll('#page-partner .filter-bar .filter-select');
+  const partnerF=selects[0]?.value||'', typeF=selects[1]?.value||'';
+  const data=apiConnected? livePartnerData : samplePartner;
+  const filtered=data.filter(t=>
+    (!partnerF||t.partner===partnerF)&&(!typeF||t.type===typeF)
+  );
+  renderPartnerTxns(filtered);
 }
 
 let sortDir={};
@@ -2812,7 +3052,8 @@ function exportToCSV(tableId,filename){
 function globalSearch(q){
   if(!q||q.length<2) return;
   q=q.toLowerCase();
-  const matches=sampleSales.filter(r=>r.customer.toLowerCase().includes(q)||r.phone.includes(q)||r.product.toLowerCase().includes(q)||r.id.includes(q));
+  const data=apiConnected? liveSalesData : sampleSales;
+  const matches=data.filter(r=>(r.customer||'').toLowerCase().includes(q)||(r.phone||'').includes(q)||(r.product||'').toLowerCase().includes(q)||(r.id||'').includes(q));
   if(matches.length>0){
     showPage('sales',document.querySelector('.nav-item:nth-child(2)'));
     renderSalesRows(matches);
@@ -2865,6 +3106,8 @@ window.onload = async function(){
     // Demo data
     populateSales(); populateInventory(); populateExpenses(); populatePartners(); populateCRM();
     populateDashboardDemo();
+    // Update pending badge from demo data
+    updatePendingBadge(sampleSales);
     setTimeout(drawChart,100);
 
     // Refresh button (safe insert)
