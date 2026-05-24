@@ -1039,7 +1039,7 @@ tbody td.muted{color:var(--text3);}
           </div>
         </div>
         <div class="filter-bar">
-          <select class="filter-select" onchange="filterExpenses()">
+          <select class="filter-select" id="exp-cat-filter" onchange="filterExpenses()">
             <option>All Categories</option>
             <option>Marketing / Ad Spend</option>
             <option>Product Sourcing</option>
@@ -1048,7 +1048,7 @@ tbody td.muted{color:var(--text3);}
             <option>Staff / Labor</option>
             <option>Other</option>
           </select>
-          <select class="filter-select" onchange="filterExpenses()">
+          <select class="filter-select" id="exp-month-filter" onchange="filterExpenses()">
             <option>All Months</option>
             <option>January</option><option>February</option><option>March</option>
             <option>April</option><option>May</option><option>June</option>
@@ -1823,7 +1823,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = https://script.google.com/macros/s/AKfycbynPfVTSLwyZNd7re6E4TuesSsEeXHVUas3PmK215Rcs4v8oAOFNG4h73a7VCe0QfaRyQ/exec
+const API_URL = "https://script.google.com/macros/s/AKfycbzZkiDZcWDb6MyOTAkixq-I_mG_jUID64RSQJ5kCgHwdtSK668Q0BlUb6K84lne92tj/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -2832,8 +2832,8 @@ async function updateExpense(){
 
 // Expense filter — always uses live data when connected, demo otherwise
 function filterExpenses(){
-  const monthSel=document.querySelector('#page-expense .filter-bar .filter-select:nth-child(2)');
-  const catSel=document.querySelector('#page-expense .filter-bar .filter-select:nth-child(1)');
+  const monthSel=document.getElementById('exp-month-filter') || document.querySelector('#page-expense .filter-bar .filter-select:nth-child(2)');
+  const catSel=document.getElementById('exp-cat-filter') || document.querySelector('#page-expense .filter-bar .filter-select:nth-child(1)');
   const month=monthSel?monthSel.value:'';
   const cat=catSel?catSel.value:'';
   const monthMap={'January':'Jan','February':'Feb','March':'Mar','April':'Apr','May':'May','June':'Jun','July':'Jul','August':'Aug','September':'Sep','October':'Oct','November':'Nov','December':'Dec'};
@@ -2961,6 +2961,7 @@ function openModal(id){
   }
 }
 
+let liveSalesData = [];
 let liveInventoryData = [];
 
 async function submitStockIn(){
