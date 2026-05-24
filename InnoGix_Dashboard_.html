@@ -764,7 +764,7 @@ tbody td.muted{color:var(--text3);}
         <input type="text" placeholder="Search orders, customers..." oninput="globalSearch(this.value)">
       </div>
       <div class="icon-btn" onclick="toggleTheme()" title="Toggle Theme">🌓</div>
-      <div class="icon-btn" title="Notifications">🔔</div>
+      <div class="icon-btn" id="notif-bell" title="Notifications" onclick="toggleNotifications()">🔔</div>
     </div>
   </header>
 
@@ -1563,7 +1563,7 @@ tbody td.muted{color:var(--text3);}
         <div class="form-group"><label class="form-label">Total (৳)</label><input class="form-input" type="number" id="total-price" readonly></div>
         <div class="form-group"><label class="form-label">Paid Amount (৳)</label><input class="form-input" id="order-paid" type="number" placeholder="0" oninput="calcDue()"></div>
         <div class="form-group"><label class="form-label">Due (৳)</label><input class="form-input" type="number" id="due-amount" readonly></div>
-        <div class="form-group"><label class="form-label">Delivery Charge (৳)</label><input class="form-input" id="order-delivery" type="number" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">Delivery Charge (৳)</label><input class="form-input" id="order-delivery" type="number" placeholder="0" oninput="calcDue()"></div>
         <div class="form-group"><label class="form-label">Payment Method</label><select class="form-select" id="order-payment"><option>Cash</option><option>bKash</option><option>Nagad</option><option>Bank Transfer</option><option>COD</option></select></div>
         <div class="form-group"><label class="form-label">Order Status</label><select class="form-select" id="order-status"><option>Pending</option><option>Processing</option><option>In Transit</option><option>Delivered</option><option>Returned</option><option>Cancelled</option></select></div>
         <div class="form-group"><label class="form-label">Courier</label><select class="form-select" id="order-courier"><option value="">Select Courier</option><option>Pathao</option><option>Steadfast</option><option>Redx</option><option>SA Paribahan</option><option>Sundarban</option><option>Janani</option></select></div>
@@ -1861,19 +1861,30 @@ const BD_LOCATIONS = {
     "Natore":           ["Natore Sadar","Bagatipara","Baraigram","Gurudaspur","Lalpur","Singra"],
     "Pabna":            ["Pabna Sadar","Atgharia","Bera","Bhangura","Chatmohar","Faridpur","Ishwardi","Santhia","Sujanagar"],
     "Sirajganj":        ["Sirajganj Sadar","Belkuchi","Chauhali","Enayetpur","Kamarkhand","Kazipur","Raiganj","Shahjadpur","Tarash","Ullahpara"],
-    "Bogra":            ["Bogra Sadar","Adamdighi","Dhunat","Dhupchanchia","Gabtali","Kahaloo","Nandigram","Sariakandi","Shajahanpur","Sherpur","Shibganj","Sonatala"]
+    "Bogra":            ["Bogra Sadar","Adamdighi","Dhunat","Dhupchanchia","Gabtali","Kahaloo","Nandigram","Sariakandi","Shajahanpur","Sherpur","Shibganj","Sonatala"],
+    "Chapai Nawabganj": ["Chapai Nawabganj Sadar","Bholahat","Gomastapur","Nachole","Shibganj"],
+    "Naogaon":          ["Naogaon Sadar","Atrai","Badalgachhi","Dhamoirhat","Mahadebpur","Manda","Mohadevpur","Niamatpur","Patnitala","Porsha","Raninagar","Sapahar"],
+    "Joypurhat":        ["Joypurhat Sadar","Akkelpur","Kalai","Khetlal","Panchbibi"]
   },
   "Khulna": {
     "Khulna City": ["Daulatpur","Khan Jahan Ali","Khulna Sadar","Khalishpur","Sonadanga"],
     "Bagerhat":    ["Bagerhat Sadar","Chitalmari","Fakirhat","Kachua","Mollahat","Mongla","Morrelganj","Rampal","Sharankhola"],
     "Satkhira":    ["Satkhira Sadar","Assasuni","Debhata","Kalaroa","Kaliganj","Shyamnagar","Tala"],
     "Jessore":     ["Jessore Sadar","Abhaynagar","Bagherpara","Chougachha","Jhikargachha","Keshabpur","Manirampur","Sharsha"],
-    "Kushtia":     ["Kushtia Sadar","Bheramara","Daulatpur","Khoksa","Kumarkhali","Mirpur"]
+    "Kushtia":     ["Kushtia Sadar","Bheramara","Daulatpur","Khoksa","Kumarkhali","Mirpur"],
+    "Narail":      ["Narail Sadar","Kalia","Lohagara"],
+    "Chuadanga":   ["Chuadanga Sadar","Alamdanga","Damurhuda","Jibannagar"],
+    "Meherpur":    ["Meherpur Sadar","Gangni","Mujibnagar"],
+    "Magura":      ["Magura Sadar","Mohammadpur","Shalikha","Sreepur"],
+    "Jhenaidah":   ["Jhenaidah Sadar","Harinakunda","Kaliganj","Kotchandpur","Maheshpur","Shailkupa"]
   },
   "Barisal": {
     "Barisal City": ["Barisal Sadar","Airport","Banda","Chandpura","Char Ailia","Charmonai","Kashipur","Kaunia"],
     "Bhola":        ["Bhola Sadar","Borhanuddin","Char Fasson","Daulatkhan","Lalmohan","Manpura","Tazumuddin"],
-    "Patuakhali":   ["Patuakhali Sadar","Bauphal","Dashmina","Dumki","Galachipa","Kalapara","Mirzaganj","Rangabali"]
+    "Patuakhali":   ["Patuakhali Sadar","Bauphal","Dashmina","Dumki","Galachipa","Kalapara","Mirzaganj","Rangabali"],
+    "Pirojpur":     ["Pirojpur Sadar","Bhandaria","Kawkhali","Mathbaria","Nazirpur","Nesarabad","Zianagar"],
+    "Jhalokati":    ["Jhalokati Sadar","Kathalia","Nalchity","Rajapur"],
+    "Barguna":      ["Barguna Sadar","Amtali","Bamna","Betagi","Patharghata","Taltali"]
   },
   "Sylhet": {
     "Sylhet City":  ["Sylhet Sadar","Airportroad","Ambarkhana","Bandarbazar","Chowhatta","Dargah Gate","Jalalabad","Kazir Bazar","Kumarpara","Lamabazar","Uposhahar","Zindabazar"],
@@ -1885,7 +1896,11 @@ const BD_LOCATIONS = {
     "Rangpur City": ["Rangpur Sadar","Badarganj","Gangachhara","Kaunia","Mithapukur","Pirgachha","Pirganj","Taraganj"],
     "Dinajpur":     ["Dinajpur Sadar","Birampur","Birganj","Biral","Bochaganj","Chirirbandar","Fulbari","Ghoraghat","Hakimpur","Kaharole","Khansama","Nawabganj","Parbatipur"],
     "Nilphamari":   ["Nilphamari Sadar","Dimla","Domar","Jaldhaka","Kishoreganj","Saidpur"],
-    "Panchagarh":   ["Panchagarh Sadar","Atwari","Boda","Debiganj","Tetulia"]
+    "Panchagarh":   ["Panchagarh Sadar","Atwari","Boda","Debiganj","Tetulia"],
+    "Kurigram":     ["Kurigram Sadar","Bhurungamari","Char Rajibpur","Chilmari","Nageshwari","Phulbari","Rajarhat","Rajibpur","Rowmari","Ulipur"],
+    "Lalmonirhat":  ["Lalmonirhat Sadar","Aditmari","Hatibandha","Kaliganj","Patgram"],
+    "Gaibandha":    ["Gaibandha Sadar","Fulchhari","Gobindaganj","Palashbari","Sadullapur","Saghata","Sundarganj"],
+    "Thakurgaon":   ["Thakurgaon Sadar","Baliadangi","Haripur","Pirganj","Ranisankail"]
   },
   "Mymensingh": {
     "Mymensingh City": ["Mymensingh Sadar","Bhaluka","Dhobaura","Fulbaria","Gaffargaon","Gauripur","Haluaghat","Ishwarganj","Muktagacha","Nandail","Phulpur","Tarakanda","Trishal"],
@@ -2620,7 +2635,8 @@ function calcTotal(){
 function calcDue(){
   const total=parseFloat(document.getElementById('total-price').value)||0;
   const paid=parseFloat(document.getElementById('order-paid').value)||0;
-  document.getElementById('due-amount').value=Math.max(0,total-paid);
+  const delivery=parseFloat(document.querySelector('#modal-add-order #order-delivery')?.value)||0;
+  document.getElementById('due-amount').value=Math.max(0,total+delivery-paid);
 }
 
 // ─── LOCATION DROPDOWNS ──────────────────────────────────────
@@ -2674,7 +2690,66 @@ async function submitOrder(){
     showToast(currentEditOrderId?'✅ Order updated!':'✅ Order saved!','success');
     setTimeout(()=>{ loadLiveSales(); loadLiveDashboard(); },1500);
   } else {
-    showToast('Demo mode — Google Sheets connect করুন','info');
+    // Demo mode — save locally with correct BD time
+    const nowDate = bdDate();
+    const nowTime = bdTime();
+    const qty = Number(payload.qty)||1;
+    const price = Number(payload.price)||0;
+    const paid = Number(payload.paid)||0;
+    const delivery = Number(payload.delivery)||0;
+    const total = price * qty;
+    const due = Math.max(0, total + delivery - paid);
+
+    if(currentEditOrderId){
+      const idx = sampleSales.findIndex(r=>String(r.id)===String(currentEditOrderId));
+      if(idx>=0){
+        sampleSales[idx]={...sampleSales[idx],
+          customer:payload.customer, phone:payload.phone,
+          div:payload.division, dist:payload.district, thana:payload.thana,
+          address:payload.address, product:payload.product,
+          qty, price, total, paid, due, delivery,
+          status:payload.status, payment:payload.payment,
+          courier:payload.courier, tracking:payload.tracking, notes:payload.notes
+        };
+      }
+      showToast('✅ Order updated! (demo mode)','success');
+    } else {
+      const newId = String(sampleSales.length + 1).padStart(3,'0');
+      sampleSales.unshift({
+        id:newId, date:nowDate, time:nowTime,
+        customer:payload.customer, phone:payload.phone,
+        div:payload.division, dist:payload.district, thana:payload.thana,
+        address:payload.address, product:payload.product,
+        qty, price, total, paid, due, delivery,
+        status:payload.status||'Pending', payment:payload.payment||'Cash',
+        courier:payload.courier||'', tracking:payload.tracking||'', notes:payload.notes||''
+      });
+      // Fix Bug 6: Decrement inventory current stock
+      const invIdx = sampleInventory.findIndex(p=>p.name===payload.product||p.id===payload.product);
+      if(invIdx>=0){
+        sampleInventory[invIdx].sold = (sampleInventory[invIdx].sold||0) + qty;
+        sampleInventory[invIdx].current = Math.max(0,(sampleInventory[invIdx].current||0) - qty);
+      }
+      // Update CRM
+      const crmIdx = sampleCRM.findIndex(c=>c.phone===payload.phone||c.name===payload.customer);
+      if(crmIdx>=0){
+        sampleCRM[crmIdx].orders = (sampleCRM[crmIdx].orders||0) + 1;
+        sampleCRM[crmIdx].spent = (sampleCRM[crmIdx].spent||0) + total;
+        sampleCRM[crmIdx].due = (sampleCRM[crmIdx].due||0) + due;
+        sampleCRM[crmIdx].last = nowDate;
+        sampleCRM[crmIdx].avg = Math.round(sampleCRM[crmIdx].spent / sampleCRM[crmIdx].orders);
+      } else {
+        sampleCRM.unshift({id:sampleCRM.length+1,name:payload.customer,phone:payload.phone,
+          div:payload.division,dist:payload.district,orders:1,spent:total,due,avg:total,last:nowDate,type:'New'});
+      }
+      showToast('✅ Order saved! (demo mode)','success');
+    }
+    renderSalesRows(sampleSales);
+    document.getElementById('sales-count').textContent = sampleSales.length + ' records (demo)';
+    renderInventoryData(sampleInventory);
+    renderCRMRows(sampleCRM);
+    populateDashboardDemo();
+    updatePendingBadge(sampleSales);
   }
 }
 
@@ -3038,7 +3113,7 @@ function openViewCustomer(c){
           <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--green);">৳${Number(c.spent||0).toLocaleString()}</div>
         </div>
         <div style="background:${c.due>0?'var(--red2)':'var(--bg3)'};border:1px solid ${c.due>0?'rgba(248,81,73,.3)':'var(--border)'};border-radius:10px;padding:14px;text-align:center;">
-          <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">TOTAL DUE</div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">TOTAL DUE (ডেলিভারি সহ)</div>
           <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:${c.due>0?'var(--red)':'var(--green)'};">৳${Number(c.due||0).toLocaleString()}</div>
         </div>
       </div>
@@ -3263,17 +3338,21 @@ function globalSearch(q){
   if(!q||q.length<2) return;
   q=q.toLowerCase();
   const data=apiConnected? liveSalesData : sampleSales;
-  // SAFE: stringify all fields before search — Google Sheets may return numbers
   const matches=data.filter(r=>
     String(r.customer||'').toLowerCase().includes(q)||
     String(r.phone||'').includes(q)||
     String(r.product||'').toLowerCase().includes(q)||
     String(r.id||'').includes(q));
+  // Navigate to sales page safely
+  const salesNavItem = Array.from(document.querySelectorAll('.nav-item')).find(el=>el.textContent.includes('Sales'));
+  if(salesNavItem) showPage('sales', salesNavItem);
   if(matches.length>0){
-    showPage('sales',document.querySelector('.nav-item:nth-child(2)'));
     renderSalesRows(matches);
+    document.getElementById('sales-count').textContent = matches.length + ' result(s)';
     showToast(`${matches.length} result(s) found`,'info');
   } else {
+    renderSalesRows([]);
+    document.getElementById('sales-count').textContent = '0 results';
     showToast(`"${q}" পাওয়া যায়নি`,'error');
   }
 }
@@ -3293,6 +3372,50 @@ async function refreshAllData(){
   showToast('All data refreshed ✅','success');
 }
 function printPage(){ window.print(); }
+
+// ─── NOTIFICATIONS / BELL ────────────────────────────────────
+let notifPanelOpen = false;
+function toggleNotifications(){
+  let panel = document.getElementById('notif-panel');
+  if(!panel){
+    panel = document.createElement('div');
+    panel.id = 'notif-panel';
+    panel.style.cssText = 'position:fixed;top:68px;right:16px;width:320px;max-height:400px;overflow-y:auto;background:var(--bg2);border:1px solid var(--border);border-radius:12px;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,.4);padding:0;';
+    document.body.appendChild(panel);
+  }
+  notifPanelOpen = !notifPanelOpen;
+  if(notifPanelOpen){
+    // Build notifications from current data
+    const pendingOrders = (apiConnected? liveSalesData : sampleSales).filter(r=>String(r.status||'').toLowerCase()==='pending');
+    const lowStock = (apiConnected? liveInventoryData : sampleInventory).filter(p=>p.current<=p.alert);
+    const dueOrders = (apiConnected? liveSalesData : sampleSales).filter(r=>Number(r.due||0)>0);
+    let html = '<div style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:700;font-size:13px;display:flex;justify-content:space-between;align-items:center;">🔔 Notifications<span onclick="toggleNotifications()" style="cursor:pointer;color:var(--text3);font-size:16px;">✕</span></div>';
+    html += '<div style="display:flex;flex-direction:column;gap:0;">';
+    if(pendingOrders.length>0) html += `<div style="padding:10px 16px;border-bottom:1px solid var(--border2);font-size:12px;"><span style="color:var(--orange);">📋</span> <strong>${pendingOrders.length} টি Pending</strong> অর্ডার আছে প্রসেস করার জন্য।</div>`;
+    if(lowStock.length>0) html += `<div style="padding:10px 16px;border-bottom:1px solid var(--border2);font-size:12px;"><span style="color:var(--red);">⚠️</span> <strong>${lowStock.length} টি পণ্যের</strong> স্টক কম: ${lowStock.map(p=>p.name).join(', ')}</div>`;
+    if(dueOrders.length>0){
+      const totalDue = dueOrders.reduce((s,r)=>s+Number(r.due||0),0);
+      html += `<div style="padding:10px 16px;border-bottom:1px solid var(--border2);font-size:12px;"><span style="color:var(--red);">💰</span> মোট <strong>৳${totalDue.toLocaleString()} বকেয়া</strong> আছে ${dueOrders.length} টি অর্ডারে।</div>`;
+    }
+    if(pendingOrders.length===0 && lowStock.length===0 && dueOrders.length===0){
+      html += '<div style="padding:20px 16px;text-align:center;color:var(--text3);font-size:12px;">✅ সব ঠিকঠাক! কোনো নতুন notification নেই।</div>';
+    }
+    html += '</div>';
+    panel.innerHTML = html;
+    panel.style.display = 'block';
+    // Close on outside click
+    setTimeout(()=>document.addEventListener('click', closeNotifOnOutside, {once:true}), 50);
+  } else {
+    panel.style.display = 'none';
+  }
+}
+function closeNotifOnOutside(e){
+  const panel = document.getElementById('notif-panel');
+  const bell = document.getElementById('notif-bell');
+  if(panel && !panel.contains(e.target) && (!bell||!bell.contains(e.target))){
+    panel.style.display='none'; notifPanelOpen=false;
+  }
+}
 
 // ─── KEYBOARD SHORTCUTS ──────────────────────────────────────
 document.addEventListener('keydown', e=>{
