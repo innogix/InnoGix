@@ -1575,6 +1575,7 @@ tbody td.muted{color:var(--text3);}
         <div class="form-group"><label class="form-label">Delivery Charge (৳)</label><input class="form-input" id="order-delivery" type="number" placeholder="0" oninput="calcDue()"></div>
         <div class="form-group"><label class="form-label">Payment Method</label><select class="form-select" id="order-payment"><option>Cash</option><option>bKash</option><option>Nagad</option><option>Bank Transfer</option><option>COD</option></select></div>
         <div class="form-group"><label class="form-label">Order Status</label><select class="form-select" id="order-status"><option>Pending</option><option>Processing</option><option>In Transit</option><option>Delivered</option><option>Returned</option><option>Cancelled</option></select></div>
+        <div class="form-group"><label class="form-label">Delivery Status</label><select class="form-select" id="order-delstatus"><option value="Not Sent">Not Sent</option><option value="In Transit">In Transit</option><option value="Delivered">Delivered</option><option value="Returned">Returned</option></select></div>
         <div class="form-group"><label class="form-label">Courier</label><select class="form-select" id="order-courier"><option value="">Select Courier</option><option>Pathao</option><option>Steadfast</option><option>Redx</option><option>SA Paribahan</option><option>Sundarban</option><option>Janani</option></select></div>
         <div class="form-group"><label class="form-label">Tracking ID</label><input class="form-input" id="order-tracking" placeholder="Courier tracking number" type="text"></div>
         <div class="form-group full"><label class="form-label">Notes</label><textarea class="form-textarea" id="order-notes" placeholder="Any special instructions..."></textarea></div>
@@ -1832,7 +1833,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycby0b-Uf-rw9Sr4px0XvMSsUQpRyuYNtNK2uIUNbasEko7lY4OLgugJ3difrftaXLILq/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbwMxv9tptoNc6it9aDu9Z1sTJl4oJoKyBCtq5_QffErx0pOqhMu81b9S92VrQQC5cCDyg/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -2304,11 +2305,16 @@ function renderInventoryData(rows){
   document.getElementById('inv-cards').innerHTML = rows.map(p=>{
     const pct = Math.round((p.current/Math.max(p.opening+p.in,1))*100);
     const cls = p.current<=p.alert?'low':p.current<=p.alert*2?'warn':'ok';
+    // FIX 2: Calculate margin from cost/sell — always fresh, never blank
+    const cardMargin = p.sell>0 ? Math.round((p.sell-p.cost)/p.sell*100) : 0;
+    const marginColor = cardMargin>=40?'var(--green)':cardMargin>=20?'var(--orange)':'var(--red)';
     return `<div class="inv-card ${p.current<=p.alert?'low':''}">
       <div class="inv-product">${p.name}</div>
       <div class="inv-sku">${p.id} · ${p.cat}</div>
       <div class="inv-stat"><label>Current Stock</label><span style="color:${p.current<=p.alert?'var(--red)':p.current<=p.alert*2?'var(--orange)':'var(--green)'};">${p.current}</span></div>
       <div class="inv-stat"><label>Sell Price</label><span>৳${Number(p.sell).toLocaleString()}</span></div>
+      <div class="inv-stat"><label>Cost Price</label><span>৳${Number(p.cost).toLocaleString()}</span></div>
+      <div class="inv-stat"><label>Margin</label><span style="color:${marginColor};font-weight:700;">${cardMargin}%</span></div>
       <div class="inv-stat"><label>Total Sold</label><span>${p.sold}</span></div>
       <div class="stock-bar"><div class="stock-fill ${cls}" style="width:${Math.min(pct,100)}%"></div></div>
       ${p.current<=p.alert?'<div class="low-badge">⚠ Low Stock</div>':''}
@@ -2591,11 +2597,12 @@ async function loadLiveInventory(){
     cat: String(r[2]||''),
     cost: Number(r[3])||0,
     sell: Number(r[4])||0,
+    // FIX 2: Read margin from Sheet (col F = r[5]), fallback to calculated value
+    sheetMargin: Number(r[5])||0,
     opening: Number(r[6])||0,
     in: Number(r[7])||0,
     sold: Number(r[8])||0,
-    // BUG 4 FIX: If current stock (col 10, index 9) is blank/zero in Sheet,
-    // compute it dynamically as (Opening + StockIn) - Sold
+    // If current stock (col J, index 9) is blank/zero — compute from Opening+StockIn-Sold
     current: (function(){
       const raw = parseInt(Number(r[9])||0);
       const computed = (parseInt(Number(r[6])||0) + parseInt(Number(r[7])||0)) - parseInt(Number(r[8])||0);
@@ -2686,7 +2693,7 @@ async function loadLivePartners(){
 }
 async function loadLiveCRM(){
   const data=await fetchFromAPI('crm'); if(!data||!data.data) return;
-  const rows=data.data.map((r,i)=>({id:i+1,name:r[0]||'',phone:r[1]||'',div:r[2]||'',dist:r[3]||'',orders:r[4]||0,spent:r[5]||0,due:r[6]||0,avg:r[7]||0,last:r[9]||'',type:r[8]||'Regular'}));
+  const rows=data.data.map((r,i)=>({id:i+1,name:r[0]||'',phone:r[1]||'',div:r[2]||'',dist:r[3]||'',orders:r[4]||0,spent:r[5]||0,due:r[6]||0,avg:r[7]||0,last:r[8]||'',type:r[9]||'Regular',status:r[10]||'Clear'}));
   renderCRMRows(rows);
   const el1=document.getElementById('crm-total'); if(el1) el1.textContent=rows.length;
   const el2=document.getElementById('crm-repeat'); if(el2) el2.textContent=rows.filter(c=>String(c.type).includes('Repeat')).length;
@@ -2782,6 +2789,7 @@ async function submitOrder(){
     status: m.querySelector('#order-status').value,
     courier: m.querySelector('#order-courier').value,
     tracking: m.querySelector('#order-tracking').value,
+    delStatus: m.querySelector('#order-delstatus')?.value||'Not Sent',
     notes: m.querySelector('#order-notes').value,
   };
   closeModal('add-order');
@@ -2810,7 +2818,7 @@ async function submitOrder(){
           address:payload.address, product:payload.product,
           qty, price, total, paid, due, delivery,
           status:payload.status, payment:payload.payment,
-          courier:payload.courier, tracking:payload.tracking, notes:payload.notes
+          courier:payload.courier, tracking:payload.tracking, delStatus:payload.delStatus||'Not Sent', notes:payload.notes
         };
       }
       showToast('✅ Order updated! (demo mode)','success');
@@ -2823,13 +2831,21 @@ async function submitOrder(){
         address:payload.address, product:payload.product,
         qty, price, total, paid, due, delivery,
         status:payload.status||'Pending', payment:payload.payment||'Cash',
-        courier:payload.courier||'', tracking:payload.tracking||'', notes:payload.notes||''
+        courier:payload.courier||'', tracking:payload.tracking||'', delStatus:payload.delStatus||'Not Sent', notes:payload.notes||''
       });
-      // Fix Bug 6: Decrement inventory current stock
-      const invIdx = sampleInventory.findIndex(p=>p.name===payload.product||p.id===payload.product);
+      // FIX 1: Decrement inventory stock — case-insensitive + trim matching (mirrors GAS logic)
+      const orderProductName = String(payload.product||'').trim().toLowerCase();
+      const invIdx = sampleInventory.findIndex(p=>
+        String(p.name||'').trim().toLowerCase() === orderProductName ||
+        String(p.id||'').trim().toLowerCase() === orderProductName
+      );
       if(invIdx>=0){
         sampleInventory[invIdx].sold = (sampleInventory[invIdx].sold||0) + qty;
         sampleInventory[invIdx].current = Math.max(0,(sampleInventory[invIdx].current||0) - qty);
+        // Re-render inventory if currently visible
+        if(document.getElementById('page-inventory')?.classList.contains('active')){
+          renderInventoryData(sampleInventory);
+        }
       }
       // Update CRM
       const crmIdx = sampleCRM.findIndex(c=>c.phone===payload.phone||c.name===payload.customer);
@@ -2882,6 +2898,8 @@ function openEditOrder(r){
   m.querySelector('#order-status').value=r.status||'Pending';
   m.querySelector('#order-courier').value=r.courier||'';
   m.querySelector('#order-tracking').value=r.tracking||'';
+  const delStatusSel=m.querySelector('#order-delstatus');
+  if(delStatusSel) delStatusSel.value=r.delStatus||'Not Sent';
   m.querySelector('#order-notes').value=r.notes||'';
   openModal('add-order');
 }
