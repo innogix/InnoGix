@@ -547,14 +547,17 @@ tbody td.muted{color:var(--text3);}
   .expense-cats{grid-template-columns:repeat(2,1fr);}
 }
 @media(max-width:900px){
-  .sidebar{transform:translateX(-100%);}
-  .sidebar.open{transform:translateX(0);}
+  .sidebar{transform:translateX(-100%);transition:transform .3s;}
+  .sidebar.open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.5);}
   .main{margin-left:0;}
   .menu-toggle{display:flex;}
   .arch-grid{grid-template-columns:1fr;}
   .chart-row,.chart-row.three{grid-template-columns:1fr;}
   .partner-row{grid-template-columns:1fr;}
   .form-grid,.form-grid.three{grid-template-columns:1fr;}
+  /* FIX 7: Backdrop overlay when sidebar is open on mobile */
+  .sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:199;backdrop-filter:blur(2px);}
+  .sidebar-backdrop.show{display:block;}
 }
 @media(max-width:600px){
   .kpi-grid{grid-template-columns:1fr;}
@@ -668,6 +671,10 @@ tbody td.muted{color:var(--text3);}
       <button class="pin-key enter" onclick="pinSubmit()">✓</button>
     </div>
     <div class="pin-error" id="pin-error"></div>
+    <!-- FIX 5: Show notice when browser cleared localStorage and PIN reset to default -->
+    <div id="pin-default-notice" style="display:none;margin-top:8px;font-size:11px;color:var(--orange);background:var(--orange2);border:1px solid rgba(227,179,65,.3);border-radius:6px;padding:6px 12px;text-align:center;">
+      ⚠️ Browser clear হয়েছে — Default PIN: <strong>1234</strong> — Login করে PIN পরিবর্তন করুন
+    </div>
     <span class="pin-change-link" onclick="openChangePinFromLock()">PIN ভুলে গেছেন?</span>
   </div>
 </div>
@@ -745,6 +752,8 @@ tbody td.muted{color:var(--text3);}
     </div>
   </div>
 </aside>
+<!-- FIX 7: Mobile sidebar backdrop — tap to close -->
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebarMobile()"></div>
 
 <!-- MAIN -->
 <div class="main">
@@ -1823,7 +1832,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbxd4ZOFxiRnxOUN0WLogMRX6KZNKBOqp8G3kUsj8nBHqxnv1xcAEEc3kodQIaYW_8yb/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbwE7LMUDdyqWc3PKt27BSqqpo2jjG6JxiEDrCWE2J_NDo7pT5PKWAgQ28LyT6oYvxQP2w/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -1930,8 +1939,23 @@ async function regularFetch(url) {
     const res = await fetch(url, { signal: ctrl.signal });
     clearTimeout(timer);
     if (!res.ok) return null;
-    return await res.json();
+    // BUG 4 FIX: Use res.text() + safeJSONParse instead of res.json()
+    // res.json() corrupts large numbers (>2^53) because JS IEEE-754 precision
+    const text = await res.text();
+    return safeJSONParse(text);
   } catch(e) { clearTimeout(timer); throw e; }
+}
+// BUG 4 FIX: Safe JSON parser — preserves large integers as JS numbers
+// by replacing bare large-integer tokens with parseFloat-safe values before parsing
+function safeJSONParse(text) {
+  try {
+    // Replace JSON number tokens that exceed safe integer range with their string form,
+    // then parse to float — avoids 64-bit precision loss for amounts like 150000, 1500000 etc.
+    const safe = text.replace(/:(\s*)(\d{16,})/g, function(_,sp,n){ return ':'+sp+parseFloat(n); });
+    return JSON.parse(safe);
+  } catch(e) {
+    try { return JSON.parse(text); } catch(e2) { return null; }
+  }
 }
 async function smartFetch(url) {
   return location.protocol === 'file:' ? await jsonpFetch(url) : await regularFetch(url);
@@ -1969,7 +1993,8 @@ async function postToAPI(payload) {
     const text = await res.text();
     // Strip JSONP wrapper if present
     const clean = text.replace(/^[^(]+\(/, '').replace(/\);?\s*$/, '');
-    const data = JSON.parse(clean);
+    // BUG 4 FIX: use safeJSONParse to protect big numbers
+    const data = safeJSONParse(clean);
     return data.status === 'success';
   } catch(e) {
     showToast(e.name === 'AbortError' ? 'Timeout — পুনরায় চেষ্টা করুন' : 'Error: ' + e.message, 'error');
@@ -1985,7 +2010,15 @@ function safeNum(v) {
 // ─── PIN LOCK ────────────────────────────────────────────────
 const DEFAULT_PIN = '1234';
 let pinBuffer = '', isLocked = true, fromLock = false;
-function getStoredPin() { return localStorage.getItem('innogix_pin') || DEFAULT_PIN; }
+function getStoredPin() {
+  const stored = localStorage.getItem('innogix_pin');
+  // FIX 5: If no PIN saved (browser cleared), show gentle notice on lock screen
+  if(!stored){
+    const noticeEl = document.getElementById('pin-default-notice');
+    if(noticeEl) noticeEl.style.display = 'block';
+  }
+  return stored || DEFAULT_PIN;
+}
 function pinPress(d) {
   if (pinBuffer.length >= 4) return;
   pinBuffer += d;
@@ -2043,6 +2076,9 @@ function populateDashboardDemo(){
   setEl('kpi-pending', pending);
   setEl('kpi-delivered', delivered);
   setEl('kpi-capital', fmt(capital));
+  // FIX 3: kpi-stock in demo mode from sampleInventory
+  const stock = sampleInventory.reduce((s,p)=>s+Number(p.current||0),0);
+  setEl('kpi-stock', stock);
   // Partner balances on dashboard
   ['ismail','ashik','rabbi'].forEach((p,i)=>{
     const names=['Md Ismail Hosen','Ashikur Rahman','Golam Rabbi'];
@@ -2090,9 +2126,21 @@ function showPage(id, el) {
   el.classList.add('active');
   document.getElementById('page-title').textContent = pageTitles[id][0];
   document.getElementById('page-sub').textContent = pageTitles[id][1];
-  if(window.innerWidth<=900) document.getElementById('sidebar').classList.remove('open');
+  // FIX 7: Auto-close sidebar on mobile when nav item clicked
+  if(window.innerWidth<=900) closeSidebarMobile();
 }
-function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); }
+function toggleSidebar(){
+  const sb = document.getElementById('sidebar');
+  const bd = document.getElementById('sidebar-backdrop');
+  sb.classList.toggle('open');
+  // FIX 7: Show/hide backdrop with sidebar
+  if(bd) bd.classList.toggle('show', sb.classList.contains('open'));
+}
+function closeSidebarMobile(){
+  document.getElementById('sidebar').classList.remove('open');
+  const bd = document.getElementById('sidebar-backdrop');
+  if(bd) bd.classList.remove('show');
+}
 
 // ─── THEME ───────────────────────────────────────────────────
 let dark=true;
@@ -2115,12 +2163,12 @@ function showToast(msg, type='success'){
 // ─── BD TIME ─────────────────────────────────────────────────
 function bdNow(){ return new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Dhaka'})); }
 function bdDate(){ const d=bdNow(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function bdTime(){ const d=bdNow(); let h=d.getHours(),m=d.getMinutes(); const ap=h>=12?'PM':'AM'; h=h%12||12; return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+' '+ap; }
+function bdTime(){ const d=bdNow(); let h=d.getHours(),m=d.getMinutes(),s=d.getSeconds(); const ap=h>=12?'PM':'AM'; h=h%12||12; return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+' '+ap; }
 function startClock(){
   const el=document.getElementById('bd-clock'); if(!el) return;
   const days=['রবিবার','সোমবার','মঙ্গলবার','বুধবার','বৃহস্পতিবার','শুক্রবার','শনিবার'];
   const tick=()=>{ const d=bdNow(); el.textContent=days[d.getDay()]+' '+bdDate()+' '+bdTime()+' (ঢাকা)'; };
-  tick(); setInterval(tick, 30000);
+  tick(); setInterval(tick, 1000);
 }
 
 // ─── SAMPLE DATA (demo mode only) ───────────────────────────
@@ -2237,6 +2285,7 @@ function renderSalesRows(rows){
       <td><span class="pay-badge ${(r.payment||'').toLowerCase().replace(/ /g,'')}">${r.payment}</span></td>
       <td>${r.courier||'—'}</td>
       <td class="mono muted" style="font-size:11px;">${r.tracking||'—'}</td>
+      <td><span class="status ${(r.delStatus||'').toLowerCase().replace(/ /g,'')}">${r.delStatus||'Not Sent'}</span></td>
       <td class="muted" style="font-size:11px;max-width:120px;white-space:normal;">${r.notes||'—'}</td>
       <td><button class="btn" style="padding:4px 10px;font-size:11px;" onclick='openEditOrder(${JSON.stringify(r)})'>✏️ Edit</button></td>
     </tr>`).join('');
@@ -2369,8 +2418,22 @@ function renderPartnerSummary(txns){
 }
 
 function renderPartnerTxns(rows){
-  document.getElementById('partner-body').innerHTML = rows.map(t=>`
-    <tr>
+  // FIX 6: Calculate running total per partner (Investment adds, Drawings subtracts)
+  const runningTotals = {};
+  // Process rows in chronological order (oldest first = reversed from display order)
+  const chronoRows = [...rows].reverse();
+  const runMap = {};
+  chronoRows.forEach(t=>{
+    const k = t.partner;
+    if(!runMap[k]) runMap[k] = 0;
+    if(t.type==='Investment'||t.type==='Profit Share') runMap[k] += Number(t.amount||0);
+    else if(t.type==='Drawings') runMap[k] -= Number(t.amount||0);
+    runningTotals[t.id] = runMap[k];
+  });
+  document.getElementById('partner-body').innerHTML = rows.map(t=>{
+    const runTotal = runningTotals[t.id]||0;
+    const runColor = runTotal>=0?'var(--green)':'var(--red)';
+    return `<tr>
       <td class="mono muted">${t.id}</td>
       <td class="mono">${t.date}</td>
       <td><strong>${t.partner}</strong></td>
@@ -2378,11 +2441,12 @@ function renderPartnerTxns(rows){
       <td class="mono" style="font-weight:700;color:${t.type==='Investment'?'var(--green)':'var(--red)'};">৳${Number(t.amount||0).toLocaleString()}</td>
       <td><span class="pay-badge ${(t.method||'').toLowerCase().replace(/ /g,'')}">${t.method||'—'}</span></td>
       <td class="muted">${t.desc||'—'}</td>
-      <td class="mono" style="color:var(--blue);">—</td>
+      <td class="mono" style="color:${runColor};font-weight:700;">৳${Math.abs(runTotal).toLocaleString()}${runTotal<0?' ↓':''}</td>
       <td>
         <button class="btn" style="padding:4px 10px;font-size:11px;" onclick='openEditPartnerTxn(${JSON.stringify(t)})'>✏️ Edit</button>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 function renderCRMRows(rows){
@@ -2440,6 +2504,10 @@ async function loadLiveDashboard(){
   setEl('kpi-pending', data.pending||'0');
   setEl('kpi-delivered',data.delivered||'0');
   setEl('kpi-capital', fmt(data.capital));
+  // FIX 3: kpi-stock was never set in live mode — now fixed
+  setEl('kpi-stock',   data.stock||'0');
+  // FIX 4: kpi-expense also set from live data
+  setEl('kpi-expense', fmt(data.expenses));
   // Partner balances — REF error ছাড়া Apps Script এ JS calculate হয়ে আসে
   setEl('ismail-inv','৳'+fmt(data.ismail_inv)); setEl('ismail-drw','৳'+fmt(data.ismail_drw)); setEl('ismail-bal','৳'+fmt(data.ismail_bal));
   setEl('ashik-inv', '৳'+fmt(data.ashik_inv));  setEl('ashik-drw', '৳'+fmt(data.ashik_drw));  setEl('ashik-bal', '৳'+fmt(data.ashik_bal));
@@ -2494,9 +2562,11 @@ async function loadLiveSales(){
       price:Number(r[11])||0, total:Number(r[12])||0,
       paid:Number(r[13])||0, due:Number(r[14])||0, delivery:Number(r[15])||0,
       status:String(r[16]||'Pending'), payment:String(r[17]||'Cash'),
-      courier:String(r[18]||''), tracking:String(r[19]||''), notes:String(r[21]||''),
+      courier:String(r[18]||''), tracking:String(r[19]||''), delStatus:String(r[20]||'Not Sent'), notes:String(r[21]||''),
     };
   }).filter(r=>r.customer && r.customer.trim()); // skip empty rows
+  // BUG 2 FIX: Reverse so newest orders (highest SL#) appear at top
+  rows.reverse();
   liveSalesData = rows; // cache for filter
   renderSalesRows(rows);
   document.getElementById('sales-count').textContent = rows.length+' records';
@@ -2681,6 +2751,17 @@ let currentEditOrderId = null;
 
 async function submitOrder(){
   const m=document.getElementById('modal-add-order');
+  // ── FIX 1: Validate required fields before saving ──
+  const customerVal = (m.querySelector('#order-customer')?.value||'').trim();
+  const phoneVal    = (m.querySelector('#order-phone')?.value||'').trim();
+  const productVal  = (m.querySelector('#order-product')?.value||'').trim();
+  const qtyVal      = parseFloat(m.querySelector('#order-qty')?.value||0);
+  const priceVal    = parseFloat(document.getElementById('unit-price')?.value||0);
+  if(!customerVal){ showToast('⚠️ Customer Name লিখুন','error'); m.querySelector('#order-customer').focus(); return; }
+  if(!phoneVal||phoneVal.length<11){ showToast('⚠️ সঠিক Phone Number দিন (১১ ডিজিট)','error'); m.querySelector('#order-phone').focus(); return; }
+  if(!productVal){ showToast('⚠️ Product select করুন','error'); m.querySelector('#order-product').focus(); return; }
+  if(!qtyVal||qtyVal<1){ showToast('⚠️ Quantity কমপক্ষে ১ হতে হবে','error'); m.querySelector('#order-qty').focus(); return; }
+  if(!priceVal||priceVal<1){ showToast('⚠️ Unit Price দিন','error'); document.getElementById('unit-price').focus(); return; }
   const payload={
     action: currentEditOrderId ? 'updateOrder' : 'addOrder',
     orderId: currentEditOrderId||null,
@@ -3363,24 +3444,36 @@ function exportToCSV(tableId,filename){
 
 // ─── GLOBAL SEARCH ───────────────────────────────────────────
 function globalSearch(q){
-  if(!q||q.length<2) return;
-  q=q.toLowerCase();
-  const data=apiConnected? liveSalesData : sampleSales;
-  const matches=data.filter(r=>
+  const data = apiConnected ? liveSalesData : sampleSales;
+  // If query is empty or cleared — reset to full list without navigating away
+  if(!q || !q.trim()){
+    const activePage = document.querySelector('.page.active');
+    if(activePage && activePage.id === 'page-sales'){
+      renderSalesRows(data);
+      document.getElementById('sales-count').textContent = data.length + ' records';
+    }
+    return;
+  }
+  // Minimum 1 character to trigger search
+  q = q.toLowerCase().trim();
+  const matches = data.filter(r=>
     String(r.customer||'').toLowerCase().includes(q)||
     String(r.phone||'').includes(q)||
     String(r.product||'').toLowerCase().includes(q)||
-    String(r.id||'').includes(q));
-  // Navigate to sales page safely
+    String(r.id||'').includes(q)||
+    String(r.div||'').toLowerCase().includes(q)||
+    String(r.dist||'').toLowerCase().includes(q)||
+    String(r.tracking||'').toLowerCase().includes(q)||
+    String(r.status||'').toLowerCase().includes(q));
+  // Navigate to sales page
   const salesNavItem = Array.from(document.querySelectorAll('.nav-item')).find(el=>el.textContent.includes('Sales'));
   if(salesNavItem) showPage('sales', salesNavItem);
-  if(matches.length>0){
-    renderSalesRows(matches);
-    document.getElementById('sales-count').textContent = matches.length + ' result(s)';
+  renderSalesRows(matches);
+  const countEl = document.getElementById('sales-count');
+  if(countEl) countEl.textContent = matches.length + ' result(s)';
+  if(matches.length > 0){
     showToast(`${matches.length} result(s) found`,'info');
   } else {
-    renderSalesRows([]);
-    document.getElementById('sales-count').textContent = '0 results';
     showToast(`"${q}" পাওয়া যায়নি`,'error');
   }
 }
