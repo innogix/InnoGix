@@ -961,8 +961,10 @@ tbody td.muted{color:var(--text3)!important;}
             <thead>
               <tr>
                 <th onclick="sortTable('sales-table',0)">#</th>
-                <th onclick="sortTable('sales-table',1)">Date & Time ⇅</th>
-                <th onclick="sortTable('sales-table',2)">Customer ⇅</th>
+                <th onclick="sortTable('sales-table',1)">Date ⇅</th>
+                <th>Time</th>
+                <th>Order ID</th>
+                <th onclick="sortTable('sales-table',4)">Customer ⇅</th>
                 <th>Phone</th>
                 <th>Division</th>
                 <th>District</th>
@@ -1835,7 +1837,7 @@ tbody td.muted{color:var(--text3)!important;}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbw5TIyAQvGU4f2S-Dh3pbwftQzV4UjnDIAM_R7MdwQ-HsxSRPMDU1jBQz_JEjKtW6K20w/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbw-fkDi6YLLqodApQ3vvF6dWKdD-BOlthMQmEFgShxxOQy3u_NXF-TVfd-KFzsa9ESNYw/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -2178,11 +2180,11 @@ function startClock(){
 
 // ─── SAMPLE DATA (demo mode only) ───────────────────────────
 const sampleSales = [
-  {id:'001',date:'19-May-2025',time:'09:15',customer:'Rahman Store',phone:'01712345678',div:'Dhaka',dist:'Gazipur',thana:'Gazipur Sadar',address:'Gazipur Bazar',product:'Amanah Door Lock Pro',qty:2,price:2800,total:5600,paid:5600,due:0,delivery:60,status:'Delivered',payment:'bKash',courier:'Pathao',tracking:'PT123456',notes:''},
-  {id:'002',date:'19-May-2025',time:'10:30',customer:'Karim Electronics',phone:'01812345678',div:'Chittagong',dist:'Chittagong City',thana:'Kotwali',address:'Kotwali Main Road',product:'Amanah CCTV Kit',qty:1,price:8500,total:8500,paid:5000,due:3500,delivery:100,status:'Pending',payment:'Cash',courier:'Steadfast',tracking:'SF789012',notes:''},
-  {id:'003',date:'18-May-2025',time:'14:20',customer:'Alam Brothers',phone:'01912345678',div:'Rajshahi',dist:'Rajshahi City',thana:'Boalia',address:'Boalia Road',product:'Amanah Alarm System',qty:3,price:3200,total:9600,paid:9600,due:0,delivery:80,status:'Delivered',payment:'Nagad',courier:'Redx',tracking:'RX345678',notes:''},
-  {id:'004',date:'18-May-2025',time:'16:45',customer:'Hossain Traders',phone:'01612345678',div:'Dhaka',dist:'Dhaka City',thana:'Dhanmondi',address:'Dhanmondi 15',product:'Amanah Smart Lock',qty:1,price:5500,total:5500,paid:3000,due:2500,delivery:60,status:'Processing',payment:'Bank',courier:'Pathao',tracking:'PT901234',notes:'Urgent'},
-  {id:'005',date:'17-May-2025',time:'11:00',customer:'Noor Enterprise',phone:'01512345678',div:'Sylhet',dist:'Sylhet City',thana:'Sylhet Sadar',address:'Sylhet Center',product:'Amanah Door Lock Pro',qty:4,price:2800,total:11200,paid:11200,due:0,delivery:120,status:'Delivered',payment:'bKash',courier:'SA Paribahan',tracking:'SA567890',notes:''},
+  {id:'001',orderId:'ORD-DEMO001',date:'19-May-2025',time:'09:15',customer:'Rahman Store',phone:'01712345678',div:'Dhaka',dist:'Gazipur',thana:'Gazipur Sadar',address:'Gazipur Bazar',product:'Amanah Door Lock Pro',qty:2,price:2800,total:5600,paid:5600,due:0,delivery:60,status:'Delivered',payment:'bKash',courier:'Pathao',tracking:'PT123456',notes:''},
+  {id:'002',orderId:'ORD-DEMO002',date:'19-May-2025',time:'10:30',customer:'Karim Electronics',phone:'01812345678',div:'Chittagong',dist:'Chittagong City',thana:'Kotwali',address:'Kotwali Main Road',product:'Amanah CCTV Kit',qty:1,price:8500,total:8500,paid:5000,due:3500,delivery:100,status:'Pending',payment:'Cash',courier:'Steadfast',tracking:'SF789012',notes:''},
+  {id:'003',orderId:'ORD-DEMO003',date:'18-May-2025',time:'14:20',customer:'Alam Brothers',phone:'01912345678',div:'Rajshahi',dist:'Rajshahi City',thana:'Boalia',address:'Boalia Road',product:'Amanah Alarm System',qty:3,price:3200,total:9600,paid:9600,due:0,delivery:80,status:'Delivered',payment:'Nagad',courier:'Redx',tracking:'RX345678',notes:''},
+  {id:'004',orderId:'ORD-DEMO004',date:'18-May-2025',time:'16:45',customer:'Hossain Traders',phone:'01612345678',div:'Dhaka',dist:'Dhaka City',thana:'Dhanmondi',address:'Dhanmondi 15',product:'Amanah Smart Lock',qty:1,price:5500,total:5500,paid:3000,due:2500,delivery:60,status:'Processing',payment:'Bank',courier:'Pathao',tracking:'PT901234',notes:'Urgent'},
+  {id:'005',orderId:'ORD-DEMO005',date:'17-May-2025',time:'11:00',customer:'Noor Enterprise',phone:'01512345678',div:'Sylhet',dist:'Sylhet City',thana:'Sylhet Sadar',address:'Sylhet Center',product:'Amanah Door Lock Pro',qty:4,price:2800,total:11200,paid:11200,due:0,delivery:120,status:'Delivered',payment:'bKash',courier:'SA Paribahan',tracking:'SA567890',notes:''},
 ];
 
 const sampleInventory = [
@@ -2282,8 +2284,10 @@ function renderSalesRows(rows){
   }
   document.getElementById('sales-body').innerHTML = rows.map(r=>`
     <tr>
-      <td class="mono muted">${r.id}</td>
-      <td class="mono">${r.date}<br><span style="color:var(--text3);font-size:11px;">${r.time||''}</span></td>
+      <td class="mono muted">${r.slNo||r.id}</td>
+      <td class="mono">${r.date}</td>
+      <td class="mono" style="color:var(--text3);font-size:11px;">${r.time||''}</td>
+      <td class="mono muted" style="font-size:11px;">${r.orderId||r.id}</td>
       <td><strong>${r.customer}</strong></td>
       <td class="mono">${r.phone}</td>
       <td>${r.div}</td><td>${r.dist}</td>
@@ -2558,44 +2562,48 @@ async function loadLiveSales(){
   const rowsToProcess = isHeader ? rawRows.slice(1) : rawRows;
   const rows=rowsToProcess.map((r,i)=>{
     // Parse date — Google Sheets sends ISO or serial date
+    // NEW: r[1]=Date only, r[2]=Time only (separated since v16)
     let dateStr='', timeStr='';
     const rawDT = r[1]||'';
+    const rawTime = r[2]||'';
     if(rawDT){
       try{
-        // Handle ISO string like "2026-05-23T18:00:00.000Z" or serial number
-        let dt;
         if(typeof rawDT==='number'){
-          // Google Sheets serial date (days since Dec 30 1899)
-          dt=new Date((rawDT-25569)*86400*1000);
+          // Google Sheets serial date
+          const dt=new Date((rawDT-25569)*86400*1000);
+          if(!isNaN(dt)){
+            const opts={timeZone:'Asia/Dhaka'};
+            dateStr=new Intl.DateTimeFormat('en-BD',{...opts,day:'2-digit',month:'short',year:'numeric'}).format(dt);
+          } else { dateStr=String(rawDT); }
         } else {
-          dt=new Date(rawDT);
+          // GAS writes "dd-MMM-yyyy" for date — use as-is; no time parsing
+          dateStr=String(rawDT);
         }
-        if(!isNaN(dt)){
-          // Convert to Asia/Dhaka timezone
-          const opts={timeZone:'Asia/Dhaka'};
-          const d=new Intl.DateTimeFormat('en-BD',{...opts,day:'2-digit',month:'short',year:'numeric'}).format(dt);
-          const t=new Intl.DateTimeFormat('en-BD',{...opts,hour:'2-digit',minute:'2-digit',hour12:true}).format(dt);
-          dateStr=d; timeStr=t;
-        } else {
-          dateStr=rawDT; timeStr=r[2]||'';
-        }
-      } catch(e){ dateStr=rawDT; timeStr=r[2]||''; }
-    } else { dateStr=r[1]||''; timeStr=r[2]||''; }
+      } catch(e){ dateStr=String(rawDT); }
+    }
+    // Time is a separate column — use directly
+    timeStr = rawTime ? String(rawTime) : '';
+
     // FIX: Use col C (r[2]) as stable order ID for edit/delete — col A (r[0]) = SL# renumbers after insert
-    const stableId = r[2] && String(r[2]).startsWith('ORD-') ? String(r[2]) : String(r[0]||String(i+1).padStart(3,'0'));
+    // NEW 23-col layout: [0]=SL#, [1]=Date, [2]=Time, [3]=OrderID, [4]=Customer, [5]=Phone,
+    // [6]=Division, [7]=District, [8]=Thana, [9]=Address, [10]=Product,
+    // [11]=Qty, [12]=UnitPrice, [13]=Total, [14]=Paid, [15]=Due, [16]=Delivery,
+    // [17]=Status, [18]=Payment, [19]=Courier, [20]=Tracking, [21]=DelStatus, [22]=Notes
+    const orderId = r[3] && String(r[3]).startsWith('ORD-') ? String(r[3]) : String(r[0]||String(i+1).padStart(3,'0'));
     return {
-      id: stableId, slNo: r[0], date:dateStr, time:timeStr,
+      id: orderId, slNo: r[0], date:dateStr, time:timeStr,
+      orderId: String(r[3]||''),
       rawDate:rawDT, rawDateISO:String(rawDT||''),
-      customer:String(r[3]||''), phone:String(r[4]||''),
-      div:String(r[5]||''), dist:String(r[6]||''),
-      thana:String(r[7]||''), address:String(r[8]||''),
-      product:String(r[9]||''), qty:Number(r[10])||0,
-      price:Number(r[11])||0, total:Number(r[12])||0,
-      paid:Number(r[13])||0, due:Number(r[14])||0, delivery:Number(r[15])||0,
-      status:String(r[16]||'Pending'), payment:String(r[17]||'Cash'),
-      courier:String(r[18]||''), tracking:String(r[19]||''), delStatus:String(r[20]||'Not Sent'), notes:String(r[21]||''),
+      customer:String(r[4]||''), phone:String(r[5]||''),
+      div:String(r[6]||''), dist:String(r[7]||''),
+      thana:String(r[8]||''), address:String(r[9]||''),
+      product:String(r[10]||''), qty:Number(r[11])||0,
+      price:Number(r[12])||0, total:Number(r[13])||0,
+      paid:Number(r[14])||0, due:Number(r[15])||0, delivery:Number(r[16])||0,
+      status:String(r[17]||'Pending'), payment:String(r[18]||'Cash'),
+      courier:String(r[19]||''), tracking:String(r[20]||''), delStatus:String(r[21]||'Not Sent'), notes:String(r[22]||''),
     };
-  }).filter(r=>r.customer && r.customer.trim()); // skip empty rows
+  }).filter(r=>r.customer && r.customer.trim()); // skip empty rows — customer now from col E(r[4])
   // BUG 2 FIX: Reverse so newest orders (highest SL#) appear at top
   rows.reverse();
   liveSalesData = rows; // cache for filter
@@ -2865,8 +2873,9 @@ async function submitOrder(){
       showToast('✅ Order updated! (demo mode)','success');
     } else {
       const newId = String(sampleSales.length + 1).padStart(3,'0');
+      const newOrdId = 'ORD-' + Date.now();
       sampleSales.unshift({
-        id:newId, date:nowDate, time:nowTime,
+        id:newId, orderId:newOrdId, date:nowDate, time:nowTime,
         customer:payload.customer, phone:payload.phone,
         div:payload.division, dist:payload.district, thana:payload.thana,
         address:payload.address, product:payload.product,
