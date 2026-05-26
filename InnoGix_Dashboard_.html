@@ -322,12 +322,13 @@ thead th{
 }
 thead th:hover{color:var(--text);background:var(--bg4);}
 thead th.sorted{color:var(--gold);}
-tbody tr{border-bottom:1px solid var(--border2);transition:background .1s;}
-tbody tr:hover{background:var(--bg3);}
+tbody tr{border-bottom:1px solid var(--border2);transition:background .1s;background:transparent!important;color:var(--text)!important;}
+tbody tr:hover{background:var(--bg3)!important;}
 tbody tr:last-child{border-bottom:none;}
-tbody td{padding:11px 14px;font-size:13px;color:var(--text);}
+/* Ensure table cells always show proper text color — overrides any Google Sheet CF leakage */
+tbody td{padding:11px 14px;font-size:13px;color:var(--text)!important;background:transparent!important;}
 tbody td.mono{font-family:'IBM Plex Mono',monospace;font-size:12px;}
-tbody td.muted{color:var(--text3);}
+tbody td.muted{color:var(--text3)!important;}
 
 /* STATUS BADGES */
 .status{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
@@ -346,12 +347,13 @@ tbody td.muted{color:var(--text3);}
 .status.intransit::before{background:var(--orange);}
 
 /* PAYMENT BADGE */
-.pay-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.pay-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:var(--bg3);color:var(--text2);}
 .pay-badge.cash{background:var(--green2);color:var(--green);}
 .pay-badge.bkash{background:rgba(228,38,98,.15);color:#E42662;}
 .pay-badge.nagad{background:rgba(246,139,31,.15);color:#F68B1F;}
-.pay-badge.bank{background:var(--blue2);color:var(--blue);}
+.pay-badge.bank,.pay-badge.banktransfer,.pay-badge.bankTransfer{background:var(--blue2);color:var(--blue);}
 .pay-badge.cod{background:var(--gold3);color:var(--gold);}
+/* Ensure table rows always show correct text colors regardless of sheet CF */
 
 /* INLINE EDIT CELL */
 .editable{cursor:text;border-bottom:1px dashed transparent;transition:border-color .15s;padding:1px 3px;}
@@ -1833,7 +1835,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbykRHtHRj63_OOPY5sxoYMWYIezeTZEspRNAAmZB0WasLBTAMOUgEFTL13RMyd6lc-7_Q/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbw5TIyAQvGU4f2S-Dh3pbwftQzV4UjnDIAM_R7MdwQ-HsxSRPMDU1jBQz_JEjKtW6K20w/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -2270,6 +2272,14 @@ function populateCRM(){
 
 // ─── RENDER FUNCTIONS ────────────────────────────────────────
 function renderSalesRows(rows){
+  // Normalize a string into a CSS-safe class name (lowercase, remove spaces/special chars)
+  function cls(s){ return (s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+  // Normalize payment for pay-badge: "Bank Transfer" → "banktransfer", "COD" → "cod" etc.
+  function payClass(p){
+    const c=cls(p);
+    // Alias: "banktransfer" matches CSS .pay-badge.banktransfer
+    return c;
+  }
   document.getElementById('sales-body').innerHTML = rows.map(r=>`
     <tr>
       <td class="mono muted">${r.id}</td>
@@ -2281,14 +2291,14 @@ function renderSalesRows(rows){
       <td class="mono" style="text-align:right;">${r.qty}</td>
       <td class="mono" style="text-align:right;">৳${Number(r.price||0).toLocaleString()}</td>
       <td class="mono" style="text-align:right;font-weight:700;">৳${Number(r.total||0).toLocaleString()}</td>
-      <td class="mono" style="text-align:right;color:var(--green);">৳${Number(r.paid||0).toLocaleString()}</td>
-      <td class="mono" style="text-align:right;color:${r.due>0?'var(--red)':'var(--text3)'};">৳${Number(r.due||0).toLocaleString()}</td>
+      <td class="mono" style="text-align:right;color:var(--green)!important;">৳${Number(r.paid||0).toLocaleString()}</td>
+      <td class="mono" style="text-align:right;color:${Number(r.due)>0?'var(--red)':'var(--text3)'}!important;">৳${Number(r.due||0).toLocaleString()}</td>
       <td class="mono" style="text-align:right;">৳${Number(r.delivery||0).toLocaleString()}</td>
-      <td><span class="status ${(r.status||'').toLowerCase().replace(/ /g,'')}">${r.status}</span></td>
-      <td><span class="pay-badge ${(r.payment||'').toLowerCase().replace(/ /g,'')}">${r.payment}</span></td>
+      <td><span class="status ${cls(r.status)}">${r.status}</span></td>
+      <td><span class="pay-badge ${payClass(r.payment)}">${r.payment||'—'}</span></td>
       <td>${r.courier||'—'}</td>
       <td class="mono muted" style="font-size:11px;">${r.tracking||'—'}</td>
-      <td><span class="status ${(r.delStatus||'').toLowerCase().replace(/ /g,'')}">${r.delStatus||'Not Sent'}</span></td>
+      <td><span class="status ${cls(r.delStatus||'')}">${r.delStatus||'Not Sent'}</span></td>
       <td class="muted" style="font-size:11px;max-width:120px;white-space:normal;">${r.notes||'—'}</td>
       <td><button class="btn" style="padding:4px 10px;font-size:11px;" onclick='openEditOrder(${JSON.stringify(r)})'>✏️ Edit</button></td>
     </tr>`).join('');
@@ -2344,15 +2354,17 @@ function renderInventoryData(rows){
   }
   // Table
   document.getElementById('inv-body').innerHTML = rows.map(p=>{
-    const margin = p.sell>0?Math.round((p.sell-p.cost)/p.sell*100):0;
+    // Always calculate margin from cost/sell — sheet formula may be overwritten by sample data
+    const margin = p.sell>0 ? Math.round((p.sell-p.cost)/p.sell*100) : (p.sheetMargin||0);
+    const marginColor = margin>=40?'var(--green)':margin>=20?'var(--orange)':'var(--red)';
     return `<tr>
       <td class="mono">${p.id}</td>
       <td><strong>${p.name}</strong></td><td>${p.cat}</td>
       <td class="mono">৳${Number(p.cost).toLocaleString()}</td>
       <td class="mono">৳${Number(p.sell).toLocaleString()}</td>
-      <td><span style="color:${margin>30?'var(--green)':'var(--orange)'};">${margin}%</span></td>
+      <td><span style="color:${marginColor};font-weight:700;">${margin}%</span></td>
       <td class="mono">${p.opening}</td><td class="mono">${p.in}</td><td class="mono">${p.sold}</td>
-      <td class="mono" style="font-weight:700;color:${p.current<=p.alert?'var(--red)':'var(--text)'};">${p.current}</td>
+      <td class="mono" style="font-weight:700;color:${p.current<=p.alert?'var(--red)':'var(--text)'}!important;">${p.current}</td>
       <td class="mono">${p.alert}</td>
       <td>${p.current<=0?'<span class="status cancelled">Out</span>':p.current<=p.alert?'<span class="status pending">Low</span>':'<span class="status delivered">OK</span>'}</td>
       <td>${p.supplier||'—'}</td>
@@ -2368,8 +2380,8 @@ function renderExpenseRows(rows){
     <tr>
       <td class="mono muted">${e.id}</td>
       <td class="mono">${e.date}</td><td>${e.cat}</td><td>${e.desc}</td>
-      <td class="mono" style="font-weight:700;color:var(--red);">৳${Number(e.amount||0).toLocaleString()}</td>
-      <td><span class="pay-badge ${(e.payment||'').toLowerCase().replace(/ /g,'')}">${e.payment||'—'}</span></td>
+      <td class="mono" style="font-weight:700;color:var(--red)!important;">৳${Number(e.amount||0).toLocaleString()}</td>
+      <td><span class="pay-badge ${(e.payment||'').toLowerCase().replace(/[^a-z0-9]/g,'')}">${e.payment||'—'}</span></td>
       <td>${e.vendor||'—'}</td>
       <td class="mono muted">${e.invoice||'—'}</td>
       <td class="muted">${e.notes||'—'}</td>
@@ -2458,19 +2470,28 @@ function renderPartnerTxns(rows){
 }
 
 function renderCRMRows(rows){
-  document.getElementById('crm-body').innerHTML = rows.map(c=>`
-    <tr>
+  document.getElementById('crm-body').innerHTML = rows.map(c=>{
+    // Handle both emoji-prefixed ("🔄 Repeat") and plain ("Repeat") type values
+    const typeStr = String(c.type||'Regular');
+    const isRepeat = typeStr.includes('Repeat');
+    const isNew = typeStr.includes('New');
+    const typeClass = isRepeat ? 'delivered' : isNew ? 'processing' : 'pending';
+    const typeLabel = isRepeat ? 'Repeat' : isNew ? 'New' : 'Regular';
+    // Handle emoji-prefixed status from Google Sheets CRM ("🔴 Has Due" / "🟢 Clear")
+    const hasDue = Number(c.due||0)>0 || String(c.status||'').includes('Due');
+    return `<tr>
       <td class="mono muted">${c.id}</td>
       <td><strong>${c.name}</strong></td>
       <td class="mono">${c.phone}</td>
       <td>${c.div}</td><td>${c.dist}</td>
       <td class="mono" style="text-align:center;font-weight:700;">${c.orders}</td>
-      <td class="mono" style="color:var(--green);">৳${Number(c.spent||0).toLocaleString()}</td>
-      <td class="mono" style="color:${c.due>0?'var(--red)':'var(--text3)'};">৳${Number(c.due||0).toLocaleString()}</td>
-      <td><span class="status ${c.type==='Repeat'?'delivered':c.type==='New'?'processing':'pending'}">${c.type}</span></td>
+      <td class="mono" style="color:var(--green)!important;">৳${Number(c.spent||0).toLocaleString()}</td>
+      <td class="mono" style="color:${hasDue?'var(--red)':'var(--text3)'}!important;">৳${Number(c.due||0).toLocaleString()}</td>
+      <td><span class="status ${typeClass}">${typeLabel}</span></td>
       <td class="mono">${c.last||'—'}</td>
       <td><button class="btn" style="padding:4px 10px;font-size:11px;" onclick='openViewCustomer(${JSON.stringify(c)})'>👁 View</button></td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 // ─── CHART ───────────────────────────────────────────────────
@@ -2697,12 +2718,28 @@ async function loadLivePartners(){
 }
 async function loadLiveCRM(){
   const data=await fetchFromAPI('crm'); if(!data||!data.data) return;
-  const rows=data.data.map((r,i)=>({id:i+1,name:r[0]||'',phone:r[1]||'',div:r[2]||'',dist:r[3]||'',orders:r[4]||0,spent:r[5]||0,due:r[6]||0,avg:r[7]||0,last:r[8]||'',type:r[9]||'Regular',status:r[10]||'Clear'}));
+  const rows=data.data.map((r,i)=>({
+    id:i+1,
+    name:String(r[0]||''),
+    phone:String(r[1]||''),
+    div:String(r[2]||''),
+    dist:String(r[3]||''),
+    orders:Number(r[4])||0,
+    spent:Number(r[5])||0,
+    due:Number(r[6])||0,
+    avg:Number(r[7])||0,
+    last:String(r[8]||''),
+    // r[9] = Type (may have emoji: "🔄 Repeat" / "👤 Regular"), r[10] = Status
+    type:String(r[9]||'Regular'),
+    status:String(r[10]||'Clear'),
+  })).filter(r=>r.name && r.name.trim());
   renderCRMRows(rows);
+  // Update CRM stats
   const el1=document.getElementById('crm-total'); if(el1) el1.textContent=rows.length;
   const el2=document.getElementById('crm-repeat'); if(el2) el2.textContent=rows.filter(c=>String(c.type).includes('Repeat')).length;
-  const el3=document.getElementById('crm-due'); if(el3) el3.textContent=rows.filter(c=>c.due>0).length;
-  const el4=document.getElementById('crm-top'); if(el4){ const top=rows.reduce((a,b)=>a.spent>b.spent?a:b,{name:'—'}); el4.textContent=top.name; }
+  const el3=document.getElementById('crm-due'); if(el3) el3.textContent=rows.filter(c=>Number(c.due||0)>0).length;
+  const el4=document.getElementById('crm-top'); if(el4){ const top=rows.reduce((a,b)=>Number(a.spent)>Number(b.spent)?a:b,{name:'—'}); el4.textContent=top.name; }
+  showToast('CRM loaded ✅','success');
 }
 
 // ─── CONNECTION TEST ─────────────────────────────────────────
@@ -2801,7 +2838,7 @@ async function submitOrder(){
   const ok=await postToAPI(payload);
   if(ok){
     showToast(currentEditOrderId?'✅ Order updated!':'✅ Order saved!','success');
-    setTimeout(()=>{ loadLiveSales(); loadLiveDashboard(); },1500);
+    setTimeout(()=>{ loadLiveSales(); loadLiveDashboard(); loadLiveCRM(); },1500);
   } else {
     // Demo mode — save locally with correct BD time
     const nowDate = bdDate();
@@ -2869,6 +2906,11 @@ async function submitOrder(){
     document.getElementById('sales-count').textContent = sampleSales.length + ' records (demo)';
     renderInventoryData(sampleInventory);
     renderCRMRows(sampleCRM);
+    // Update CRM stats after new entry
+    const el1c=document.getElementById('crm-total'); if(el1c) el1c.textContent=sampleCRM.length;
+    const el2c=document.getElementById('crm-repeat'); if(el2c) el2c.textContent=sampleCRM.filter(c=>c.type==='Repeat').length;
+    const el3c=document.getElementById('crm-due'); if(el3c) el3c.textContent=sampleCRM.filter(c=>Number(c.due||0)>0).length;
+    const el4c=document.getElementById('crm-top'); if(el4c){ const top=sampleCRM.reduce((a,b)=>a.spent>b.spent?a:b,{name:'—'}); el4c.textContent=top.name; }
     populateDashboardDemo();
     updatePendingBadge(sampleSales);
   }
