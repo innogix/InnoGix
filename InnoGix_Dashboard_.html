@@ -840,7 +840,7 @@ tbody td.muted{color:var(--text3)!important;}
           <div class="kpi-icon">🗺️</div>
           <div class="kpi-label">Top Region</div>
           <div class="kpi-value" style="font-size:18px;font-family:'IBM Plex Sans',sans-serif;" id="kpi-top-region">—</div>
-          <div class="kpi-change" style="color:var(--text3)" id="kpi-top-region-count">calculating...</div>
+          <div class="kpi-change" style="color:var(--text3)" id="kpi-top-region-count">— orders this month</div>
         </div>
       </div>
 
@@ -1832,7 +1832,7 @@ tbody td.muted{color:var(--text3)!important;}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwrzOmm3jssYVa83hIt4nMH_NMIH11sTYQq_dnWCnKoDCCpUcQcIKEV1OZnZTgVDhqr/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbyqDGfw33iqhnC_-G03BjuPPdyEmt2bQsPjvSChKuk_RoFo92_T3JqRMcf_U4Am53L9Wg/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -2081,20 +2081,14 @@ function populateDashboardDemo(){
   // FIX 3: kpi-stock in demo mode from sampleInventory
   const stock = sampleInventory.reduce((s,p)=>s+Number(p.current||0),0);
   setEl('kpi-stock', stock);
-  // FIX 3 (REGION COUNT BUG): Dynamically calculate top region from actual sampleSales data.
-  // Previously hardcoded as "Dhaka / 48 orders" — now aggregates by division field.
+  // FIX 3: Compute top region dynamically from actual sampleSales data
   const regionMap = {};
-  sampleSales.forEach(r => {
-    const div = (r.div || 'Unknown').trim();
-    if (div) regionMap[div] = (regionMap[div] || 0) + 1;
-  });
-  let topRegion = '—', topCount = 0;
-  Object.entries(regionMap).forEach(([div, count]) => {
-    if (count > topCount) { topRegion = div; topCount = count; }
-  });
+  sampleSales.forEach(r=>{ const div=String(r.div||'').trim(); if(div){ regionMap[div]=(regionMap[div]||0)+1; } });
+  let topRegion='—', topCount=0;
+  Object.entries(regionMap).forEach(([div,cnt])=>{ if(cnt>topCount){ topCount=cnt; topRegion=div; } });
   setEl('kpi-top-region', topRegion);
-  setEl('kpi-top-region-count', topCount > 0 ? topCount + ' orders this month' : 'No data yet');
-
+  const topRegionCountEl=document.getElementById('kpi-top-region-count');
+  if(topRegionCountEl) topRegionCountEl.textContent=(topCount>0?topCount:'—')+' orders this month';
   // Partner balances on dashboard
   ['ismail','ashik','rabbi'].forEach((p,i)=>{
     const names=['Md Ismail Hosen','Ashikur Rahman','Golam Rabbi'];
@@ -2142,6 +2136,8 @@ function showPage(id, el) {
   el.classList.add('active');
   document.getElementById('page-title').textContent = pageTitles[id][0];
   document.getElementById('page-sub').textContent = pageTitles[id][1];
+  // FIX 2: Re-populate CRM from latest sampleSales whenever Customers page is opened
+  if(id==='crm' && !apiConnected) populateCRM();
   // FIX 7: Auto-close sidebar on mobile when nav item clicked
   if(window.innerWidth<=900) closeSidebarMobile();
 }
@@ -2177,40 +2173,49 @@ function showToast(msg, type='success'){
 }
 
 // ─── BD TIME ─────────────────────────────────────────────────
-// FIX 1 (TIMEZONE BUG): Replaced unreliable new Date(toLocaleString()) pattern
-// which causes parse errors in Firefox/Safari with a safe Intl.DateTimeFormat approach.
-function bdNow(){
-  const now = new Date();
-  const opts = { timeZone: 'Asia/Dhaka', year:'numeric', month:'2-digit', day:'2-digit',
-                 hour:'2-digit', minute:'2-digit', second:'2-digit', hour12: false };
-  const parts = new Intl.DateTimeFormat('en-CA', opts).formatToParts(now);
-  const get = type => parts.find(p=>p.type===type)?.value || '00';
-  // Construct a local-time Date object safely without any locale string parsing
-  return new Date(
-    `${get('year')}-${get('month')}-${get('day')}T${get('hour').replace('24','00')}:${get('minute')}:${get('second')}`
-  );
+// FIX 1: Use Intl.DateTimeFormat parts directly — avoids cross-browser
+// timezone parsing bugs caused by new Date(localeString) re-parsing.
+function _bdParts(now){
+  // Returns an object with year,month,day,hour,minute,second,weekday from Asia/Dhaka
+  const fmtDate = new Intl.DateTimeFormat('en-US',{
+    timeZone:'Asia/Dhaka',
+    year:'numeric',month:'2-digit',day:'2-digit',
+    hour:'2-digit',minute:'2-digit',second:'2-digit',
+    hour12:false,weekday:'long'
+  });
+  const parts = {};
+  fmtDate.formatToParts(now||new Date()).forEach(p=>{ parts[p.type]=p.value; });
+  // hour12:false gives '24' for midnight on some browsers — normalise to '00'
+  if(parts.hour==='24') parts.hour='00';
+  return parts;
 }
 function bdDate(){
-  const now = new Date();
-  const opts = { timeZone:'Asia/Dhaka', year:'numeric', month:'2-digit', day:'2-digit' };
-  const parts = new Intl.DateTimeFormat('en-CA', opts).formatToParts(now);
-  const get = type => parts.find(p=>p.type===type)?.value || '00';
-  return `${get('year')}-${get('month')}-${get('day')}`;
+  const p=_bdParts();
+  return p.year+'-'+p.month+'-'+p.day;
 }
 function bdTime(){
-  const now = new Date();
-  const opts = { timeZone:'Asia/Dhaka', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false };
-  const parts = new Intl.DateTimeFormat('en-CA', opts).formatToParts(now);
-  const get = type => parts.find(p=>p.type===type)?.value || '00';
-  let h = parseInt(get('hour')); if(h===24) h=0;
-  const ap = h >= 12 ? 'PM' : 'AM';
-  const h12 = h % 12 || 12;
-  return String(h12).padStart(2,'0') + ':' + get('minute') + ':' + get('second') + ' ' + ap;
+  const p=_bdParts();
+  let h=parseInt(p.hour,10);
+  const ap=h>=12?'PM':'AM';
+  h=h%12||12;
+  return String(h).padStart(2,'0')+':'+p.minute+':'+p.second+' '+ap;
+}
+// bdDate formatted as DD-Mon-YYYY for display in order rows
+function bdDateDisplay(){
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const p=_bdParts();
+  return p.day+'-'+months[parseInt(p.month,10)-1]+'-'+p.year;
 }
 function startClock(){
   const el=document.getElementById('bd-clock'); if(!el) return;
-  const days=['রবিবার','সোমবার','মঙ্গলবার','বুধবার','বৃহস্পতিবার','শুক্রবার','শনিবার'];
-  const tick=()=>{ const d=bdNow(); el.textContent=days[d.getDay()]+' '+bdDate()+' '+bdTime()+' (ঢাকা)'; };
+  const daysBN=['রবিবার','সোমবার','মঙ্গলবার','বুধবার','বৃহস্পতিবার','শুক্রবার','শনিবার'];
+  const dayEN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const tick=()=>{
+    const p=_bdParts();
+    const wdIdx=dayEN.indexOf(p.weekday);
+    const wdBN=wdIdx>=0?daysBN[wdIdx]:p.weekday;
+    el.textContent=wdBN+' '+bdDate()+' '+bdTime()+' (ঢাকা)';
+  };
   tick(); setInterval(tick, 1000);
 }
 
@@ -2300,12 +2305,52 @@ function populatePartners(){
 
 function populateCRM(){
   if (apiConnected) { return; }
+  // FIX 2: Rebuild CRM from sampleSales so new orders always appear
+  rebuildCRMFromSales();
   renderCRMRows(sampleCRM);
   // update demo CRM stats
   const el1=document.getElementById('crm-total'); if(el1) el1.textContent=sampleCRM.length;
   const el2=document.getElementById('crm-repeat'); if(el2) el2.textContent=sampleCRM.filter(c=>c.type==='Repeat').length;
   const el3=document.getElementById('crm-due'); if(el3) el3.textContent=sampleCRM.filter(c=>c.due>0).length;
   const el4=document.getElementById('crm-top'); if(el4) { const top=sampleCRM.reduce((a,b)=>a.spent>b.spent?a:b,{name:'—'}); el4.textContent=top.name; }
+}
+
+// FIX 2: Rebuild sampleCRM entirely from sampleSales so any new order always
+// creates or updates the matching customer record — no stale data possible.
+function rebuildCRMFromSales(){
+  const map = {};
+  // Seed with existing handcrafted CRM entries so notes/type history is preserved
+  sampleCRM.forEach(c=>{ map[c.phone] = {...c}; });
+  // Now merge all sales into the map
+  sampleSales.forEach(o=>{
+    const key = o.phone || o.customer;
+    if(!key) return;
+    if(!map[key]){
+      map[key]={id:Object.keys(map).length+1,name:o.customer,phone:o.phone,
+        div:o.div||'',dist:o.dist||'',orders:0,spent:0,due:0,avg:0,last:'',type:'New'};
+    }
+    const c = map[key];
+    // Update name/location in case it changed
+    c.name = o.customer || c.name;
+    c.div  = o.div  || c.div;
+    c.dist = o.dist || c.dist;
+  });
+  // Recalculate aggregates from scratch
+  Object.values(map).forEach(c=>{
+    const orders = sampleSales.filter(o=>o.phone===c.phone || o.customer===c.name);
+    c.orders = orders.length;
+    c.spent  = orders.reduce((s,o)=>s+Number(o.total||0),0);
+    c.due    = orders.reduce((s,o)=>s+Number(o.due||0),0);
+    c.avg    = c.orders>0 ? Math.round(c.spent/c.orders) : 0;
+    // last order date
+    const dates = orders.map(o=>o.date).filter(Boolean);
+    c.last   = dates.length>0 ? dates[0] : (c.last||'');
+    // Promote to Repeat if 2+ orders
+    if(c.orders>=2 && c.type==='New') c.type='Repeat';
+  });
+  // Replace sampleCRM contents in-place (keep same array reference)
+  sampleCRM.length = 0;
+  Object.values(map).forEach(c=>sampleCRM.push(c));
 }
 
 // ─── RENDER FUNCTIONS ────────────────────────────────────────
@@ -2575,27 +2620,17 @@ async function loadLiveDashboard(){
   setEl('kpi-stock',   data.stock||'0');
   // FIX 4: kpi-expense also set from live data
   setEl('kpi-expense', fmt(data.expenses));
+  // FIX 3 (live mode): Update top region from GS response
+  if (data.top_region) {
+    const trEl = document.getElementById('kpi-top-region');
+    const trCEl = document.getElementById('kpi-top-region-count');
+    if (trEl) trEl.textContent = data.top_region;
+    if (trCEl) trCEl.textContent = (data.top_region_count||'—') + ' orders this month';
+  }
   // Partner balances — REF error ছাড়া Apps Script এ JS calculate হয়ে আসে
   setEl('ismail-inv','৳'+fmt(data.ismail_inv)); setEl('ismail-drw','৳'+fmt(data.ismail_drw)); setEl('ismail-bal','৳'+fmt(data.ismail_bal));
   setEl('ashik-inv', '৳'+fmt(data.ashik_inv));  setEl('ashik-drw', '৳'+fmt(data.ashik_drw));  setEl('ashik-bal', '৳'+fmt(data.ashik_bal));
   setEl('rabbi-inv', '৳'+fmt(data.rabbi_inv));   setEl('rabbi-drw', '৳'+fmt(data.rabbi_drw));   setEl('rabbi-bal', '৳'+fmt(data.rabbi_bal));
-  // FIX 3 (REGION COUNT BUG — live mode): Use topRegion data from GS API when available
-  if (data.topRegion && data.topRegion !== 'N/A') {
-    setEl('kpi-top-region', data.topRegion);
-    setEl('kpi-top-region-count', (data.topRegionCount||0) + ' orders this month');
-  } else if (liveSalesData && liveSalesData.length > 0) {
-    const liveRegionMap = {};
-    liveSalesData.forEach(r => {
-      const div = (r.div || 'Unknown').trim();
-      if (div) liveRegionMap[div] = (liveRegionMap[div] || 0) + 1;
-    });
-    let liveTopRegion = '—', liveTopCount = 0;
-    Object.entries(liveRegionMap).forEach(([div, count]) => {
-      if (count > liveTopCount) { liveTopRegion = div; liveTopCount = count; }
-    });
-    setEl('kpi-top-region', liveTopRegion);
-    setEl('kpi-top-region-count', liveTopCount > 0 ? liveTopCount + ' orders this month' : 'No data yet');
-  }
   showToast('Live data updated ✅','success');
 }
 async function loadLiveSales(){
@@ -2902,8 +2937,8 @@ async function submitOrder(){
     showToast(currentEditOrderId?'✅ Order updated!':'✅ Order saved!','success');
     setTimeout(()=>{ loadLiveSales(); loadLiveDashboard(); loadLiveCRM(); },1500);
   } else {
-    // Demo mode — save locally with correct BD time
-    const nowDate = bdDate();
+    // Demo mode — save locally with correct BD time (FIX 1: use display format DD-Mon-YYYY)
+    const nowDate = bdDateDisplay();
     const nowTime = bdTime();
     const qty = Number(payload.qty)||1;
     const price = Number(payload.price)||0;
@@ -3304,22 +3339,13 @@ function openViewCustomer(c){
   const body=document.getElementById('customer-detail-body');
   // Build orders list from live or demo sales
   const allOrders=(apiConnected? liveSalesData : sampleSales).filter(r=>(r.phone||'')===(c.phone||'')||(r.customer||'')===(c.name||''));
-
-  // FIX 2 (CUSTOMER PANEL ORDER INSERTION BUG):
-  // Recalculate orders count, total spent, and due directly from the actual orders array.
-  // Previously used stale c.orders / c.spent / c.due from the CRM cache object, which
-  // was NOT updated when new orders were added in the same session.
-  const liveOrderCount = allOrders.length > 0 ? allOrders.length : Number(c.orders||0);
-  const liveSpent = allOrders.length > 0
-    ? allOrders.reduce((s,o) => s + Number(o.total||0), 0)
-    : Number(c.spent||0);
-  const liveAvg = liveOrderCount > 0 ? Math.round(liveSpent / liveOrderCount) : Number(c.avg||0);
-
-  // Recalculate total due from orders including delivery charge
+  // BUG 3 & 5 FIX: Recalculate total due from orders including delivery charge
+  // Due per order = (product total + delivery) - paid
   const recalcDue = allOrders.reduce((sum, o)=>{
     const orderDue = Math.max(0, (Number(o.total||0) + Number(o.delivery||0)) - Number(o.paid||0));
     return sum + orderDue;
   }, 0);
+  // Use recalculated due if we have orders data, otherwise fall back to c.due
   const displayDue = allOrders.length > 0 ? recalcDue : Number(c.due||0);
   const ordersHTML=allOrders.length>0?`
     <div style="margin-top:16px;">
@@ -3350,11 +3376,11 @@ function openViewCustomer(c){
       <div style="display:flex;flex-direction:column;gap:12px;">
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
           <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">TOTAL ORDERS</div>
-          <div style="font-size:28px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--blue);">${liveOrderCount}</div>
+          <div style="font-size:28px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--blue);">${c.orders}</div>
         </div>
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
           <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">TOTAL SPENT</div>
-          <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--green);">৳${Number(liveSpent||0).toLocaleString()}</div>
+          <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--green);">৳${Number(c.spent||0).toLocaleString()}</div>
         </div>
         <div style="background:${displayDue>0?'var(--red2)':'var(--bg3)'};border:1px solid ${displayDue>0?'rgba(248,81,73,.3)':'var(--border)'};border-radius:10px;padding:14px;text-align:center;">
           <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">TOTAL DUE (ডেলিভারি সহ)</div>
@@ -3363,7 +3389,7 @@ function openViewCustomer(c){
       </div>
     </div>
     <div style="margin-top:16px;padding:12px 16px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--text3);">
-      Avg Order Value: <strong style="color:var(--text);">৳${Number(liveAvg||0).toLocaleString()}</strong>
+      Avg Order Value: <strong style="color:var(--text);">৳${Number(c.avg||0).toLocaleString()}</strong>
       &nbsp;·&nbsp; Customer Since: <strong style="color:var(--text);">${c.last||'—'}</strong>
     </div>
     ${ordersHTML}
