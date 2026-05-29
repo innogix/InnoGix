@@ -1962,11 +1962,15 @@ tbody td.muted{color:var(--text3);}
 
     <div class="modal-body" style="padding:20px 24px;">
 
-      <!-- Breadcrumb trail -->
+      <!-- Breadcrumb trail — Level 1 › Level 2 › Level 3 -->
       <div class="rgn-breadcrumb" id="rgn-breadcrumb" style="display:none;">
-        <span onclick="rgnDrillUp()">All Divisions</span>
+        <span onclick="rgnGoToLevel(0)">All Divisions</span>
         <span style="color:var(--text3);cursor:default;">›</span>
-        <span id="rgn-breadcrumb-div" style="cursor:default;color:var(--text);"></span>
+        <span id="rgn-breadcrumb-div"  onclick="rgnGoToLevel(1)" style="cursor:pointer;"></span>
+        <span id="rgn-breadcrumb-sep2" style="color:var(--text3);cursor:default;display:none;">›</span>
+        <span id="rgn-breadcrumb-dist" style="cursor:pointer;display:none;"></span>
+        <span id="rgn-breadcrumb-sep3" style="color:var(--text3);cursor:default;display:none;">›</span>
+        <span id="rgn-breadcrumb-thana" style="cursor:default;color:var(--text);display:none;"></span>
       </div>
 
       <!-- Two-column layout: ranking list + chart -->
@@ -1987,7 +1991,7 @@ tbody td.muted{color:var(--text3);}
               <div class="rgn-chart-title" id="rgn-chart-title">Sales by Division</div>
               <div class="rgn-chart-sub" id="rgn-chart-sub">Click any bar to drill into districts</div>
             </div>
-            <button class="rgn-back-btn" id="rgn-back-btn" onclick="rgnDrillUp()">← Back to Divisions</button>
+            <button class="rgn-back-btn" id="rgn-back-btn" onclick="rgnDrillUp()">← Back</button>
           </div>
           <div class="rgn-bars-wrap" id="rgn-bars-wrap">
             <!-- Bars populated by JS -->
@@ -3923,24 +3927,48 @@ window.onload = async function(){
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// TOP REGION MODAL — ISOLATED FEATURE ADDITION
-// Functions:  openTopRegionModal()  rgnBuildData()  rgnRenderList()
-//             rgnRenderChart()      rgnDrillDown()   rgnDrillUp()
+// TOP REGION MODAL — 3-LEVEL DRILL-DOWN (Division → District → Thana)
+// Functions:  openTopRegionModal()  rgnBuildData()
+//             rgnRenderList()       rgnRenderChart()
+//             rgnRenderDivisionView()
+//             rgnRenderDistrictView(divName)
+//             rgnRenderThanaView(divName, distName)
+//             rgnDrillToDist(distName)
+//             rgnDrillToThana(thanaName)  [leaf — no further drill]
+//             rgnDrillUp()               [one level at a time]
+//             rgnGoToLevel(n)            [breadcrumb jump: 0=div,1=dist]
 //
-// Data flow: reads liveSalesData (if connected) or sampleSales (demo)
-// Field mapping:  r.div  → Division string  (e.g. "Dhaka")
-//                 r.dist → District string   (e.g. "Gazipur")
-//                 r.qty  → Quantity number   (order item count)
-// Fallback:   "Not Specified" for blank / missing values
+// Data flow: reads liveSalesData (if API connected) or sampleSales (demo)
+// Field mapping:
+//   r.div   → Division string  (e.g. "Dhaka")
+//   r.dist  → District string  (e.g. "Gazipur")
+//   r.thana → Thana string     (e.g. "Gazipur Sadar")
+// Fallback: "Not Specified" for any blank/missing value
 // ═══════════════════════════════════════════════════════════════════
 
-// ─── Module state (private to this feature) ─────────────────────
+// ─── Module state ────────────────────────────────────────────────
 const _rgn = {
-  currentDiv: null,          // null = division view; string = drilling into districts
-  divData:    {},            // { "Dhaka": { orders:N, districts: { "Gazipur": N, … } } }
+  // Navigation stack — tracks where we are in the 3 levels
+  currentDiv:  null,   // null  = Division view (Level 1)
+  currentDist: null,   // null  = not yet in District drill (Level 2)
+                       // string = drilling into that district's thanas (Level 3)
+
+  // Hierarchical data store built from sales rows:
+  // divData[div] = {
+  //   orders: N, revenue: N,
+  //   districts: {
+  //     [dist]: {
+  //       orders: N, revenue: N,
+  //       thanas: { [thana]: { orders: N, revenue: N } }
+  //     }
+  //   }
+  // }
+  divData: {},
+
   PALETTE: [
-    'var(--blue)', 'var(--green)', 'var(--gold)', 'var(--purple)',
-    'var(--red)',  'var(--orange)','#39D353',     '#58A6FF'
+    'var(--blue)', 'var(--green)', 'var(--gold)',   'var(--purple)',
+    'var(--red)',  'var(--orange)','#39D353',        '#58A6FF',
+    '#F0883E',     '#A371F7',      '#79C0FF',        '#56D364'
   ]
 };
 
@@ -3953,18 +3981,28 @@ function rgnBuildData() {
   const result = {};
 
   rows.forEach(r => {
-    // Graceful fallback: never let missing values break the loop
-    const div  = String(r.div  || r[5]  || '').trim() || 'Not Specified';
-    const dist = String(r.dist || r[6]  || '').trim() || 'Not Specified';
-    const qty  = Number(r.qty  || r[10] || 1);   // at least 1 unit per order row
+    // Graceful fallback — never let a missing field throw
+    const div   = String(r.div   || r[5]  || '').trim() || 'Not Specified';
+    const dist  = String(r.dist  || r[6]  || '').trim() || 'Not Specified';
+    const thana = String(r.thana || r[7]  || '').trim() || 'Not Specified';
+    const total = Number(r.total) || 0;
 
+    // Division level
     if (!result[div]) result[div] = { orders: 0, revenue: 0, districts: {} };
     result[div].orders++;
-    result[div].revenue += (Number(r.total) || 0);
+    result[div].revenue += total;
 
-    if (!result[div].districts[dist]) result[div].districts[dist] = { orders: 0, revenue: 0 };
+    // District level
+    if (!result[div].districts[dist])
+      result[div].districts[dist] = { orders: 0, revenue: 0, thanas: {} };
     result[div].districts[dist].orders++;
-    result[div].districts[dist].revenue += (Number(r.total) || 0);
+    result[div].districts[dist].revenue += total;
+
+    // Thana level
+    if (!result[div].districts[dist].thanas[thana])
+      result[div].districts[dist].thanas[thana] = { orders: 0, revenue: 0 };
+    result[div].districts[dist].thanas[thana].orders++;
+    result[div].districts[dist].thanas[thana].revenue += total;
   });
 
   _rgn.divData = result;
@@ -3973,54 +4011,46 @@ function rgnBuildData() {
 
 // ─── Open modal entry point ──────────────────────────────────────
 function openTopRegionModal() {
-  _rgn.currentDiv = null;
+  _rgn.currentDiv  = null;
+  _rgn.currentDist = null;
   rgnBuildData();
   document.getElementById('modal-top-region').classList.add('open');
-  rgnRenderView();
+  rgnRenderDivisionView();
 }
 
-// ─── Master render dispatcher ────────────────────────────────────
-function rgnRenderView() {
-  if (_rgn.currentDiv === null) {
-    rgnRenderDivisionView();
-  } else {
-    rgnRenderDistrictView(_rgn.currentDiv);
-  }
-}
-
-// ─── Division-level view ─────────────────────────────────────────
+// ─── Level 1 — Division view ─────────────────────────────────────
 function rgnRenderDivisionView() {
-  // Sort divisions by order count descending
+  _rgn.currentDiv  = null;
+  _rgn.currentDist = null;
+
   const sorted = Object.entries(_rgn.divData)
     .map(([name, d]) => ({ name, orders: d.orders, revenue: d.revenue }))
     .sort((a, b) => b.orders - a.orders);
 
-  const maxOrders = sorted.length ? sorted[0].orders : 1;
+  const maxOrders   = sorted.length ? sorted[0].orders : 1;
   const totalOrders = sorted.reduce((s, d) => s + d.orders, 0);
 
-  // Update modal chrome
-  document.getElementById('rgn-chart-title').textContent   = 'Sales by Division';
-  document.getElementById('rgn-chart-sub').textContent     = 'Click any bar or row to drill into districts';
-  document.getElementById('rgn-list-heading').textContent  = 'Division Rankings';
-  document.getElementById('rgn-back-btn').style.display    = 'none';
-  document.getElementById('rgn-breadcrumb').style.display  = 'none';
-  document.getElementById('rgn-footer-note').textContent   =
-    totalOrders + ' total orders · ' + sorted.length + ' active division(s)';
+  // Modal chrome
+  _rgnSetChrome({
+    title:    'Sales by Division',
+    sub:      'Click any bar or row to see districts',
+    heading:  'Division Rankings',
+    backText: null,             // hide back button
+    footerNote: totalOrders + ' total orders across ' + sorted.length + ' division(s)',
+    breadcrumb: null            // hide breadcrumb entirely
+  });
 
-  // Deselect all list items
-  document.querySelectorAll('.region-rank-item').forEach(el => el.classList.remove('rri-selected'));
-
-  // ── Ranking list ──────────────────────────────────────────────
-  rgnRenderList(sorted, maxOrders, false);
-
-  // ── Chart bars ───────────────────────────────────────────────
-  rgnRenderChart(sorted, maxOrders, false);
+  rgnRenderList(sorted,  maxOrders, 'division');
+  rgnRenderChart(sorted, maxOrders, 'division');
 }
 
-// ─── District drill-down view ────────────────────────────────────
+// ─── Level 2 — District view ─────────────────────────────────────
 function rgnRenderDistrictView(divName) {
+  _rgn.currentDiv  = divName;
+  _rgn.currentDist = null;
+
   const divEntry = _rgn.divData[divName];
-  if (!divEntry) { rgnDrillUp(); return; }
+  if (!divEntry) { rgnRenderDivisionView(); return; }
 
   const sorted = Object.entries(divEntry.districts)
     .map(([name, d]) => ({ name, orders: d.orders, revenue: d.revenue }))
@@ -4028,74 +4058,193 @@ function rgnRenderDistrictView(divName) {
 
   const maxOrders = sorted.length ? sorted[0].orders : 1;
 
-  // Update modal chrome
-  document.getElementById('rgn-chart-title').textContent   = divName + ' — Districts';
-  document.getElementById('rgn-chart-sub').textContent     = sorted.length + ' district(s) with orders';
-  document.getElementById('rgn-list-heading').textContent  = 'District Rankings';
+  _rgnSetChrome({
+    title:    divName + ' — Districts',
+    sub:      sorted.length + ' district(s) · Click to see thanas',
+    heading:  'District Rankings',
+    backText: '← All Divisions',
+    footerNote: divEntry.orders + ' orders · ৳' + Number(divEntry.revenue).toLocaleString('en-BD') + ' revenue',
+    breadcrumb: { div: divName, dist: null, thana: null }
+  });
+
+  rgnRenderList(sorted,  maxOrders, 'district');
+  rgnRenderChart(sorted, maxOrders, 'district');
+}
+
+// ─── Level 3 — Thana view (leaf) ────────────────────────────────
+function rgnRenderThanaView(divName, distName) {
+  _rgn.currentDiv  = divName;
+  _rgn.currentDist = distName;
+
+  const distEntry = (_rgn.divData[divName] || {}).districts?.[distName];
+  if (!distEntry) { rgnRenderDistrictView(divName); return; }
+
+  const sorted = Object.entries(distEntry.thanas)
+    .map(([name, d]) => ({ name, orders: d.orders, revenue: d.revenue }))
+    .sort((a, b) => b.orders - a.orders);
+
+  const maxOrders = sorted.length ? sorted[0].orders : 1;
+
+  _rgnSetChrome({
+    title:    distName + ' — Thanas',
+    sub:      sorted.length + ' thana(s) with orders',
+    heading:  'Thana Rankings',
+    backText: '← ' + divName + ' Districts',
+    footerNote: distEntry.orders + ' orders · ৳' + Number(distEntry.revenue).toLocaleString('en-BD') + ' in ' + distName,
+    breadcrumb: { div: divName, dist: distName, thana: null }
+  });
+
+  // Thana is the leaf — bars and list rows are NOT clickable further
+  rgnRenderList(sorted,  maxOrders, 'thana');
+  rgnRenderChart(sorted, maxOrders, 'thana');
+}
+
+// ─── Chrome helper (titles, back button, breadcrumb) ────────────
+function _rgnSetChrome({ title, sub, heading, backText, footerNote, breadcrumb }) {
+  document.getElementById('rgn-chart-title').textContent  = title;
+  document.getElementById('rgn-chart-sub').textContent    = sub;
+  document.getElementById('rgn-list-heading').textContent = heading;
+  document.getElementById('rgn-footer-note').textContent  = footerNote || '';
+
+  // Back button
   const backBtn = document.getElementById('rgn-back-btn');
-  backBtn.style.display = 'flex';
+  if (backText) {
+    backBtn.style.display   = 'flex';
+    backBtn.textContent     = backText;
+  } else {
+    backBtn.style.display   = 'none';
+  }
 
   // Breadcrumb
   const bc = document.getElementById('rgn-breadcrumb');
+  if (!breadcrumb) {
+    bc.style.display = 'none';
+    return;
+  }
   bc.style.display = 'flex';
-  document.getElementById('rgn-breadcrumb-div').textContent = divName;
 
-  document.getElementById('rgn-footer-note').textContent =
-    divEntry.orders + ' orders · ৳' + Number(divEntry.revenue).toLocaleString('en-BD') + ' revenue in ' + divName;
+  // Division segment — always clickable back to Level 1 when visible
+  const bcDiv = document.getElementById('rgn-breadcrumb-div');
+  bcDiv.textContent = breadcrumb.div || '';
+  // If we're at Level 3, division is clickable back to Level 2
+  if (breadcrumb.dist) {
+    bcDiv.style.cursor = 'pointer';
+    bcDiv.style.color  = 'var(--blue)';
+    bcDiv.onclick      = () => rgnRenderDistrictView(breadcrumb.div);
+  } else {
+    // At Level 2 — division is current, not clickable
+    bcDiv.style.cursor = 'default';
+    bcDiv.style.color  = 'var(--text)';
+    bcDiv.onclick      = null;
+  }
 
-  rgnRenderList(sorted, maxOrders, true);
-  rgnRenderChart(sorted, maxOrders, true);
+  // District segment (Level 3 only)
+  const sep2  = document.getElementById('rgn-breadcrumb-sep2');
+  const bcDist = document.getElementById('rgn-breadcrumb-dist');
+  const sep3  = document.getElementById('rgn-breadcrumb-sep3');
+  const bcThana = document.getElementById('rgn-breadcrumb-thana');
+
+  if (breadcrumb.dist) {
+    sep2.style.display   = 'inline';
+    bcDist.style.display = 'inline';
+    bcDist.textContent   = breadcrumb.dist;
+    bcDist.style.cursor  = 'default';
+    bcDist.style.color   = 'var(--text)';
+    bcDist.onclick       = null;
+    // Thana segment (unused at Level 3 for now — leaf shows district as final)
+    sep3.style.display   = 'none';
+    bcThana.style.display = 'none';
+  } else {
+    sep2.style.display    = 'none';
+    bcDist.style.display  = 'none';
+    sep3.style.display    = 'none';
+    bcThana.style.display = 'none';
+  }
 }
 
-// ─── Shared list renderer ─────────────────────────────────────────
-function rgnRenderList(items, maxVal, isDrillDown) {
+// ─── Shared list renderer ────────────────────────────────────────
+// level: 'division' | 'district' | 'thana'
+function rgnRenderList(items, maxVal, level) {
   const container = document.getElementById('rgn-rank-list');
   if (!items.length) {
-    container.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:12px 0;">No data available</div>';
+    container.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:12px 0;">কোনো ডেটা নেই</div>';
     return;
   }
 
+  const isLeaf     = (level === 'thana');
+  const isDivLevel = (level === 'division');
+
   container.innerHTML = items.map((item, i) => {
-    const rankClass = i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : 'rn';
-    const pct = maxVal > 0 ? Math.round((item.orders / maxVal) * 100) : 0;
-    const color = _rgn.PALETTE[i % _rgn.PALETTE.length];
-    const drillHint = isDrillDown ? '' : '<span class="rri-drill-hint">›</span>';
-    const clickAttr = isDrillDown ? '' : `onclick="rgnDrillDown('${item.name.replace(/'/g,"\\'")}')"`;
+    const rankClass  = i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : 'rn';
+    const pct        = maxVal > 0 ? Math.round((item.orders / maxVal) * 100) : 0;
+    const color      = _rgn.PALETTE[i % _rgn.PALETTE.length];
+    const drillHint  = isLeaf ? '' : '<span class="rri-drill-hint">›</span>';
+    const revLabel   = item.revenue > 0
+      ? `<span style="font-size:9px;color:var(--text3);display:block;margin-top:2px;">৳${Number(item.revenue).toLocaleString('en-BD')}</span>`
+      : '';
+
+    // Click handler depends on current level
+    let clickAttr = '';
+    if (!isLeaf) {
+      const safeName = item.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      if (isDivLevel) {
+        clickAttr = `onclick="rgnDrillToDist('${safeName}')"`;
+      } else {
+        // district level → drill to thana
+        clickAttr = `onclick="rgnDrillToThana('${safeName}')"`;
+      }
+    }
 
     return `
-      <div class="region-rank-item" ${clickAttr} data-div="${item.name}">
+      <div class="region-rank-item" ${clickAttr} data-name="${item.name}">
         <div class="rri-rank ${rankClass}">${i + 1}</div>
-        <div class="rri-name">${item.name}${drillHint}</div>
+        <div class="rri-name" style="display:flex;flex-direction:column;">
+          <span>${item.name}${drillHint}</span>
+          ${revLabel}
+        </div>
         <div class="rri-bar-wrap">
           <div class="rri-bar-fill" style="width:${pct}%;background:${color};"></div>
         </div>
-        <div class="rri-count">${item.orders} <span style="font-size:9px;font-weight:400;color:var(--text3);">orders</span></div>
+        <div class="rri-count">${item.orders}<span style="font-size:9px;font-weight:400;color:var(--text3);display:block;">orders</span></div>
       </div>`;
   }).join('');
 }
 
-// ─── Shared chart renderer ────────────────────────────────────────
-function rgnRenderChart(items, maxVal, isDrillDown) {
-  const wrap = document.getElementById('rgn-bars-wrap');
+// ─── Shared chart renderer ───────────────────────────────────────
+// level: 'division' | 'district' | 'thana'
+function rgnRenderChart(items, maxVal, level) {
+  const wrap   = document.getElementById('rgn-bars-wrap');
+  const isLeaf = (level === 'thana');
+  const isDivLevel = (level === 'division');
 
   if (!items.length) {
-    wrap.innerHTML = '<div class="rgn-chart-empty">No data to display</div>';
+    wrap.innerHTML = '<div class="rgn-chart-empty">কোনো ডেটা নেই</div>';
     return;
   }
 
-  // Clamp to 16 bars so the chart stays readable
-  const display = items.slice(0, 16);
+  // Cap bars at 18 so the chart stays readable; horizontal scroll handles rest
+  const display = items.slice(0, 18);
 
   wrap.innerHTML = display.map((item, i) => {
-    const pct = maxVal > 0 ? Math.max(4, Math.round((item.orders / maxVal) * 100)) : 4;
-    const color = _rgn.PALETTE[i % _rgn.PALETTE.length];
-    // Truncate long district names
-    const shortName = item.name.length > 12 ? item.name.slice(0, 11) + '…' : item.name;
-    const clickAttr = isDrillDown ? '' : `onclick="rgnDrillDown('${item.name.replace(/'/g,"\\'")}')"`;
-    const cursorStyle = isDrillDown ? '' : 'cursor:pointer;';
+    const pct       = maxVal > 0 ? Math.max(4, Math.round((item.orders / maxVal) * 100)) : 4;
+    const color     = _rgn.PALETTE[i % _rgn.PALETTE.length];
+    const shortName = item.name.length > 13 ? item.name.slice(0, 12) + '…' : item.name;
+
+    let clickAttr   = '';
+    let cursorStyle = '';
+    if (!isLeaf) {
+      const safeName = item.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      cursorStyle = 'cursor:pointer;';
+      if (isDivLevel) {
+        clickAttr = `onclick="rgnDrillToDist('${safeName}')"`;
+      } else {
+        clickAttr = `onclick="rgnDrillToThana('${safeName}')"`;
+      }
+    }
 
     return `
-      <div class="rgn-bar-col" ${clickAttr} style="${cursorStyle}" title="${item.name}: ${item.orders} orders">
+      <div class="rgn-bar-col" ${clickAttr} style="${cursorStyle}"
+           title="${item.name}: ${item.orders} orders · ৳${Number(item.revenue).toLocaleString('en-BD')}">
         <div class="rgn-bar-inner" style="height:${pct}%;background:${color};">
           <span class="rgn-bar-val">${item.orders}</span>
         </div>
@@ -4104,24 +4253,46 @@ function rgnRenderChart(items, maxVal, isDrillDown) {
   }).join('');
 }
 
-// ─── Drill-down into a division's districts ───────────────────────
-function rgnDrillDown(divName) {
+// ─── Navigation actions ──────────────────────────────────────────
+
+// From Division bars/list → into Districts
+function rgnDrillToDist(divName) {
   if (!_rgn.divData[divName]) return;
-  _rgn.currentDiv = divName;
-
-  // Highlight selected row in list
-  document.querySelectorAll('.region-rank-item').forEach(el => {
-    el.classList.toggle('rri-selected', el.dataset.div === divName);
-  });
-
+  // Highlight selected row
+  document.querySelectorAll('.region-rank-item').forEach(el =>
+    el.classList.toggle('rri-selected', el.dataset.name === divName));
   rgnRenderDistrictView(divName);
-  showToast('📍 ' + divName + ' জেলা ভাঙছে...', 'info');
+  showToast('📍 ' + divName + ' — জেলা দেখাচ্ছে', 'info');
 }
 
-// ─── Drill back up to division view ──────────────────────────────
+// From District bars/list → into Thanas
+function rgnDrillToThana(distName) {
+  if (!_rgn.currentDiv) return;
+  document.querySelectorAll('.region-rank-item').forEach(el =>
+    el.classList.toggle('rri-selected', el.dataset.name === distName));
+  rgnRenderThanaView(_rgn.currentDiv, distName);
+  showToast('🏘️ ' + distName + ' — থানা দেখাচ্ছে', 'info');
+}
+
+// Step-wise back: Thana→District→Division
 function rgnDrillUp() {
-  _rgn.currentDiv = null;
-  rgnRenderDivisionView();
+  if (_rgn.currentDist !== null) {
+    // At Level 3 → go back to Level 2 (districts of same div)
+    rgnRenderDistrictView(_rgn.currentDiv);
+  } else if (_rgn.currentDiv !== null) {
+    // At Level 2 → go back to Level 1 (all divisions)
+    rgnRenderDivisionView();
+  }
+  // At Level 1 → nothing to do (back button is hidden)
+}
+
+// Breadcrumb jump: level 0 = Divisions, 1 = Districts of currentDiv
+function rgnGoToLevel(level) {
+  if (level === 0) {
+    rgnRenderDivisionView();
+  } else if (level === 1 && _rgn.currentDiv) {
+    rgnRenderDistrictView(_rgn.currentDiv);
+  }
 }
 
 </script>
