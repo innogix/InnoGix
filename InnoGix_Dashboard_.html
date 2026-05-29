@@ -1832,7 +1832,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzttakYWBMgVvD2zH5xc3AL5TKTrlf6preTsJ5DEteDMESdmJ8l3l2SqPrwztIgnec/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbzXhwHGRq9eGFm9Xb8id0Tx0Sq2A2QNg-i11l6E4W6IIee9khnnZbWIk7MSEtmjX8m_Yw/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -2842,7 +2842,36 @@ async function submitOrder(){
     if(currentEditOrderId){
       const idx = sampleSales.findIndex(r=>String(r.id)===String(currentEditOrderId));
       if(idx>=0){
-        sampleSales[idx]={...sampleSales[idx],
+        const oldOrder = sampleSales[idx];
+        const oldStatus = (oldOrder.status||'').toLowerCase();
+        const newStatus = (payload.status||'').toLowerCase();
+        const cancelReturnStatuses = ['cancelled','returned'];
+
+        // ── BUG FIX v18: Demo mode inventory reverse logic ──────────────
+        const invIdx = sampleInventory.findIndex(p=>p.name===oldOrder.product||p.id===oldOrder.product);
+        if(invIdx>=0){
+          const wasActive  = !cancelReturnStatuses.includes(oldStatus);
+          const isNowVoid  = cancelReturnStatuses.includes(newStatus);
+          const wasVoid    = cancelReturnStatuses.includes(oldStatus);
+          const isNowActive= !cancelReturnStatuses.includes(newStatus);
+
+          if(wasActive && isNowVoid){
+            // Cancel/Return হয়েছে → stock ফিরিয়ে দাও
+            sampleInventory[invIdx].sold    = Math.max(0,(sampleInventory[invIdx].sold||0) - oldOrder.qty);
+            sampleInventory[invIdx].current = (sampleInventory[invIdx].current||0) + oldOrder.qty;
+          } else if(wasVoid && isNowActive){
+            // Cancel/Return থেকে ফিরে এসেছে → stock আবার কমাও
+            sampleInventory[invIdx].sold    = (sampleInventory[invIdx].sold||0) + qty;
+            sampleInventory[invIdx].current = Math.max(0,(sampleInventory[invIdx].current||0) - qty);
+          } else if(wasActive && isNowActive && oldOrder.qty !== qty){
+            // Qty পরিবর্তন হয়েছে, status active থেকে active — পার্থক্য adjust করো
+            const diff = qty - oldOrder.qty;
+            sampleInventory[invIdx].sold    = Math.max(0,(sampleInventory[invIdx].sold||0) + diff);
+            sampleInventory[invIdx].current = Math.max(0,(sampleInventory[invIdx].current||0) - diff);
+          }
+        }
+
+        sampleSales[idx]={...oldOrder,
           customer:payload.customer, phone:payload.phone,
           div:payload.division, dist:payload.district, thana:payload.thana,
           address:payload.address, product:payload.product,
