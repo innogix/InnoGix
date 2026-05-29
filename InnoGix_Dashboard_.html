@@ -2829,8 +2829,8 @@ async function submitOrder(){
   const payload={
     action: currentEditOrderId ? 'updateOrder' : 'addOrder',
     orderId: currentEditOrderId||null,
-    // BUG 2 FIX: send full ISO timestamp so Apps Script saves exact BD time
-    timestamp: new Date().toISOString(),
+    // TIMEZONE FIX: bdNow() returns local BD time — Apps Script receives correct +6 time
+    timestamp: bdNow().toISOString(),
     customer: m.querySelector('#order-customer').value,
     phone: m.querySelector('#order-phone').value,
     division: m.querySelector('#order-division').value,
