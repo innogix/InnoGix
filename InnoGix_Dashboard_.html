@@ -843,8 +843,8 @@ tbody td.muted{color:var(--text3);}
         <div class="kpi-card blue">
           <div class="kpi-icon">🗺️</div>
           <div class="kpi-label">Top Region</div>
-          <div class="kpi-value" style="font-size:18px;font-family:'IBM Plex Sans',sans-serif;">Dhaka</div>
-          <div class="kpi-change" style="color:var(--text3)">48 orders this month</div>
+          <div class="kpi-value" style="font-size:18px;font-family:'IBM Plex Sans',sans-serif;"><span id="kpi-top-region">—</span></div>
+          <div class="kpi-change" style="color:var(--text3)" id="kpi-top-region-sub">Loading...</div>
         </div>
       </div>
 
@@ -2066,7 +2066,7 @@ function populateDashboardDemo(){
   const rev = sampleSales.reduce((s,r)=>s+Number(r.total||0),0);
   const due = sampleSales.reduce((s,r)=>s+Number(r.due||0),0);
   const exp = sampleExpenses.reduce((s,r)=>s+Number(r.amount||0),0);
-  const profit = rev - exp;
+  const profit = rev - exp;   // Net Profit = Revenue − Expenses
   const pending = sampleSales.filter(r=>r.status==='Pending'||r.status==='Processing').length;
   const delivered = sampleSales.filter(r=>r.status==='Delivered').length;
   const capital = samplePartner.filter(t=>t.type==='Investment').reduce((s,t)=>s+Number(t.amount||0),0);
@@ -2082,6 +2082,21 @@ function populateDashboardDemo(){
   // FIX 3: kpi-stock in demo mode from sampleInventory
   const stock = sampleInventory.reduce((s,p)=>s+Number(p.current||0),0);
   setEl('kpi-stock', stock);
+  // Bug Fix 2: Top Region — derive from demo sales data
+  const regionCount = {};
+  sampleSales.forEach(r => {
+    const region = String(r.div || '').trim();
+    if (region) regionCount[region] = (regionCount[region] || 0) + 1;
+  });
+  const regionKeys = Object.keys(regionCount);
+  if (regionKeys.length > 0) {
+    const topRegion = regionKeys.reduce((a, b) => (regionCount[b] > regionCount[a] ? b : a), regionKeys[0]);
+    setEl('kpi-top-region', topRegion);
+    setEl('kpi-top-region-sub', regionCount[topRegion] + ' orders this month');
+  } else {
+    setEl('kpi-top-region', 'Dhaka');
+    setEl('kpi-top-region-sub', '— orders this month');
+  }
   // Partner balances on dashboard
   ['ismail','ashik','rabbi'].forEach((p,i)=>{
     const names=['Md Ismail Hosen','Ashikur Rahman','Golam Rabbi'];
@@ -2508,24 +2523,78 @@ function drawChart(){
 // ─── LIVE DATA FROM GOOGLE SHEETS ────────────────────────────
 async function loadLiveDashboard(){
   const data = await fetchFromAPI('dashboard'); if(!data) return;
-  const fmt = n => Number(safeNum(n)).toLocaleString('en-BD');
-  const setEl=(id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
-  setEl('kpi-revenue', fmt(data.revenue));
-  setEl('kpi-profit',  fmt(data.profit));
-  setEl('kpi-expense', fmt(data.expenses));
-  setEl('kpi-due',     fmt(data.due));
-  setEl('kpi-pending', data.pending||'0');
-  setEl('kpi-delivered',data.delivered||'0');
-  setEl('kpi-capital', fmt(data.capital));
-  // FIX 3: kpi-stock was never set in live mode — now fixed
-  setEl('kpi-stock',   data.stock||'0');
-  // FIX 4: kpi-expense also set from live data
-  setEl('kpi-expense', fmt(data.expenses));
-  // Partner balances — REF error ছাড়া Apps Script এ JS calculate হয়ে আসে
-  setEl('ismail-inv','৳'+fmt(data.ismail_inv)); setEl('ismail-drw','৳'+fmt(data.ismail_drw)); setEl('ismail-bal','৳'+fmt(data.ismail_bal));
-  setEl('ashik-inv', '৳'+fmt(data.ashik_inv));  setEl('ashik-drw', '৳'+fmt(data.ashik_drw));  setEl('ashik-bal', '৳'+fmt(data.ashik_bal));
-  setEl('rabbi-inv', '৳'+fmt(data.rabbi_inv));   setEl('rabbi-drw', '৳'+fmt(data.rabbi_drw));   setEl('rabbi-bal', '৳'+fmt(data.rabbi_bal));
-  showToast('Live data updated ✅','success');
+
+  // Helper: safely parse any value to a clean float (handles strings, #REF!, nulls)
+  const toFloat = v => parseFloat(safeNum(v)) || 0;
+  // Helper: format a number with Bengali locale thousands separators
+  const fmt = n => Number(toFloat(n)).toLocaleString('en-BD');
+  // Helper: set element text safely
+  const setEl = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+
+  // ── Bug Fix 1: Net Profit — always calculated as Revenue − Expenses ──
+  // data.profit from the backend can be 0 or wrong if the sheet formula
+  // references COGS cells that haven't been populated. Compute it here.
+  const totalRevenue  = toFloat(data.revenue);
+  const totalExpenses = toFloat(data.expenses);
+  const netProfit     = totalRevenue - totalExpenses;
+
+  // ── Bug Fix 3: Standard cards — all values coerced via toFloat / Number() ──
+  setEl('kpi-revenue',   fmt(totalRevenue));
+  setEl('kpi-profit',    fmt(netProfit));           // Bug Fix 1: use computed value
+  setEl('kpi-expense',   fmt(totalExpenses));
+  setEl('kpi-due',       fmt(data.due));
+  setEl('kpi-pending',   String(Number(data.pending)   || 0));   // Bug Fix 3: coerce to Number
+  setEl('kpi-delivered', String(Number(data.delivered) || 0));   // Bug Fix 3: coerce to Number
+  setEl('kpi-capital',   fmt(data.capital));
+  setEl('kpi-stock',     String(Number(data.stock) || 0));
+
+  // ── Bug Fix 2: Top Region — derive from live sales data (Division field) ──
+  // The backend ?action=dashboard response does NOT include a topRegion key.
+  // We compute it client-side from liveSalesData (populated by loadLiveSales).
+  // If sales haven't loaded yet, fall back to a quick re-fetch from ?action=sales.
+  (async () => {
+    let salesRows = liveSalesData;
+    if (!salesRows || salesRows.length === 0) {
+      // Attempt a lightweight re-fetch so Top Region isn't blank on first load
+      try {
+        const sd = await fetchFromAPI('sales');
+        if (sd && sd.data) {
+          salesRows = sd.data.map(r => ({ div: String(r[5] || '') })).filter(r => r.div.trim());
+        }
+      } catch(e) { salesRows = []; }
+    }
+    if (salesRows && salesRows.length > 0) {
+      // Count orders by Division (field: .div)
+      const regionCount = {};
+      salesRows.forEach(r => {
+        const region = String(r.div || '').trim();
+        if (region) regionCount[region] = (regionCount[region] || 0) + 1;
+      });
+      // Find the region with the highest order count
+      const topRegion = Object.keys(regionCount).reduce(
+        (a, b) => (regionCount[b] > regionCount[a] ? b : a), Object.keys(regionCount)[0]
+      );
+      const topCount = regionCount[topRegion] || 0;
+      setEl('kpi-top-region', topRegion || '—');
+      setEl('kpi-top-region-sub', topCount + ' orders this month');
+    } else {
+      setEl('kpi-top-region', '—');
+      setEl('kpi-top-region-sub', 'No data');
+    }
+  })();
+
+  // ── Partner balances — calculated server-side via JS SUMIFS (no REF! errors) ──
+  setEl('ismail-inv', '৳' + fmt(data.ismail_inv));
+  setEl('ismail-drw', '৳' + fmt(data.ismail_drw));
+  setEl('ismail-bal', '৳' + fmt(data.ismail_bal));
+  setEl('ashik-inv',  '৳' + fmt(data.ashik_inv));
+  setEl('ashik-drw',  '৳' + fmt(data.ashik_drw));
+  setEl('ashik-bal',  '৳' + fmt(data.ashik_bal));
+  setEl('rabbi-inv',  '৳' + fmt(data.rabbi_inv));
+  setEl('rabbi-drw',  '৳' + fmt(data.rabbi_drw));
+  setEl('rabbi-bal',  '৳' + fmt(data.rabbi_bal));
+
+  showToast('Live data updated ✅', 'success');
 }
 async function loadLiveSales(){
   const data=await fetchFromAPI('sales'); if(!data||!data.data) return;
@@ -2545,45 +2614,6 @@ async function loadLiveSales(){
     let dateStr='', timeStr='';
     const rawDT = r[1]||'';
     const rawTime = r[2]||'';
-
-    // ── parseTimeToStr: converts rawTime (Col C) to "HH:MM AM/PM" ──────────
-    // Handles three cases Google Sheets may return for a time-formatted cell:
-    //   1. Plain string  "14:35:22"  → split on ':'
-    //   2. Numeric fraction 0.6080…  → Google serial-time (fraction of 24 h)
-    //   3. ISO string  "1899-12-30T08:35:00.000Z"  → Date object, use UTC h/m
-    function parseTimeToStr(rt){
-      if(!rt && rt!==0) return '';
-      // Case 2: numeric serial-time fraction (0.0 – 1.0 = 00:00 – 23:59)
-      if(typeof rt === 'number'){
-        const totalSec = Math.round(rt * 86400);
-        const hh = Math.floor(totalSec / 3600) % 24;
-        const mm = Math.floor((totalSec % 3600) / 60);
-        const ampm = hh >= 12 ? 'PM' : 'AM';
-        const h12 = hh % 12 || 12;
-        return `${String(h12).padStart(2,'0')}:${String(mm).padStart(2,'0')} ${ampm}`;
-      }
-      const s = String(rt);
-      // Case 3: ISO string (Google Sheets Date object serialised as "1899-12-30T…Z")
-      if(s.includes('T') && s.includes('Z')){
-        try{
-          const d = new Date(s);
-          const hh = d.getUTCHours(), mm = d.getUTCMinutes();
-          const ampm = hh >= 12 ? 'PM' : 'AM';
-          const h12 = hh % 12 || 12;
-          return `${String(h12).padStart(2,'0')}:${String(mm).padStart(2,'0')} ${ampm}`;
-        } catch(e){ return s; }
-      }
-      // Case 1: plain "HH:mm:ss" or "HH:mm" text
-      try{
-        const [hh,mm]=s.split(':');
-        const h=parseInt(hh,10), m=parseInt(mm,10);
-        if(isNaN(h)||isNaN(m)) return s;
-        const ampm=h>=12?'PM':'AM';
-        const h12=h%12||12;
-        return `${String(h12).padStart(2,'0')}:${String(mm).padStart(2,'0')} ${ampm}`;
-      } catch(te){ return s; }
-    }
-
     if(rawDT){
       try{
         if(typeof rawDT==='number'){
@@ -2591,22 +2621,38 @@ async function loadLiveSales(){
           const dt=new Date((rawDT-25569)*86400*1000);
           const opts={timeZone:'Asia/Dhaka'};
           dateStr=new Intl.DateTimeFormat('en-BD',{...opts,day:'2-digit',month:'short',year:'numeric'}).format(dt);
-          timeStr=parseTimeToStr(rawTime)||new Intl.DateTimeFormat('en-BD',{...opts,hour:'2-digit',minute:'2-digit',hour12:true}).format(dt);
+          timeStr=rawTime||new Intl.DateTimeFormat('en-BD',{...opts,hour:'2-digit',minute:'2-digit',hour12:true}).format(dt);
         } else if(String(rawDT).includes('T') && String(rawDT).includes('Z')){
           // Google Sheets sent a Date object as ISO string e.g. "2026-05-28T18:00:00.000Z"
           // Extract date portion only — do NOT use time from this ISO (it's UTC, not BD)
           const isoDate = new Date(rawDT);
           const opts={timeZone:'Asia/Dhaka'};
           dateStr=new Intl.DateTimeFormat('en-BD',{...opts,day:'2-digit',month:'short',year:'numeric'}).format(isoDate);
-          // Time must come from Col C (rawTime), NOT from rawDT ISO string
-          timeStr=parseTimeToStr(rawTime);
+          // Time must come from Col C (rawTime), NOT from ISO string
+          if(rawTime){
+            try{
+              const [hh,mm]=rawTime.split(':');
+              const h=parseInt(hh,10), m=parseInt(mm,10);
+              const ampm=h>=12?'PM':'AM';
+              const h12=h%12||12;
+              timeStr=`${String(h12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
+            } catch(te){ timeStr=rawTime; }
+          } else { timeStr=''; }
         } else {
           // Plain text date string (dd-MMM-yyyy or similar) — use as-is
           dateStr=String(rawDT);
-          timeStr=parseTimeToStr(rawTime);
+          if(rawTime){
+            try{
+              const [hh,mm]=rawTime.split(':');
+              const h=parseInt(hh,10), m=parseInt(mm,10);
+              const ampm=h>=12?'PM':'AM';
+              const h12=h%12||12;
+              timeStr=`${String(h12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
+            } catch(te){ timeStr=rawTime; }
+          } else { timeStr=''; }
         }
-      } catch(e){ dateStr=String(rawDT); timeStr=parseTimeToStr(rawTime); }
-    } else { dateStr=''; timeStr=parseTimeToStr(rawTime); }
+      } catch(e){ dateStr=String(rawDT); timeStr=rawTime; }
+    } else { dateStr=''; timeStr=rawTime; }
     return {
       id:String(r[0]||String(i+1).padStart(3,'0')), date:dateStr, time:timeStr,
       rawDate:rawDT, rawDateISO:String(rawDT||''),
@@ -2829,10 +2875,8 @@ async function submitOrder(){
   const payload={
     action: currentEditOrderId ? 'updateOrder' : 'addOrder',
     orderId: currentEditOrderId||null,
-    // TIMEZONE FIX: timestamp পাঠানো হচ্ছে না — Apps Script new Date() থেকে
-    // নিজেই Utilities.formatDate(...,'Asia/Dhaka',...) দিয়ে সঠিক BD time নেবে।
-    // Browser থেকে ISO string পাঠালে UTC conversion-এ গণ্ডগোল হয়।
-    timestamp: null,
+    // BUG 2 FIX: send full ISO timestamp so Apps Script saves exact BD time
+    timestamp: new Date().toISOString(),
     customer: m.querySelector('#order-customer').value,
     phone: m.querySelector('#order-phone').value,
     division: m.querySelector('#order-division').value,
