@@ -640,6 +640,133 @@ tbody td.muted{color:var(--text3);}
 #lock-btn { display:none; }
 
 /* conn-banner handled below */
+
+/* ═══════════════════════════════════════
+   TOP REGION MODAL — ISOLATED STYLES
+   (does not modify any existing rule)
+═══════════════════════════════════════ */
+/* Clickable hint on the Top Region KPI card */
+#kpi-card-top-region {
+  cursor: pointer;
+}
+#kpi-card-top-region:hover {
+  border-color: var(--blue) !important;
+  box-shadow: 0 0 0 3px rgba(56,139,253,.12);
+}
+.kpi-expand-hint {
+  position: absolute;
+  top: 12px; right: 12px;
+  font-size: 11px; color: var(--blue);
+  background: rgba(56,139,253,.12);
+  border: 1px solid rgba(56,139,253,.3);
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-weight: 600;
+  letter-spacing: .3px;
+  opacity: 0;
+  transition: opacity .2s;
+  pointer-events: none;
+}
+#kpi-card-top-region:hover .kpi-expand-hint { opacity: 1; }
+
+/* Wide modal for this feature */
+#modal-top-region .modal { max-width: 860px; }
+
+/* Division ranking list */
+.region-rank-list {
+  display: flex; flex-direction: column; gap: 8px;
+  margin-bottom: 20px;
+}
+.region-rank-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 14px;
+  transition: border-color .15s, background .15s;
+  cursor: pointer;
+}
+.region-rank-item:hover {
+  border-color: var(--blue);
+  background: var(--bg4);
+}
+.region-rank-item.rri-selected {
+  border-color: var(--blue);
+  background: rgba(56,139,253,.08);
+}
+.rri-rank {
+  width: 28px; height: 28px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; flex-shrink: 0;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.rri-rank.r1 { background: rgba(212,160,23,.2); color: var(--gold); }
+.rri-rank.r2 { background: rgba(139,148,158,.15); color: var(--text2); }
+.rri-rank.r3 { background: rgba(188,140,255,.15); color: var(--purple); }
+.rri-rank.rn { background: var(--bg4); color: var(--text3); }
+.rri-name { flex: 1; font-size: 13px; font-weight: 600; color: var(--text); }
+.rri-bar-wrap { flex: 2; height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+.rri-bar-fill { height: 100%; border-radius: 3px; transition: width .5s ease; }
+.rri-count { font-size: 12px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; color: var(--blue); min-width: 56px; text-align: right; }
+.rri-drill-hint { font-size: 10px; color: var(--text3); margin-left: 4px; }
+
+/* Drill-down chart area */
+.rgn-chart-section {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px;
+}
+.rgn-chart-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px; flex-wrap: wrap; gap: 8px;
+}
+.rgn-chart-title { font-size: 13px; font-weight: 700; color: var(--text); }
+.rgn-chart-sub   { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.rgn-back-btn {
+  display: none; /* shown via JS */
+  align-items: center; gap: 6px;
+  background: rgba(56,139,253,.12); border: 1px solid rgba(56,139,253,.3);
+  color: var(--blue); border-radius: 8px;
+  padding: 5px 12px; font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: background .15s;
+}
+.rgn-back-btn:hover { background: rgba(56,139,253,.2); }
+.rgn-bars-wrap {
+  display: flex; align-items: flex-end; gap: 6px;
+  height: 200px; overflow-x: auto;
+  padding-bottom: 24px; /* room for labels */
+}
+.rgn-bar-col {
+  flex: 1; min-width: 32px; max-width: 72px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-end;
+  height: 100%; cursor: pointer; position: relative;
+}
+.rgn-bar-col:hover .rgn-bar-inner { opacity: .8; }
+.rgn-bar-inner {
+  width: 100%; border-radius: 5px 5px 0 0;
+  min-height: 4px; transition: height .45s ease;
+  position: relative;
+}
+.rgn-bar-val {
+  position: absolute; top: -18px; left: 0; right: 0;
+  text-align: center; font-size: 9px; color: var(--text2);
+  font-family: 'IBM Plex Mono', monospace; white-space: nowrap;
+}
+.rgn-bar-lbl {
+  position: absolute; bottom: -22px; left: 0; right: 0;
+  text-align: center; font-size: 9px; color: var(--text3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rgn-chart-empty {
+  width: 100%; text-align: center;
+  color: var(--text3); font-size: 13px;
+  padding: 40px 0;
+}
+/* Breadcrumb trail inside modal */
+.rgn-breadcrumb {
+  font-size: 11px; color: var(--text3); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.rgn-breadcrumb span { color: var(--blue); cursor: pointer; font-weight: 600; }
+.rgn-breadcrumb span:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -840,11 +967,12 @@ tbody td.muted{color:var(--text3);}
           <div class="kpi-value"><span class="tk">৳</span><span id="kpi-capital">—</span></div>
           <div class="kpi-change" style="color:var(--text3)">Total invested</div>
         </div>
-        <div class="kpi-card blue">
+        <div class="kpi-card blue" id="kpi-card-top-region" onclick="openTopRegionModal()" title="Click to see full regional breakdown">
           <div class="kpi-icon">🗺️</div>
           <div class="kpi-label">Top Region</div>
           <div class="kpi-value" style="font-size:18px;font-family:'IBM Plex Sans',sans-serif;"><span id="kpi-top-region">—</span></div>
           <div class="kpi-change" style="color:var(--text3)" id="kpi-top-region-sub">Loading...</div>
+          <div class="kpi-expand-hint">⤢ View All</div>
         </div>
       </div>
 
@@ -1814,6 +1942,66 @@ tbody td.muted{color:var(--text3);}
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('view-customer')">Close</button>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     TOP REGION MODAL — ISOLATED ADDITION
+     Opened by openTopRegionModal(); closed by closeModal()
+════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-top-region">
+  <div class="modal" style="max-width:860px;">
+
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">🗺️ Regional Sales Breakdown</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px;">All 8 Divisions · Click a bar or row to drill into Districts</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('top-region')">✕</button>
+    </div>
+
+    <div class="modal-body" style="padding:20px 24px;">
+
+      <!-- Breadcrumb trail -->
+      <div class="rgn-breadcrumb" id="rgn-breadcrumb" style="display:none;">
+        <span onclick="rgnDrillUp()">All Divisions</span>
+        <span style="color:var(--text3);cursor:default;">›</span>
+        <span id="rgn-breadcrumb-div" style="cursor:default;color:var(--text);"></span>
+      </div>
+
+      <!-- Two-column layout: ranking list + chart -->
+      <div style="display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start;">
+
+        <!-- LEFT: Ranked list -->
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;" id="rgn-list-heading">Division Rankings</div>
+          <div class="region-rank-list" id="rgn-rank-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- RIGHT: Chart -->
+        <div class="rgn-chart-section">
+          <div class="rgn-chart-header">
+            <div>
+              <div class="rgn-chart-title" id="rgn-chart-title">Sales by Division</div>
+              <div class="rgn-chart-sub" id="rgn-chart-sub">Click any bar to drill into districts</div>
+            </div>
+            <button class="rgn-back-btn" id="rgn-back-btn" onclick="rgnDrillUp()">← Back to Divisions</button>
+          </div>
+          <div class="rgn-bars-wrap" id="rgn-bars-wrap">
+            <!-- Bars populated by JS -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="modal-footer" style="justify-content:space-between;align-items:center;">
+      <span id="rgn-footer-note" style="font-size:11px;color:var(--text3);"></span>
+      <button class="btn" onclick="closeModal('top-region')">Close</button>
+    </div>
+
   </div>
 </div>
 
@@ -3733,6 +3921,208 @@ window.onload = async function(){
     showToast('Load error: '+err.message,'error');
   }
 };
+
+// ═══════════════════════════════════════════════════════════════════
+// TOP REGION MODAL — ISOLATED FEATURE ADDITION
+// Functions:  openTopRegionModal()  rgnBuildData()  rgnRenderList()
+//             rgnRenderChart()      rgnDrillDown()   rgnDrillUp()
+//
+// Data flow: reads liveSalesData (if connected) or sampleSales (demo)
+// Field mapping:  r.div  → Division string  (e.g. "Dhaka")
+//                 r.dist → District string   (e.g. "Gazipur")
+//                 r.qty  → Quantity number   (order item count)
+// Fallback:   "Not Specified" for blank / missing values
+// ═══════════════════════════════════════════════════════════════════
+
+// ─── Module state (private to this feature) ─────────────────────
+const _rgn = {
+  currentDiv: null,          // null = division view; string = drilling into districts
+  divData:    {},            // { "Dhaka": { orders:N, districts: { "Gazipur": N, … } } }
+  PALETTE: [
+    'var(--blue)', 'var(--green)', 'var(--gold)', 'var(--purple)',
+    'var(--red)',  'var(--orange)','#39D353',     '#58A6FF'
+  ]
+};
+
+// ─── Data builder ────────────────────────────────────────────────
+function rgnBuildData() {
+  const rows = (apiConnected && liveSalesData && liveSalesData.length)
+    ? liveSalesData
+    : sampleSales;
+
+  const result = {};
+
+  rows.forEach(r => {
+    // Graceful fallback: never let missing values break the loop
+    const div  = String(r.div  || r[5]  || '').trim() || 'Not Specified';
+    const dist = String(r.dist || r[6]  || '').trim() || 'Not Specified';
+    const qty  = Number(r.qty  || r[10] || 1);   // at least 1 unit per order row
+
+    if (!result[div]) result[div] = { orders: 0, revenue: 0, districts: {} };
+    result[div].orders++;
+    result[div].revenue += (Number(r.total) || 0);
+
+    if (!result[div].districts[dist]) result[div].districts[dist] = { orders: 0, revenue: 0 };
+    result[div].districts[dist].orders++;
+    result[div].districts[dist].revenue += (Number(r.total) || 0);
+  });
+
+  _rgn.divData = result;
+  return result;
+}
+
+// ─── Open modal entry point ──────────────────────────────────────
+function openTopRegionModal() {
+  _rgn.currentDiv = null;
+  rgnBuildData();
+  document.getElementById('modal-top-region').classList.add('open');
+  rgnRenderView();
+}
+
+// ─── Master render dispatcher ────────────────────────────────────
+function rgnRenderView() {
+  if (_rgn.currentDiv === null) {
+    rgnRenderDivisionView();
+  } else {
+    rgnRenderDistrictView(_rgn.currentDiv);
+  }
+}
+
+// ─── Division-level view ─────────────────────────────────────────
+function rgnRenderDivisionView() {
+  // Sort divisions by order count descending
+  const sorted = Object.entries(_rgn.divData)
+    .map(([name, d]) => ({ name, orders: d.orders, revenue: d.revenue }))
+    .sort((a, b) => b.orders - a.orders);
+
+  const maxOrders = sorted.length ? sorted[0].orders : 1;
+  const totalOrders = sorted.reduce((s, d) => s + d.orders, 0);
+
+  // Update modal chrome
+  document.getElementById('rgn-chart-title').textContent   = 'Sales by Division';
+  document.getElementById('rgn-chart-sub').textContent     = 'Click any bar or row to drill into districts';
+  document.getElementById('rgn-list-heading').textContent  = 'Division Rankings';
+  document.getElementById('rgn-back-btn').style.display    = 'none';
+  document.getElementById('rgn-breadcrumb').style.display  = 'none';
+  document.getElementById('rgn-footer-note').textContent   =
+    totalOrders + ' total orders · ' + sorted.length + ' active division(s)';
+
+  // Deselect all list items
+  document.querySelectorAll('.region-rank-item').forEach(el => el.classList.remove('rri-selected'));
+
+  // ── Ranking list ──────────────────────────────────────────────
+  rgnRenderList(sorted, maxOrders, false);
+
+  // ── Chart bars ───────────────────────────────────────────────
+  rgnRenderChart(sorted, maxOrders, false);
+}
+
+// ─── District drill-down view ────────────────────────────────────
+function rgnRenderDistrictView(divName) {
+  const divEntry = _rgn.divData[divName];
+  if (!divEntry) { rgnDrillUp(); return; }
+
+  const sorted = Object.entries(divEntry.districts)
+    .map(([name, d]) => ({ name, orders: d.orders, revenue: d.revenue }))
+    .sort((a, b) => b.orders - a.orders);
+
+  const maxOrders = sorted.length ? sorted[0].orders : 1;
+
+  // Update modal chrome
+  document.getElementById('rgn-chart-title').textContent   = divName + ' — Districts';
+  document.getElementById('rgn-chart-sub').textContent     = sorted.length + ' district(s) with orders';
+  document.getElementById('rgn-list-heading').textContent  = 'District Rankings';
+  const backBtn = document.getElementById('rgn-back-btn');
+  backBtn.style.display = 'flex';
+
+  // Breadcrumb
+  const bc = document.getElementById('rgn-breadcrumb');
+  bc.style.display = 'flex';
+  document.getElementById('rgn-breadcrumb-div').textContent = divName;
+
+  document.getElementById('rgn-footer-note').textContent =
+    divEntry.orders + ' orders · ৳' + Number(divEntry.revenue).toLocaleString('en-BD') + ' revenue in ' + divName;
+
+  rgnRenderList(sorted, maxOrders, true);
+  rgnRenderChart(sorted, maxOrders, true);
+}
+
+// ─── Shared list renderer ─────────────────────────────────────────
+function rgnRenderList(items, maxVal, isDrillDown) {
+  const container = document.getElementById('rgn-rank-list');
+  if (!items.length) {
+    container.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:12px 0;">No data available</div>';
+    return;
+  }
+
+  container.innerHTML = items.map((item, i) => {
+    const rankClass = i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : 'rn';
+    const pct = maxVal > 0 ? Math.round((item.orders / maxVal) * 100) : 0;
+    const color = _rgn.PALETTE[i % _rgn.PALETTE.length];
+    const drillHint = isDrillDown ? '' : '<span class="rri-drill-hint">›</span>';
+    const clickAttr = isDrillDown ? '' : `onclick="rgnDrillDown('${item.name.replace(/'/g,"\\'")}')"`;
+
+    return `
+      <div class="region-rank-item" ${clickAttr} data-div="${item.name}">
+        <div class="rri-rank ${rankClass}">${i + 1}</div>
+        <div class="rri-name">${item.name}${drillHint}</div>
+        <div class="rri-bar-wrap">
+          <div class="rri-bar-fill" style="width:${pct}%;background:${color};"></div>
+        </div>
+        <div class="rri-count">${item.orders} <span style="font-size:9px;font-weight:400;color:var(--text3);">orders</span></div>
+      </div>`;
+  }).join('');
+}
+
+// ─── Shared chart renderer ────────────────────────────────────────
+function rgnRenderChart(items, maxVal, isDrillDown) {
+  const wrap = document.getElementById('rgn-bars-wrap');
+
+  if (!items.length) {
+    wrap.innerHTML = '<div class="rgn-chart-empty">No data to display</div>';
+    return;
+  }
+
+  // Clamp to 16 bars so the chart stays readable
+  const display = items.slice(0, 16);
+
+  wrap.innerHTML = display.map((item, i) => {
+    const pct = maxVal > 0 ? Math.max(4, Math.round((item.orders / maxVal) * 100)) : 4;
+    const color = _rgn.PALETTE[i % _rgn.PALETTE.length];
+    // Truncate long district names
+    const shortName = item.name.length > 12 ? item.name.slice(0, 11) + '…' : item.name;
+    const clickAttr = isDrillDown ? '' : `onclick="rgnDrillDown('${item.name.replace(/'/g,"\\'")}')"`;
+    const cursorStyle = isDrillDown ? '' : 'cursor:pointer;';
+
+    return `
+      <div class="rgn-bar-col" ${clickAttr} style="${cursorStyle}" title="${item.name}: ${item.orders} orders">
+        <div class="rgn-bar-inner" style="height:${pct}%;background:${color};">
+          <span class="rgn-bar-val">${item.orders}</span>
+        </div>
+        <span class="rgn-bar-lbl">${shortName}</span>
+      </div>`;
+  }).join('');
+}
+
+// ─── Drill-down into a division's districts ───────────────────────
+function rgnDrillDown(divName) {
+  if (!_rgn.divData[divName]) return;
+  _rgn.currentDiv = divName;
+
+  // Highlight selected row in list
+  document.querySelectorAll('.region-rank-item').forEach(el => {
+    el.classList.toggle('rri-selected', el.dataset.div === divName);
+  });
+
+  rgnRenderDistrictView(divName);
+  showToast('📍 ' + divName + ' জেলা ভাঙছে...', 'info');
+}
+
+// ─── Drill back up to division view ──────────────────────────────
+function rgnDrillUp() {
+  _rgn.currentDiv = null;
+  rgnRenderDivisionView();
+}
 
 </script>
 </body>
