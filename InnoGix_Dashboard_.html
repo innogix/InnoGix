@@ -2545,6 +2545,45 @@ async function loadLiveSales(){
     let dateStr='', timeStr='';
     const rawDT = r[1]||'';
     const rawTime = r[2]||'';
+
+    // ── parseTimeToStr: converts rawTime (Col C) to "HH:MM AM/PM" ──────────
+    // Handles three cases Google Sheets may return for a time-formatted cell:
+    //   1. Plain string  "14:35:22"  → split on ':'
+    //   2. Numeric fraction 0.6080…  → Google serial-time (fraction of 24 h)
+    //   3. ISO string  "1899-12-30T08:35:00.000Z"  → Date object, use UTC h/m
+    function parseTimeToStr(rt){
+      if(!rt && rt!==0) return '';
+      // Case 2: numeric serial-time fraction (0.0 – 1.0 = 00:00 – 23:59)
+      if(typeof rt === 'number'){
+        const totalSec = Math.round(rt * 86400);
+        const hh = Math.floor(totalSec / 3600) % 24;
+        const mm = Math.floor((totalSec % 3600) / 60);
+        const ampm = hh >= 12 ? 'PM' : 'AM';
+        const h12 = hh % 12 || 12;
+        return `${String(h12).padStart(2,'0')}:${String(mm).padStart(2,'0')} ${ampm}`;
+      }
+      const s = String(rt);
+      // Case 3: ISO string (Google Sheets Date object serialised as "1899-12-30T…Z")
+      if(s.includes('T') && s.includes('Z')){
+        try{
+          const d = new Date(s);
+          const hh = d.getUTCHours(), mm = d.getUTCMinutes();
+          const ampm = hh >= 12 ? 'PM' : 'AM';
+          const h12 = hh % 12 || 12;
+          return `${String(h12).padStart(2,'0')}:${String(mm).padStart(2,'0')} ${ampm}`;
+        } catch(e){ return s; }
+      }
+      // Case 1: plain "HH:mm:ss" or "HH:mm" text
+      try{
+        const [hh,mm]=s.split(':');
+        const h=parseInt(hh,10), m=parseInt(mm,10);
+        if(isNaN(h)||isNaN(m)) return s;
+        const ampm=h>=12?'PM':'AM';
+        const h12=h%12||12;
+        return `${String(h12).padStart(2,'0')}:${String(mm).padStart(2,'0')} ${ampm}`;
+      } catch(te){ return s; }
+    }
+
     if(rawDT){
       try{
         if(typeof rawDT==='number'){
@@ -2552,38 +2591,22 @@ async function loadLiveSales(){
           const dt=new Date((rawDT-25569)*86400*1000);
           const opts={timeZone:'Asia/Dhaka'};
           dateStr=new Intl.DateTimeFormat('en-BD',{...opts,day:'2-digit',month:'short',year:'numeric'}).format(dt);
-          timeStr=rawTime||new Intl.DateTimeFormat('en-BD',{...opts,hour:'2-digit',minute:'2-digit',hour12:true}).format(dt);
+          timeStr=parseTimeToStr(rawTime)||new Intl.DateTimeFormat('en-BD',{...opts,hour:'2-digit',minute:'2-digit',hour12:true}).format(dt);
         } else if(String(rawDT).includes('T') && String(rawDT).includes('Z')){
           // Google Sheets sent a Date object as ISO string e.g. "2026-05-28T18:00:00.000Z"
           // Extract date portion only — do NOT use time from this ISO (it's UTC, not BD)
           const isoDate = new Date(rawDT);
           const opts={timeZone:'Asia/Dhaka'};
           dateStr=new Intl.DateTimeFormat('en-BD',{...opts,day:'2-digit',month:'short',year:'numeric'}).format(isoDate);
-          // Time must come from Col C (rawTime), NOT from ISO string
-          if(rawTime){
-            try{
-              const [hh,mm]=rawTime.split(':');
-              const h=parseInt(hh,10), m=parseInt(mm,10);
-              const ampm=h>=12?'PM':'AM';
-              const h12=h%12||12;
-              timeStr=`${String(h12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
-            } catch(te){ timeStr=rawTime; }
-          } else { timeStr=''; }
+          // Time must come from Col C (rawTime), NOT from rawDT ISO string
+          timeStr=parseTimeToStr(rawTime);
         } else {
           // Plain text date string (dd-MMM-yyyy or similar) — use as-is
           dateStr=String(rawDT);
-          if(rawTime){
-            try{
-              const [hh,mm]=rawTime.split(':');
-              const h=parseInt(hh,10), m=parseInt(mm,10);
-              const ampm=h>=12?'PM':'AM';
-              const h12=h%12||12;
-              timeStr=`${String(h12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
-            } catch(te){ timeStr=rawTime; }
-          } else { timeStr=''; }
+          timeStr=parseTimeToStr(rawTime);
         }
-      } catch(e){ dateStr=String(rawDT); timeStr=rawTime; }
-    } else { dateStr=''; timeStr=rawTime; }
+      } catch(e){ dateStr=String(rawDT); timeStr=parseTimeToStr(rawTime); }
+    } else { dateStr=''; timeStr=parseTimeToStr(rawTime); }
     return {
       id:String(r[0]||String(i+1).padStart(3,'0')), date:dateStr, time:timeStr,
       rawDate:rawDT, rawDateISO:String(rawDT||''),
