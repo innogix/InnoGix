@@ -3287,14 +3287,26 @@ function openEditExpense(e){
 }
 
 async function updateExpense(){
-  const payload={
-    action:'updateExpense', expId:currentEditExpId,
-    category: document.getElementById('eexp-cat').value,
-    amount: document.getElementById('eexp-amount').value,
-    method: document.getElementById('eexp-method').value,
-    vendor: document.getElementById('eexp-vendor').value,
-    invoice: document.getElementById('eexp-invoice').value,
-    description: document.getElementById('eexp-desc').value,
+  const cat  = document.getElementById('eexp-cat').value;
+  const amt  = document.getElementById('eexp-amount').value;
+  const pay  = document.getElementById('eexp-method').value;
+  const vnd  = document.getElementById('eexp-vendor').value;
+  const inv  = document.getElementById('eexp-invoice').value;
+  const desc = document.getElementById('eexp-desc').value;
+  const nts  = document.getElementById('eexp-notes') ? document.getElementById('eexp-notes').value : desc;
+  const id   = currentEditExpId;
+  const payload = {
+    action: 'updateExpense',
+    expenseId: id,
+    expId: id,        // backend also reads p.expId — keep both for compatibility
+    category: cat,
+    description: desc,
+    amount: amt,
+    payment: pay,
+    method: pay,      // backend reads p.method — keep both for compatibility
+    vendor: vnd,
+    invoice: inv,
+    notes: nts
   };
   closeModal('edit-expense');
   const ok=await postToAPI(payload);
@@ -3302,8 +3314,8 @@ async function updateExpense(){
     showToast('✅ Expense updated!','success');
     setTimeout(loadLiveExpenses,1500);
   } else {
-    const idx=sampleExpenses.findIndex(e=>e.id===currentEditExpId);
-    if(idx>=0){ sampleExpenses[idx]={...sampleExpenses[idx],cat:payload.category,amount:Number(payload.amount),payment:payload.method,vendor:payload.vendor,invoice:payload.invoice,desc:payload.description}; renderExpenseRows(sampleExpenses); updateExpenseCats(sampleExpenses); }
+    const idx=sampleExpenses.findIndex(e=>e.id===id);
+    if(idx>=0){ sampleExpenses[idx]={...sampleExpenses[idx],cat:cat,amount:Number(amt),payment:pay,vendor:vnd,invoice:inv,desc:desc}; renderExpenseRows(sampleExpenses); updateExpenseCats(sampleExpenses); }
     showToast('Updated (demo mode)','info');
   }
 }
@@ -3341,13 +3353,23 @@ function openEditPartnerTxn(t){
 }
 
 async function updatePartnerTxn(){
-  const payload={
-    action:'updatePartner', txnId:currentEditTxnId,
-    partner: document.getElementById('eptxn-partner').value,
-    type: document.getElementById('eptxn-type').value,
-    amount: document.getElementById('eptxn-amount').value,
-    method: document.getElementById('eptxn-method').value,
-    description: document.getElementById('eptxn-desc').value,
+  const prt  = document.getElementById('eptxn-partner').value;
+  const typ  = document.getElementById('eptxn-type').value;
+  const amt  = document.getElementById('eptxn-amount').value;
+  const mth  = document.getElementById('eptxn-method').value;
+  const desc = document.getElementById('eptxn-desc').value;
+  const nts  = document.getElementById('eptxn-notes') ? document.getElementById('eptxn-notes').value : desc;
+  const id   = currentEditTxnId;
+  const payload = {
+    action: 'updatePartner',
+    transactionId: id,
+    txnId: id,          // backend reads p.txnId — keep both for compatibility
+    partner: prt,
+    type: typ,
+    amount: amt,
+    method: mth,
+    description: desc,
+    notes: nts
   };
   closeModal('edit-partner');
   const ok=await postToAPI(payload);
@@ -3355,8 +3377,8 @@ async function updatePartnerTxn(){
     showToast('✅ Transaction updated!','success');
     setTimeout(()=>{ loadLivePartners(); loadLiveDashboard(); },1500);
   } else {
-    const idx=samplePartner.findIndex(t=>t.id===currentEditTxnId);
-    if(idx>=0){ samplePartner[idx]={...samplePartner[idx],partner:payload.partner,type:payload.type,amount:Number(payload.amount),method:payload.method,desc:payload.description}; renderPartnerSummary(samplePartner); renderPartnerTxns(samplePartner); }
+    const idx=samplePartner.findIndex(t=>t.id===id);
+    if(idx>=0){ samplePartner[idx]={...samplePartner[idx],partner:prt,type:typ,amount:Number(amt),method:mth,desc:desc}; renderPartnerSummary(samplePartner); renderPartnerTxns(samplePartner); }
     showToast('Updated (demo mode)','info');
   }
 }
