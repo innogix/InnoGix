@@ -2528,30 +2528,35 @@ async function loadLiveSales(){
      String(firstRow[3]||'').toLowerCase().includes('customer'));
   const rowsToProcess = isHeader ? rawRows.slice(1) : rawRows;
   const rows=rowsToProcess.map((r,i)=>{
-    // Parse date — Google Sheets sends ISO or serial date
+    // Parse date/time — Col B = date string (yyyy-MM-dd), Col C = time string (HH:mm:ss)
     let dateStr='', timeStr='';
     const rawDT = r[1]||'';
+    const rawTime = r[2]||'';
     if(rawDT){
       try{
-        // Handle ISO string like "2026-05-23T18:00:00.000Z" or serial number
-        let dt;
         if(typeof rawDT==='number'){
           // Google Sheets serial date (days since Dec 30 1899)
-          dt=new Date((rawDT-25569)*86400*1000);
-        } else {
-          dt=new Date(rawDT);
-        }
-        if(!isNaN(dt)){
-          // Convert to Asia/Dhaka timezone
+          const dt=new Date((rawDT-25569)*86400*1000);
           const opts={timeZone:'Asia/Dhaka'};
-          const d=new Intl.DateTimeFormat('en-BD',{...opts,day:'2-digit',month:'short',year:'numeric'}).format(dt);
-          const t=new Intl.DateTimeFormat('en-BD',{...opts,hour:'2-digit',minute:'2-digit',hour12:true}).format(dt);
-          dateStr=d; timeStr=t;
+          dateStr=new Intl.DateTimeFormat('en-BD',{...opts,day:'2-digit',month:'short',year:'numeric'}).format(dt);
+          timeStr=rawTime||new Intl.DateTimeFormat('en-BD',{...opts,hour:'2-digit',minute:'2-digit',hour12:true}).format(dt);
         } else {
-          dateStr=rawDT; timeStr=r[2]||'';
+          // Col B is a plain date string (yyyy-MM-dd or similar), Col C is time string
+          // Do NOT use new Date(dateOnly) — that parses as UTC midnight → wrong time
+          dateStr=rawDT;
+          if(rawTime){
+            // Format HH:mm:ss → 12-hour AM/PM for display
+            try{
+              const [hh,mm] = rawTime.split(':');
+              const h=parseInt(hh,10), m=parseInt(mm,10);
+              const ampm=h>=12?'PM':'AM';
+              const h12=h%12||12;
+              timeStr=`${String(h12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
+            } catch(te){ timeStr=rawTime; }
+          } else { timeStr=''; }
         }
-      } catch(e){ dateStr=rawDT; timeStr=r[2]||''; }
-    } else { dateStr=r[1]||''; timeStr=r[2]||''; }
+      } catch(e){ dateStr=rawDT; timeStr=rawTime; }
+    } else { dateStr=''; timeStr=rawTime; }
     return {
       id:String(r[0]||String(i+1).padStart(3,'0')), date:dateStr, time:timeStr,
       rawDate:rawDT, rawDateISO:String(rawDT||''),
@@ -2737,28 +2742,13 @@ function updateDistricts(sel){
 }
 function updateThanas(sel){
   const dist=sel.value;
+  // BUG 6 FIX: use the reliable #order-division element instead of fragile querySelector
   const divSel=document.getElementById('order-division');
   const div=divSel?divSel.value:'';
   const ts=document.getElementById('thana-select');
   ts.innerHTML='<option value="">Select Thana</option>';
   if(BD_LOCATIONS[div]&&BD_LOCATIONS[div][dist])
     BD_LOCATIONS[div][dist].forEach(t=>{ const o=document.createElement('option'); o.value=t; o.textContent=t; ts.appendChild(o); });
-}
-function repopulateLocationDropdowns(){
-  const divSel=document.getElementById('order-division');
-  if(!divSel||!divSel.value) return;
-  updateDistricts(divSel);
-  const dsSel=document.getElementById('district-select');
-  if(dsSel&&dsSel.getAttribute('data-pending')){
-    dsSel.value=dsSel.getAttribute('data-pending');
-    dsSel.removeAttribute('data-pending');
-    updateThanas(dsSel);
-    const tsSel=document.getElementById('thana-select');
-    if(tsSel&&tsSel.getAttribute('data-pending')){
-      tsSel.value=tsSel.getAttribute('data-pending');
-      tsSel.removeAttribute('data-pending');
-    }
-  }
 }
 
 // ─── ADD ORDER ───────────────────────────────────────────────
@@ -2880,13 +2870,11 @@ function openEditOrder(r){
   const divSel=m.querySelector('#order-division');
   divSel.value=r.div||'';
   updateDistricts(divSel);
-  const dsSel=document.getElementById('district-select');
-  dsSel.value=r.dist||'';
-  if(!dsSel.value && r.dist){ dsSel.setAttribute('data-pending', r.dist); }
-  updateThanas(dsSel);
-  const tsSel=document.getElementById('thana-select');
-  tsSel.value=r.thana||'';
-  if(!tsSel.value && r.thana){ tsSel.setAttribute('data-pending', r.thana); }
+  setTimeout(()=>{
+    document.getElementById('district-select').value=r.dist||'';
+    updateThanas(document.getElementById('district-select'));
+    setTimeout(()=>{ document.getElementById('thana-select').value=r.thana||''; }, 80);
+  },80);
   m.querySelector('#order-address').value=r.address||'';
   m.querySelector('#order-product').value=r.product||'';
   m.querySelector('#order-qty').value=r.qty||1;
