@@ -1832,7 +1832,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzG0WwEJm0HqZtVNHrHhh-IhesAp_W11CMP5LAp9kxFtiKHKxheRV0fAkPdzS_QyCao/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbyihvzQpRKRiQOhhvK1fimtRcVEvbxJCEBQCcAeFK-UbY4AI8P3gUhF1uH8b6liwUeX/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -2528,7 +2528,7 @@ async function loadLiveSales(){
      String(firstRow[3]||'').toLowerCase().includes('customer'));
   const rowsToProcess = isHeader ? rawRows.slice(1) : rawRows;
   const rows=rowsToProcess.map((r,i)=>{
-    // Parse date/time — Col B = date string (yyyy-MM-dd), Col C = time string (HH:mm:ss)
+    // Parse date/time — Col B = date string (dd-MMM-yyyy), Col C = time string (HH:mm:ss)
     let dateStr='', timeStr='';
     const rawDT = r[1]||'';
     const rawTime = r[2]||'';
@@ -2540,14 +2540,28 @@ async function loadLiveSales(){
           const opts={timeZone:'Asia/Dhaka'};
           dateStr=new Intl.DateTimeFormat('en-BD',{...opts,day:'2-digit',month:'short',year:'numeric'}).format(dt);
           timeStr=rawTime||new Intl.DateTimeFormat('en-BD',{...opts,hour:'2-digit',minute:'2-digit',hour12:true}).format(dt);
-        } else {
-          // Col B is a plain date string (yyyy-MM-dd or similar), Col C is time string
-          // Do NOT use new Date(dateOnly) — that parses as UTC midnight → wrong time
-          dateStr=rawDT;
+        } else if(String(rawDT).includes('T') && String(rawDT).includes('Z')){
+          // Google Sheets sent a Date object as ISO string e.g. "2026-05-28T18:00:00.000Z"
+          // Extract date portion only — do NOT use time from this ISO (it's UTC, not BD)
+          const isoDate = new Date(rawDT);
+          const opts={timeZone:'Asia/Dhaka'};
+          dateStr=new Intl.DateTimeFormat('en-BD',{...opts,day:'2-digit',month:'short',year:'numeric'}).format(isoDate);
+          // Time must come from Col C (rawTime), NOT from ISO string
           if(rawTime){
-            // Format HH:mm:ss → 12-hour AM/PM for display
             try{
-              const [hh,mm] = rawTime.split(':');
+              const [hh,mm]=rawTime.split(':');
+              const h=parseInt(hh,10), m=parseInt(mm,10);
+              const ampm=h>=12?'PM':'AM';
+              const h12=h%12||12;
+              timeStr=`${String(h12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
+            } catch(te){ timeStr=rawTime; }
+          } else { timeStr=''; }
+        } else {
+          // Plain text date string (dd-MMM-yyyy or similar) — use as-is
+          dateStr=String(rawDT);
+          if(rawTime){
+            try{
+              const [hh,mm]=rawTime.split(':');
               const h=parseInt(hh,10), m=parseInt(mm,10);
               const ampm=h>=12?'PM':'AM';
               const h12=h%12||12;
@@ -2555,7 +2569,7 @@ async function loadLiveSales(){
             } catch(te){ timeStr=rawTime; }
           } else { timeStr=''; }
         }
-      } catch(e){ dateStr=rawDT; timeStr=rawTime; }
+      } catch(e){ dateStr=String(rawDT); timeStr=rawTime; }
     } else { dateStr=''; timeStr=rawTime; }
     return {
       id:String(r[0]||String(i+1).padStart(3,'0')), date:dateStr, time:timeStr,
