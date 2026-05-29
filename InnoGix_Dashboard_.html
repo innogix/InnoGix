@@ -1832,7 +1832,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyMICfIEiiqBHAtQDcU3_ZWgwxwmaYugIU7qLzmrUrPy82oeKccVqv1IgllSnKm7byVeQ/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbzG0WwEJm0HqZtVNHrHhh-IhesAp_W11CMP5LAp9kxFtiKHKxheRV0fAkPdzS_QyCao/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -2737,13 +2737,28 @@ function updateDistricts(sel){
 }
 function updateThanas(sel){
   const dist=sel.value;
-  // BUG 6 FIX: use the reliable #order-division element instead of fragile querySelector
   const divSel=document.getElementById('order-division');
   const div=divSel?divSel.value:'';
   const ts=document.getElementById('thana-select');
   ts.innerHTML='<option value="">Select Thana</option>';
   if(BD_LOCATIONS[div]&&BD_LOCATIONS[div][dist])
     BD_LOCATIONS[div][dist].forEach(t=>{ const o=document.createElement('option'); o.value=t; o.textContent=t; ts.appendChild(o); });
+}
+function repopulateLocationDropdowns(){
+  const divSel=document.getElementById('order-division');
+  if(!divSel||!divSel.value) return;
+  updateDistricts(divSel);
+  const dsSel=document.getElementById('district-select');
+  if(dsSel&&dsSel.getAttribute('data-pending')){
+    dsSel.value=dsSel.getAttribute('data-pending');
+    dsSel.removeAttribute('data-pending');
+    updateThanas(dsSel);
+    const tsSel=document.getElementById('thana-select');
+    if(tsSel&&tsSel.getAttribute('data-pending')){
+      tsSel.value=tsSel.getAttribute('data-pending');
+      tsSel.removeAttribute('data-pending');
+    }
+  }
 }
 
 // ─── ADD ORDER ───────────────────────────────────────────────
@@ -2865,11 +2880,13 @@ function openEditOrder(r){
   const divSel=m.querySelector('#order-division');
   divSel.value=r.div||'';
   updateDistricts(divSel);
-  setTimeout(()=>{
-    document.getElementById('district-select').value=r.dist||'';
-    updateThanas(document.getElementById('district-select'));
-    setTimeout(()=>{ document.getElementById('thana-select').value=r.thana||''; }, 80);
-  },80);
+  const dsSel=document.getElementById('district-select');
+  dsSel.value=r.dist||'';
+  if(!dsSel.value && r.dist){ dsSel.setAttribute('data-pending', r.dist); }
+  updateThanas(dsSel);
+  const tsSel=document.getElementById('thana-select');
+  tsSel.value=r.thana||'';
+  if(!tsSel.value && r.thana){ tsSel.setAttribute('data-pending', r.thana); }
   m.querySelector('#order-address').value=r.address||'';
   m.querySelector('#order-product').value=r.product||'';
   m.querySelector('#order-qty').value=r.qty||1;
