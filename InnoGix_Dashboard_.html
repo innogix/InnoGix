@@ -2829,8 +2829,10 @@ async function submitOrder(){
   const payload={
     action: currentEditOrderId ? 'updateOrder' : 'addOrder',
     orderId: currentEditOrderId||null,
-    // TIMEZONE FIX: bdNow() returns local BD time — Apps Script receives correct +6 time
-    timestamp: bdNow().toISOString(),
+    // TIMEZONE FIX: timestamp পাঠানো হচ্ছে না — Apps Script new Date() থেকে
+    // নিজেই Utilities.formatDate(...,'Asia/Dhaka',...) দিয়ে সঠিক BD time নেবে।
+    // Browser থেকে ISO string পাঠালে UTC conversion-এ গণ্ডগোল হয়।
+    timestamp: null,
     customer: m.querySelector('#order-customer').value,
     phone: m.querySelector('#order-phone').value,
     division: m.querySelector('#order-division').value,
