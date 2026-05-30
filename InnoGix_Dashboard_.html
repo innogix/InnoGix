@@ -2049,7 +2049,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyIH0Ri-iP-zJMG0FSa7Xjr_4xNWrtZu5i9pu2Yx588-kln1Ks4hj7PYdgmdCj3popeKw/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbxTLvVDG5MC2V-N8AEHKjIOuRwhchRArt4jJnkb5WA0lY_2swgk5yuN7cZBaxGB-LMxRA/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -2291,13 +2291,29 @@ function lockApp() {
 
 // ─── DEMO DASHBOARD KPI POPULATE ─────────────────────────────
 function populateDashboardDemo(){
-  const rev = sampleSales.reduce((s,r)=>s+Number(r.total||0),0);
-  const due = sampleSales.reduce((s,r)=>s+Number(r.due||0),0);
-  const exp = sampleExpenses.reduce((s,r)=>s+Number(r.amount||0),0);
-  const profit = rev - exp;   // Net Profit = Revenue − Expenses
+  // ── BUG FIX 1: Revenue — ONLY sum totalAmount from Delivered orders ──
+  const deliveredOrders = sampleSales.filter(r => String(r.status||'').trim() === 'Delivered');
+  const rev = deliveredOrders.reduce((s,r) => s + Number(r.total||0), 0);
+
+  // ── BUG FIX 2: Due — ONLY sum dueAmount from Delivered orders (receivables) ──
+  const due = deliveredOrders.reduce((s,r) => s + Number(r.due||0), 0);
+
+  // ── Expenses: sum all expense records ──
+  const exp = sampleExpenses.reduce((s,r) => s + Number(r.amount||0), 0);
+
+  // ── BUG FIX 3: Net Profit = Total Revenue − Total Expenses ──
+  const profit = rev - exp;
+
   const pending = sampleSales.filter(r=>r.status==='Pending'||r.status==='Processing').length;
-  const delivered = sampleSales.filter(r=>r.status==='Delivered').length;
-  const capital = samplePartner.filter(t=>t.type==='Investment').reduce((s,t)=>s+Number(t.amount||0),0);
+  const delivered = deliveredOrders.length;
+
+  // ── BUG FIX 4: Business Capital = Sum of each partner's (Investment − Drawings) ──
+  const partnerNames = ['Md Ismail Hosen','Ashikur Rahman','Golam Rabbi'];
+  const capital = partnerNames.reduce((total, name) => {
+    const inv = samplePartner.filter(t=>t.partner===name && t.type==='Investment').reduce((s,t)=>s+Number(t.amount||0),0);
+    const drw = samplePartner.filter(t=>t.partner===name && t.type==='Drawings').reduce((s,t)=>s+Number(t.amount||0),0);
+    return total + (inv - drw);
+  }, 0);
   const fmt = n => Number(n).toLocaleString();
   const setEl=(id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
   setEl('kpi-revenue', fmt(rev));
@@ -2776,6 +2792,97 @@ function _populateYearDropdown(currentYear) {
   }
   // Set to current selected year
   sel.value = String(chartState.year);
+}
+
+// ─── BUILD DEMO CHART DATA ────────────────────────────────────
+// Builds a liveData-compatible object from sampleSales + sampleExpenses,
+// grouped by month. Revenue = Delivered orders only. Profit = Rev - Expenses.
+function buildDemoChartData() {
+  const MON_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MONTHS_BACK = 6;
+
+  // Build rolling 6-month window keys (YYYY-MM format)
+  const now = new Date();
+  const months = [];
+  for (let m = MONTHS_BACK - 1; m >= 0; m--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - m, 1);
+    months.push({
+      key: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'),
+      label: MON_NAMES[d.getMonth()]
+    });
+  }
+
+  // Aggregate: Revenue from Delivered orders only, grouped by date
+  const revMap = {}, expMap = {};
+  months.forEach(mo => { revMap[mo.key] = 0; expMap[mo.key] = 0; });
+
+  sampleSales.forEach(r => {
+    if (String(r.status || '').trim() !== 'Delivered') return;
+    if (!r.date) return;
+    // Parse "19-May-2025" or "2025-05-19" format
+    let dt;
+    try {
+      const parts = String(r.date).split('-');
+      // dd-Mon-yyyy (e.g. "19-May-2025")
+      if (parts.length === 3 && isNaN(Number(parts[1]))) {
+        dt = new Date(parts[2] + '-' + parts[1] + '-' + parts[0].padStart(2,'0'));
+      } else {
+        dt = new Date(r.date);
+      }
+    } catch(e) { return; }
+    if (!dt || isNaN(dt.getTime())) return;
+    const key = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
+    if (revMap.hasOwnProperty(key)) revMap[key] += Number(r.total || 0);
+  });
+
+  sampleExpenses.forEach(r => {
+    if (!r.date) return;
+    let dt;
+    try {
+      const parts = String(r.date).split(' ')[0].split('-'); // strip time part
+      if (parts.length === 3 && isNaN(Number(parts[1]))) {
+        dt = new Date(parts[2] + '-' + parts[1] + '-' + parts[0].padStart(2,'0'));
+      } else {
+        dt = new Date(r.date);
+      }
+    } catch(e) { return; }
+    if (!dt || isNaN(dt.getTime())) return;
+    const key = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
+    if (expMap.hasOwnProperty(key)) expMap[key] += Number(r.amount || 0);
+  });
+
+  const labels = [], revArr = [], profArr = [];
+  months.forEach(mo => {
+    labels.push(mo.label);
+    const r = revMap[mo.key] || 0;
+    const e = expMap[mo.key] || 0;
+    revArr.push(Math.round(r));
+    profArr.push(Math.round(Math.max(0, r - e)));
+  });
+
+  // Expense breakdown for the donut chart
+  const cats = ['Marketing / Ad Spend','Product Sourcing','Delivery Cost','Office & Utility','Staff / Labor','Other'];
+  const catTotals = {};
+  cats.forEach(c => { catTotals[c] = 0; });
+  sampleExpenses.forEach(r => {
+    const cat = String(r.cat || '').trim();
+    const amt = Number(r.amount || 0);
+    if (catTotals.hasOwnProperty(cat)) catTotals[cat] += amt;
+    else catTotals['Other'] += amt;
+  });
+  const grandTotal = cats.reduce((s,c) => s + catTotals[c], 0);
+  const expBreakdown = cats
+    .map(c => ({
+      name: c,
+      amount: Math.round(catTotals[c]),
+      pct: grandTotal > 0 ? Math.round((catTotals[c] / grandTotal) * 100) : 0
+    }))
+    .filter(c => c.amount > 0);
+
+  return {
+    monthlyChart: { labels, revenue: revArr, profit: profArr },
+    expBreakdown
+  };
 }
 
 // ─── MAIN DRAW FUNCTION ───────────────────────────────────────
@@ -4100,7 +4207,8 @@ window.onload = async function(){
     populateDashboardDemo();
     // Update pending badge from demo data
     updatePendingBadge(sampleSales);
-    setTimeout(drawChart,100);
+    // ── BUG FIX 5: Build real demo chart data from sampleSales + sampleExpenses ──
+    setTimeout(() => { drawChart(buildDemoChartData()); }, 100);
 
     // Refresh button (safe insert)
     try {
