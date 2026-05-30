@@ -2027,7 +2027,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbz6NPOR59y1If_5lz-Y98b3e6nCclM3H92qa8mZiq2oCwQQ7RwKd2brmqslEBvxYlcu/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbyuzatl1_Bh8xgd5z0MkfNMDVQqaBKzd75RcbjRqANzbRvG6dbD3R41tEYqsdajtmY/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -2700,29 +2700,81 @@ function renderCRMRows(rows){
 }
 
 // ─── CHART ───────────────────────────────────────────────────
-function drawChart(){
-  const months=['Dec','Jan','Feb','Mar','Apr','May'];
-  const revenue=[185000,210000,195000,245000,230000,284500];
-  const profit=[42000,55000,48000,68000,61000,72300];
-  const maxVal=Math.max(...revenue);
-  const chart=document.getElementById('rev-chart'); if(!chart) return;
-  chart.innerHTML=months.map((m,i)=>`
+// drawChart(liveData) — accepts optional live data object from loadLiveDashboard.
+// Falls back to demo data when called at boot (before API loads).
+function drawChart(liveData){
+  // ── Revenue vs Profit bar chart ──────────────────────────────
+  const hasMontly = liveData && liveData.monthlyChart &&
+                    Array.isArray(liveData.monthlyChart.labels) &&
+                    liveData.monthlyChart.labels.length > 0;
+
+  const months  = hasMontly ? liveData.monthlyChart.labels  : ['Jan','Feb','Mar','Apr','May','Jun'];
+  const revenue = hasMontly ? liveData.monthlyChart.revenue : [185000,210000,195000,245000,230000,284500];
+  const profit  = hasMontly ? liveData.monthlyChart.profit  : [42000,55000,48000,68000,61000,72300];
+
+  const maxVal = Math.max(...revenue, ...profit, 1); // avoid divide-by-zero
+  const chart  = document.getElementById('rev-chart'); if(!chart) return;
+
+  chart.innerHTML = months.map((m,i) => `
     <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;">
       <div style="width:100%;display:flex;gap:2px;align-items:flex-end;height:160px;">
-        <div class="bar" style="background:var(--green);opacity:.8;height:${revenue[i]/maxVal*100}%;"><span class="bar-val">${(revenue[i]/1000).toFixed(0)}k</span></div>
-        <div class="bar" style="background:var(--gold);height:${profit[i]/maxVal*100}%;"></div>
+        <div class="bar" style="background:var(--green);opacity:.8;height:${revenue[i]/maxVal*100}%;position:relative;">
+          <span class="bar-val">${revenue[i]>=1000?(revenue[i]/1000).toFixed(0)+'k':revenue[i]}</span>
+        </div>
+        <div class="bar" style="background:var(--gold);height:${profit[i]/maxVal*100}%;position:relative;">
+          ${profit[i]>0?`<span class="bar-val" style="color:var(--gold);">${profit[i]>=1000?(profit[i]/1000).toFixed(0)+'k':profit[i]}</span>`:''}
+        </div>
       </div>
       <span style="font-size:9px;color:var(--text3);margin-top:4px;">${m}</span>
     </div>`).join('');
-  const donut=document.getElementById('donut-chart'); if(!donut) return;
-  const cats=[{name:'Marketing',pct:28,c:'var(--blue)'},{name:'Sourcing',pct:37,c:'var(--gold)'},{name:'Delivery',pct:20,c:'var(--purple)'},{name:'Office',pct:15,c:'var(--green)'}];
-  donut.innerHTML=`<div style="display:flex;flex-direction:column;gap:8px;width:100%;">
-    ${cats.map(c=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;">
+
+  // ── Expense Breakdown donut/bar chart ────────────────────────
+  const donut = document.getElementById('donut-chart'); if(!donut) return;
+
+  const hasExp = liveData && Array.isArray(liveData.expBreakdown) && liveData.expBreakdown.length > 0;
+
+  // Color palette per category (consistent mapping)
+  const catColors = {
+    'Marketing / Ad Spend': 'var(--blue)',
+    'Product Sourcing':     'var(--gold)',
+    'Delivery Cost':        'var(--purple)',
+    'Office & Utility':     'var(--green)',
+    'Staff / Labor':        'var(--orange)',
+    'Other':                'var(--text3)',
+  };
+  const fallbackColors = ['var(--blue)','var(--gold)','var(--purple)','var(--green)','var(--orange)','var(--text3)'];
+
+  const cats = hasExp
+    ? liveData.expBreakdown.map((c,i) => ({
+        name: c.name.replace('Marketing / Ad Spend','Marketing').replace('Product Sourcing','Sourcing')
+                    .replace('Office & Utility','Office').replace('Staff / Labor','Staff'),
+        fullName: c.name,
+        pct:  c.pct,
+        amount: c.amount,
+        c: catColors[c.name] || fallbackColors[i % fallbackColors.length]
+      }))
+    : [
+        {name:'Marketing',fullName:'Marketing',pct:28,amount:0,c:'var(--blue)'},
+        {name:'Sourcing',  fullName:'Sourcing', pct:37,amount:0,c:'var(--gold)'},
+        {name:'Delivery',  fullName:'Delivery', pct:20,amount:0,c:'var(--purple)'},
+        {name:'Office',    fullName:'Office',   pct:15,amount:0,c:'var(--green)'},
+      ];
+
+  const fmtAmt = n => n >= 1000 ? '৳'+(n/1000).toFixed(1)+'k' : (n > 0 ? '৳'+n : '');
+
+  donut.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;width:100%;">
+    ${cats.map(c=>`
+    <div style="display:flex;align-items:center;gap:8px;font-size:12px;">
       <div style="width:10px;height:10px;border-radius:2px;background:${c.c};flex-shrink:0;"></div>
-      <span style="flex:1;color:var(--text2);">${c.name}</span>
-      <div style="flex:2;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;"><div style="width:${c.pct}%;height:100%;background:${c.c};border-radius:3px;"></div></div>
-      <span style="color:var(--text);font-weight:700;font-family:'IBM Plex Mono',monospace;min-width:30px;text-align:right;">${c.pct}%</span>
+      <span style="flex:1;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name}</span>
+      <div style="flex:2;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;">
+        <div style="width:${c.pct}%;height:100%;background:${c.c};border-radius:3px;transition:width .4s ease;"></div>
+      </div>
+      <span style="color:var(--text);font-weight:700;font-family:'IBM Plex Mono',monospace;min-width:52px;text-align:right;font-size:11px;">
+        ${hasExp ? fmtAmt(c.amount) : c.pct+'%'}
+      </span>
     </div>`).join('')}
+    ${hasExp ? `<div style="text-align:right;font-size:10px;color:var(--text3);margin-top:2px;">Showing ${cats.length} active categories</div>` : ''}
   </div>`;
 }
 
@@ -2799,6 +2851,10 @@ async function loadLiveDashboard(){
   setEl('rabbi-inv',  '৳' + fmt(data.rabbi_inv));
   setEl('rabbi-drw',  '৳' + fmt(data.rabbi_drw));
   setEl('rabbi-bal',  '৳' + fmt(data.rabbi_bal));
+
+  // ── Charts: pass live backend data to drawChart ──────────────
+  // This replaces the hardcoded demo bars/donut with real Sheet data.
+  drawChart(data);
 
   showToast('Live data updated ✅', 'success');
 }
