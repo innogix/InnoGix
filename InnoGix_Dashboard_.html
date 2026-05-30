@@ -965,7 +965,7 @@ tbody td.muted{color:var(--text3);}
           <div class="kpi-icon">🏦</div>
           <div class="kpi-label">Business Capital</div>
           <div class="kpi-value"><span class="tk">৳</span><span id="kpi-capital">—</span></div>
-          <div class="kpi-change" style="color:var(--text3)">Total invested</div>
+          <div class="kpi-change" style="color:var(--text3)">Net Capital (Invested − Drawings)</div>
         </div>
         <div class="kpi-card blue" id="kpi-card-top-region" onclick="openTopRegionModal()" title="Click to see full regional breakdown">
           <div class="kpi-icon">🗺️</div>
@@ -2049,7 +2049,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbxTLvVDG5MC2V-N8AEHKjIOuRwhchRArt4jJnkb5WA0lY_2swgk5yuN7cZBaxGB-LMxRA/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbx12O3PmVKpdL6HfEUBhUUUWkr-VlALKnIH_sPRx8A-Xi6MZ_K2IdKKMuhC6rOugv2N/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -2292,17 +2292,26 @@ function lockApp() {
 // ─── DEMO DASHBOARD KPI POPULATE ─────────────────────────────
 function populateDashboardDemo(){
   // ── BUG FIX 1: Revenue — ONLY sum totalAmount from Delivered orders ──
-  const deliveredOrders = sampleSales.filter(r => String(r.status||'').trim() === 'Delivered');
+  const deliveredOrders = sampleSales.map(normalizeSaleRow).filter(r => String(r.status||'').trim() === 'Delivered');
   const rev = deliveredOrders.reduce((s,r) => s + Number(r.total||0), 0);
 
   // ── BUG FIX 2: Due — ONLY sum dueAmount from Delivered orders (receivables) ──
+  // normalizeSaleRow already zeros out due for Cash/COD/bKash/Nagad delivered orders
   const due = deliveredOrders.reduce((s,r) => s + Number(r.due||0), 0);
 
-  // ── Expenses: sum all expense records ──
-  const exp = sampleExpenses.reduce((s,r) => s + Number(r.amount||0), 0);
+  // ── Expenses: sum all expense records (BUG 3 FIX: support both 'amount' and 'Amount' key casing) ──
+  const exp = sampleExpenses.reduce((s,r) => s + Number(r.amount??r.Amount??0), 0);
 
-  // ── BUG FIX 3: Net Profit = Total Revenue − Total Expenses ──
-  const profit = rev - exp;
+  // ── BUG FIX 1 (COGS): Net Profit = Revenue − COGS − Expenses ──
+  // Build cost price lookup from sampleInventory
+  const costMap = {};
+  sampleInventory.forEach(p => { costMap[String(p.name).trim().toLowerCase()] = Number(p.cost)||0; });
+  // COGS = Sum of (units sold × cost price) for all Delivered orders
+  const cogs = deliveredOrders.reduce((s,r) => {
+    const costPrice = costMap[String(r.product||'').trim().toLowerCase()] || 0;
+    return s + (Number(r.qty||0) * costPrice);
+  }, 0);
+  const profit = rev - cogs - exp;
 
   const pending = sampleSales.filter(r=>r.status==='Pending'||r.status==='Processing').length;
   const delivered = deliveredOrders.length;
@@ -2434,6 +2443,10 @@ function startClock(){
 }
 
 // ─── SAMPLE DATA (demo mode only) ───────────────────────────
+// ── BUG 2 FIX: Delivered Cash/COD/bKash/Nagad orders → paid = total, due = 0 ──
+// These payment methods collect money on delivery — once delivered the full
+// amount is received. A separate helper normalizeSaleRow() enforces this rule
+// at render time for BOTH demo and live data.
 const sampleSales = [
   {id:'001',date:'19-May-2025',time:'09:15',customer:'Rahman Store',phone:'01712345678',div:'Dhaka',dist:'Gazipur',thana:'Gazipur Sadar',address:'Gazipur Bazar',product:'Amanah Door Lock Pro',qty:2,price:2800,total:5600,paid:5600,due:0,delivery:60,status:'Delivered',payment:'bKash',courier:'Pathao',tracking:'PT123456',notes:''},
   {id:'002',date:'19-May-2025',time:'10:30',customer:'Karim Electronics',phone:'01812345678',div:'Chittagong',dist:'Chittagong City',thana:'Kotwali',address:'Kotwali Main Road',product:'Amanah CCTV Kit',qty:1,price:8500,total:8500,paid:5000,due:3500,delivery:100,status:'Pending',payment:'Cash',courier:'Steadfast',tracking:'SF789012',notes:''},
@@ -2441,6 +2454,20 @@ const sampleSales = [
   {id:'004',date:'18-May-2025',time:'16:45',customer:'Hossain Traders',phone:'01612345678',div:'Dhaka',dist:'Dhaka City',thana:'Dhanmondi',address:'Dhanmondi 15',product:'Amanah Smart Lock',qty:1,price:5500,total:5500,paid:3000,due:2500,delivery:60,status:'Processing',payment:'Bank',courier:'Pathao',tracking:'PT901234',notes:'Urgent'},
   {id:'005',date:'17-May-2025',time:'11:00',customer:'Noor Enterprise',phone:'01512345678',div:'Sylhet',dist:'Sylhet City',thana:'Sylhet Sadar',address:'Sylhet Center',product:'Amanah Door Lock Pro',qty:4,price:2800,total:11200,paid:11200,due:0,delivery:120,status:'Delivered',payment:'bKash',courier:'SA Paribahan',tracking:'SA567890',notes:''},
 ];
+
+// ── BUG 2 FIX: Normalise paid/due for delivered cash-on-delivery orders ──
+// If status='Delivered' AND payment is Cash/COD/bKash/Nagad, the money has
+// been collected — paid must equal total and due must be 0.
+const INSTANT_PAY_METHODS = new Set(['cash','cod','bkash','nagad']);
+function normalizeSaleRow(r) {
+  const status  = String(r.status  || '').trim().toLowerCase();
+  const payment = String(r.payment || '').trim().toLowerCase().replace(/ /g,'');
+  if (status === 'delivered' && INSTANT_PAY_METHODS.has(payment)) {
+    const total = Number(r.total) || 0;
+    return { ...r, paid: total, due: 0 };
+  }
+  return r;
+}
 
 const sampleInventory = [
   {id:'P001',name:'Amanah Door Lock Pro',cat:'Door Security',cost:1800,sell:2800,opening:100,in:50,sold:68,current:82,alert:10,supplier:'SecureTech BD',supplierPhone:'01711112222'},
@@ -2503,7 +2530,7 @@ function populateExpenses(){
   }
   updateExpenseCats(sampleExpenses);
   renderExpenseRows(sampleExpenses);
-  const total = sampleExpenses.reduce((s,e)=>s+e.amount,0);
+  const total = sampleExpenses.reduce((s,e)=>s+Number(e.amount??e.Amount??0),0);
   const el = document.getElementById('exp-total');
   if(el) el.textContent = total.toLocaleString();
 }
@@ -2529,6 +2556,8 @@ function populateCRM(){
 
 // ─── RENDER FUNCTIONS ────────────────────────────────────────
 function renderSalesRows(rows){
+  // BUG 2 FIX: Normalize paid/due for delivered Cash/COD/bKash/Nagad orders before rendering
+  rows = rows.map(normalizeSaleRow);
   document.getElementById('sales-body').innerHTML = rows.map(r=>`
     <tr>
       <td class="mono muted">${r.id}</td>
@@ -2628,19 +2657,23 @@ function renderInventoryData(rows){
 }
 
 function renderExpenseRows(rows){
-  document.getElementById('exp-body').innerHTML = rows.map(e=>`
-    <tr>
+  // BUG 3 FIX: Normalise key casing — backend may return 'Amount' (capital A) while
+  // demo data uses 'amount' (lowercase). Read both and coerce to number.
+  document.getElementById('exp-body').innerHTML = rows.map(e=>{
+    const amt = Number(e.amount ?? e.Amount ?? 0);
+    return `<tr>
       <td class="mono muted">${e.id}</td>
       <td class="mono">${e.date}</td><td>${e.cat}</td><td>${e.desc}</td>
-      <td class="mono" style="font-weight:700;color:var(--red);">৳${Number(e.amount||0).toLocaleString()}</td>
+      <td class="mono" style="font-weight:700;color:var(--red);">৳${amt.toLocaleString()}</td>
       <td><span class="pay-badge ${(e.payment||'').toLowerCase().replace(/ /g,'')}">${e.payment||'—'}</span></td>
       <td>${e.vendor||'—'}</td>
       <td class="mono muted">${e.invoice||'—'}</td>
       <td class="muted">${e.notes||'—'}</td>
       <td><button class="btn" style="padding:4px 10px;font-size:11px;" onclick='openEditExpense(${JSON.stringify(e)})'>✏️ Edit</button></td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
   // Update total
-  const total = rows.reduce((s,e)=>s+Number(e.amount||0),0);
+  const total = rows.reduce((s,e)=>s+Number(e.amount??e.Amount??0),0);
   const el=document.getElementById('exp-total'); if(el) el.textContent=total.toLocaleString();
 }
 
@@ -2653,7 +2686,8 @@ function updateExpenseCats(rows){
     {icon:'👷',name:'Staff',key:'Staff / Labor'},
     {icon:'🔧',name:'Other',key:'Other'},
   ];
-  const totals = cats.map(c=>rows.filter(r=>r.cat===c.key||r.cat===c.key.replace(' / ',' / ')).reduce((s,r)=>s+Number(r.amount||0),0));
+  // BUG 3 FIX: Use normalized amount — support both 'amount' and 'Amount' keys
+  const totals = cats.map(c=>rows.filter(r=>r.cat===c.key||r.cat===c.key.replace(' / ',' / ')).reduce((s,r)=>s+Number(r.amount??r.Amount??0),0));
   const grand = totals.reduce((a,b)=>a+b,0);
   document.getElementById('exp-cats').innerHTML = cats.map((c,i)=>`
     <div class="exp-cat-card">
@@ -2816,6 +2850,14 @@ function buildDemoChartData() {
   const revMap = {}, expMap = {};
   months.forEach(mo => { revMap[mo.key] = 0; expMap[mo.key] = 0; });
 
+  // Build cost price lookup from sampleInventory for COGS calculation
+  const costLookup = {};
+  sampleInventory.forEach(p => { costLookup[String(p.name).trim().toLowerCase()] = Number(p.cost)||0; });
+
+  // Also build per-month COGS map (Delivered orders only)
+  const cogsMap = {};
+  months.forEach(mo => { cogsMap[mo.key] = 0; });
+
   sampleSales.forEach(r => {
     if (String(r.status || '').trim() !== 'Delivered') return;
     if (!r.date) return;
@@ -2833,6 +2875,10 @@ function buildDemoChartData() {
     if (!dt || isNaN(dt.getTime())) return;
     const key = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
     if (revMap.hasOwnProperty(key)) revMap[key] += Number(r.total || 0);
+    if (cogsMap.hasOwnProperty(key)) {
+      const cp = costLookup[String(r.product||'').trim().toLowerCase()] || 0;
+      cogsMap[key] += (Number(r.qty||0) * cp);
+    }
   });
 
   sampleExpenses.forEach(r => {
@@ -2848,7 +2894,7 @@ function buildDemoChartData() {
     } catch(e) { return; }
     if (!dt || isNaN(dt.getTime())) return;
     const key = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
-    if (expMap.hasOwnProperty(key)) expMap[key] += Number(r.amount || 0);
+    if (expMap.hasOwnProperty(key)) expMap[key] += Number(r.amount ?? r.Amount ?? 0);
   });
 
   const labels = [], revArr = [], profArr = [];
@@ -2856,8 +2902,10 @@ function buildDemoChartData() {
     labels.push(mo.label);
     const r = revMap[mo.key] || 0;
     const e = expMap[mo.key] || 0;
+    const g = cogsMap[mo.key] || 0;
     revArr.push(Math.round(r));
-    profArr.push(Math.round(Math.max(0, r - e)));
+    // BUG 1 FIX: Profit = Revenue − COGS − Expenses
+    profArr.push(Math.round(Math.max(0, r - g - e)));
   });
 
   // Expense breakdown for the donut chart
@@ -2866,7 +2914,7 @@ function buildDemoChartData() {
   cats.forEach(c => { catTotals[c] = 0; });
   sampleExpenses.forEach(r => {
     const cat = String(r.cat || '').trim();
-    const amt = Number(r.amount || 0);
+    const amt = Number(r.amount ?? r.Amount ?? 0);
     if (catTotals.hasOwnProperty(cat)) catTotals[cat] += amt;
     else catTotals['Other'] += amt;
   });
@@ -3034,12 +3082,15 @@ async function loadLiveDashboard(){
   // Helper: set element text safely
   const setEl = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
 
-  // ── Bug Fix 1: Net Profit — always calculated as Revenue − Expenses ──
-  // data.profit from the backend can be 0 or wrong if the sheet formula
-  // references COGS cells that haven't been populated. Compute it here.
+  // ── BUG FIX 1: Net Profit — use backend-computed value (includes COGS) ──
+  // The GS backend now computes: profit = revenue − COGS − expenses
+  // If data.profit is present and valid use it; otherwise fall back to local compute
   const totalRevenue  = toFloat(data.revenue);
   const totalExpenses = toFloat(data.expenses);
-  const netProfit     = totalRevenue - totalExpenses;
+  // data.profit from backend already has COGS deducted (GS v21 fix)
+  const netProfit = (data.profit !== undefined && data.profit !== null)
+    ? toFloat(data.profit)
+    : (totalRevenue - totalExpenses);
 
   // ── Bug Fix 3: Standard cards — all values coerced via toFloat / Number() ──
   setEl('kpi-revenue',   fmt(totalRevenue));
@@ -3173,10 +3224,12 @@ async function loadLiveSales(){
       courier:String(r[18]||''), tracking:String(r[19]||''), delStatus:String(r[20]||'Not Sent'), notes:String(r[21]||''),
     };
   }).filter(r=>r.customer && r.customer.trim()); // skip empty rows
-  // BUG 2 FIX: Reverse so newest orders (highest SL#) appear at top
+  // BUG 2 FIX: Normalize paid/due for delivered Cash/COD/bKash/Nagad orders
+  // Reverse so newest orders (highest SL#) appear at top
   rows.reverse();
-  liveSalesData = rows; // cache for filter
-  renderSalesRows(rows);
+  const normalizedRows = rows.map(normalizeSaleRow);
+  liveSalesData = normalizedRows; // cache for filter
+  renderSalesRows(normalizedRows);
   document.getElementById('sales-count').textContent = rows.length+' records';
   showToast('Sales loaded ✅','success');
   // Update dashboard pending badge with real count
