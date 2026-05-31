@@ -580,17 +580,11 @@ tbody td.muted{color:var(--text3);}
 #lock-screen {
   position:fixed;inset:0;
   background:var(--bg);
-  z-index:99999;
+  z-index:9999;
   display:flex;align-items:center;justify-content:center;
   flex-direction:column;
-  pointer-events:all;
 }
-#lock-screen.hidden { display:none; pointer-events:none; }
-#lock-screen .pin-key {
-  pointer-events:all;
-  -webkit-tap-highlight-color:rgba(212,160,23,.3);
-  touch-action:manipulation;
-}
+#lock-screen.hidden { display:none; }
 .lock-box {
   background:var(--bg2);
   border:1px solid var(--border);
@@ -790,18 +784,18 @@ tbody td.muted{color:var(--text3);}
       <div class="pin-dot" id="d3"></div>
     </div>
     <div class="pin-keypad">
-      <button type="button" class="pin-key" onclick="pinPress('1',event)">1</button>
-      <button type="button" class="pin-key" onclick="pinPress('2',event)">2</button>
-      <button type="button" class="pin-key" onclick="pinPress('3',event)">3</button>
-      <button type="button" class="pin-key" onclick="pinPress('4',event)">4</button>
-      <button type="button" class="pin-key" onclick="pinPress('5',event)">5</button>
-      <button type="button" class="pin-key" onclick="pinPress('6',event)">6</button>
-      <button type="button" class="pin-key" onclick="pinPress('7',event)">7</button>
-      <button type="button" class="pin-key" onclick="pinPress('8',event)">8</button>
-      <button type="button" class="pin-key" onclick="pinPress('9',event)">9</button>
-      <button type="button" class="pin-key del" onclick="pinDel(event)">⌫</button>
-      <button type="button" class="pin-key" onclick="pinPress('0',event)">0</button>
-      <button type="button" class="pin-key enter" onclick="pinSubmit()">✓</button>
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <button class="pin-key del" onclick="pinDel()">⌫</button>
+      <button class="pin-key" onclick="pinPress('0')">0</button>
+      <button class="pin-key enter" onclick="pinSubmit()">✓</button>
     </div>
     <div class="pin-error" id="pin-error"></div>
     <!-- FIX 5: Show notice when browser cleared localStorage and PIN reset to default -->
@@ -2200,7 +2194,7 @@ async function fetchFromAPI(action, params = {}) {
 // ─── BUG 1 FIX: postToAPI now uses GET (CORS-safe for Apps Script) ──────
 // Google Apps Script Web Apps reject POST requests from browsers due to CORS
 // preflight failures. Encoding the payload as a base64 GET param avoids this.
-async async function postToAPI(payload) {
+async function postToAPI(payload) {
   if (!API_URL || !API_URL.includes('script.google.com')) {
     showToast('Google Sheets URL সেট নেই — Setup Guide দেখুন', 'error'); return false;
   }
@@ -2256,14 +2250,13 @@ function getStoredPin() {
   }
   return stored || DEFAULT_PIN;
 }
-function pinPress(d, e) {
-  if (e && e.stopPropagation) e.stopPropagation();
+function pinPress(d) {
   if (pinBuffer.length >= 4) return;
   pinBuffer += d;
   updatePinDots();
   if (pinBuffer.length === 4) setTimeout(pinSubmit, 300);
 }
-function pinDel(e) { if (e && e.stopPropagation) e.stopPropagation(); pinBuffer = pinBuffer.slice(0,-1); updatePinDots(); document.getElementById('pin-error').textContent = ''; }
+function pinDel() { pinBuffer = pinBuffer.slice(0,-1); updatePinDots(); document.getElementById('pin-error').textContent = ''; }
 function updatePinDots() {
   for (let i=0;i<4;i++) {
     document.getElementById('d'+i).classList.toggle('filled', i < pinBuffer.length);
@@ -3207,6 +3200,7 @@ async function submitOrder(){
   } else {
     showToast('Google Sheets connect হয়নি — API URL চেক করুন', 'error');
   }
+}
 
 
 function openEditOrder(r){
