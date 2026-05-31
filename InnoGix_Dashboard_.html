@@ -2052,7 +2052,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzgHcYLrOrHZUkctUwsXGLq_-7OKkjAZsYTJXxfNFLD_twepyos0IhEi-2fC07Z3s-d-g/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbyXG0FD6ee_QI96RtkNt47AQrECy8LVQmAn6HT_7MWnyMWEnk8jOv0PT1NnXvr5nbb1/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -2081,9 +2081,12 @@ const BD_LOCATIONS = {
     "Feni":            ["Feni Sadar","Chhagalnaiya","Daganbhuiyan","Parshuram","Sonagazi","Fulgazi"],
     "Noakhali":        ["Noakhali Sadar","Begumganj","Chatkhil","Companiganj","Hatiya","Kabir Hat","Senbagh","Sonaimuri","Subarnachar"],
     "Lakshmipur":      ["Lakshmipur Sadar","Kamalnagar","Raipur","Ramganj","Ramgati"],
+    "Chandpur":        ["Chandpur Sadar","Faridganj","Haimchar","Haziganj","Kachua","Matlab North","Matlab South","Shahrasti"],
     "Brahmanbaria":    ["Brahmanbaria Sadar","Akhaura","Ashuganj","Bancharampur","Bijoynagar","Kasba","Nabinagar","Nasirnagar","Sarail"],
     "Rangamati":       ["Rangamati Sadar","Bagaichhari","Barkal","Belaichhari","Juraichhari","Kaptai","Kawkhali","Langadu","Naniarchar","Rajasthali"],
-    "Bandarban":       ["Bandarban Sadar","Alikadam","Lama","Naikhongchhari","Rowangchhari","Ruma","Thanchi"]
+    "Khagrachhari":    ["Khagrachhari Sadar","Dighinala","Lakshmichhari","Mahalchhari","Manikchhari","Matiranga","Panchhari","Ramgarh"],
+    "Bandarban":       ["Bandarban Sadar","Alikadam","Lama","Naikhongchhari","Rowangchhari","Ruma","Thanchi"],
+    "Sitakunda":       ["Sitakunda","Mirsharai","Sandwip","Anwara","Boalkhali","Chandanaish","Fatikchhari","Hathazari","Lohagara","Patiya","Rangunia","Raozan","Satkania"]
   },
   "Rajshahi": {
     "Rajshahi City":    ["Boalia","Motihar","Rajpara","Shah Makhdum"],
@@ -2093,7 +2096,8 @@ const BD_LOCATIONS = {
     "Bogra":            ["Bogra Sadar","Adamdighi","Dhunat","Dhupchanchia","Gabtali","Kahaloo","Nandigram","Sariakandi","Shajahanpur","Sherpur","Shibganj","Sonatala"],
     "Chapai Nawabganj": ["Chapai Nawabganj Sadar","Bholahat","Gomastapur","Nachole","Shibganj"],
     "Naogaon":          ["Naogaon Sadar","Atrai","Badalgachhi","Dhamoirhat","Mahadebpur","Manda","Mohadevpur","Niamatpur","Patnitala","Porsha","Raninagar","Sapahar"],
-    "Joypurhat":        ["Joypurhat Sadar","Akkelpur","Kalai","Khetlal","Panchbibi"]
+    "Joypurhat":        ["Joypurhat Sadar","Akkelpur","Kalai","Khetlal","Panchbibi"],
+    "Rajshahi Rural":   ["Bagha","Bagmara","Charghat","Durgapur","Godagari","Mohanpur","Paba","Puthia","Tanore"]
   },
   "Khulna": {
     "Khulna City": ["Daulatpur","Khan Jahan Ali","Khulna Sadar","Khalishpur","Sonadanga"],
@@ -2113,6 +2117,7 @@ const BD_LOCATIONS = {
     "Patuakhali":   ["Patuakhali Sadar","Bauphal","Dashmina","Dumki","Galachipa","Kalapara","Mirzaganj","Rangabali"],
     "Pirojpur":     ["Pirojpur Sadar","Bhandaria","Kawkhali","Mathbaria","Nazirpur","Nesarabad","Zianagar"],
     "Jhalokati":    ["Jhalokati Sadar","Kathalia","Nalchity","Rajapur"],
+    "Barisal Rural":["Agailjhara","Babuganj","Bakerganj","Banaripara","Gaurnadi","Hizla","Mehendiganj","Muladi","Wazirpur"],
     "Barguna":      ["Barguna Sadar","Amtali","Bamna","Betagi","Patharghata","Taltali"]
   },
   "Sylhet": {
@@ -2135,7 +2140,8 @@ const BD_LOCATIONS = {
     "Mymensingh City": ["Mymensingh Sadar","Bhaluka","Dhobaura","Fulbaria","Gaffargaon","Gauripur","Haluaghat","Ishwarganj","Muktagacha","Nandail","Phulpur","Tarakanda","Trishal"],
     "Netrokona":       ["Netrokona Sadar","Atpara","Barhatta","Durgapur","Kalmakanda","Kendua","Khaliajuri","Madan","Mohanganj","Purbadhala"],
     "Jamalpur":        ["Jamalpur Sadar","Bakshiganj","Dewanganj","Islampur","Madarganj","Melandaha","Sarishabari"],
-    "Sherpur":         ["Sherpur Sadar","Jhenaigati","Nakla","Nalitabari","Sreebardi"]
+    "Sherpur":         ["Sherpur Sadar","Jhenaigati","Nakla","Nalitabari","Sreebardi"],
+    "Kishoreganj":     ["Kishoreganj Sadar","Austagram","Bajitpur","Bhairab","Hossainpur","Itna","Karimganj","Katiadi","Kuliarchar","Mithamain","Nikli","Pakundia","Tarail"]
   }
 };
 
@@ -3200,7 +3206,6 @@ async function submitOrder(){
   } else {
     showToast('Google Sheets connect হয়নি — API URL চেক করুন', 'error');
   }
-}
 
 
 function openEditOrder(r){
