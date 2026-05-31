@@ -909,7 +909,7 @@ tbody td.muted{color:var(--text3);}
 
   <!-- CONNECTION BANNER -->
   <div class="conn-banner" id="conn-banner">
-    ⚠️ Demo mode চলছে — Google Sheets connect নেই।
+    ⚠️ Google Sheets এখনো connect হয়নি — API URL সেট করুন।
     <a onclick="showPage('setup', document.querySelector('.nav-item:nth-last-child(2)'))">Setup Guide দেখুন</a>
     অথবা HTML file-এ API_URL বসান।
     <span style="margin-left:auto;cursor:pointer;" onclick="document.getElementById('conn-banner').classList.remove('show')">✕</span>
@@ -965,7 +965,7 @@ tbody td.muted{color:var(--text3);}
           <div class="kpi-icon">🏦</div>
           <div class="kpi-label">Business Capital</div>
           <div class="kpi-value"><span class="tk">৳</span><span id="kpi-capital">—</span></div>
-          <div class="kpi-change" style="color:var(--text3)">Net Capital (Invested − Drawings)</div>
+          <div class="kpi-change" style="color:var(--text3)">Net Current Capital</div>
         </div>
         <div class="kpi-card blue" id="kpi-card-top-region" onclick="openTopRegionModal()" title="Click to see full regional breakdown">
           <div class="kpi-icon">🗺️</div>
@@ -1077,7 +1077,7 @@ tbody td.muted{color:var(--text3);}
           </div>
         </div>
         <div class="filter-bar">
-          <select class="filter-select" onchange="filterSales()">
+          <select class="filter-select" id="sales-status-filter" onchange="filterSales()">
             <option value="">All Status</option>
             <option>Pending</option>
             <option>Processing</option>
@@ -1086,7 +1086,7 @@ tbody td.muted{color:var(--text3);}
             <option>Returned</option>
             <option>Cancelled</option>
           </select>
-          <select class="filter-select" onchange="filterSales()">
+          <select class="filter-select" id="sales-div-filter" onchange="filterSales()">
             <option value="">All Division</option>
             <option>Dhaka</option>
             <option>Chittagong</option>
@@ -1097,15 +1097,17 @@ tbody td.muted{color:var(--text3);}
             <option>Rangpur</option>
             <option>Mymensingh</option>
           </select>
-          <select class="filter-select" onchange="filterSales()">
+          <select class="filter-select" id="sales-prod-filter" onchange="filterSales()">
             <option value="">All Products</option>
             <option>Amanah Door Lock Pro</option>
             <option>Amanah CCTV Kit</option>
             <option>Amanah Alarm System</option>
             <option>Amanah Smart Lock</option>
+            <option>Amanah Motion Sensor</option>
+            <option>Amanah Video Doorbell</option>
           </select>
-          <input class="filter-input" type="text" placeholder="Search customer, phone..." oninput="filterSales()">
-          <input class="filter-input" type="date" style="width:140px;" onchange="filterSales()">
+          <input class="filter-input" id="sales-search-input" type="text" placeholder="Search customer, phone..." oninput="filterSales()">
+          <input class="filter-input" id="sales-date-filter" type="date" style="width:140px;" onchange="filterSales()">
         </div>
         <div class="table-scroll">
           <table id="sales-table">
@@ -1267,7 +1269,7 @@ tbody td.muted{color:var(--text3);}
         <div class="table-scroll">
           <table>
             <thead>
-              <tr><th>#</th><th>Date & Time</th><th>Partner</th><th>Type</th><th>Amount</th><th>Payment Method</th><th>Description</th><th>Balance After</th></tr>
+              <tr><th>#</th><th>Date & Time</th><th>Partner</th><th>Type</th><th>Amount</th><th>Payment Method</th><th>Description</th><th>Balance After</th><th>Action</th></tr>
             </thead>
             <tbody id="partner-body"></tbody>
           </table>
@@ -1906,6 +1908,7 @@ tbody td.muted{color:var(--text3);}
         <div class="form-group"><label class="form-label">Invoice No.</label><input class="form-input" id="eexp-invoice" type="text"></div>
         <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="eexp-date" type="text" readonly></div>
         <div class="form-group full"><label class="form-label">Description</label><textarea class="form-textarea" id="eexp-desc"></textarea></div>
+        <div class="form-group full"><label class="form-label">Notes</label><textarea class="form-textarea" id="eexp-notes" placeholder="Optional notes..."></textarea></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -2049,7 +2052,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyxMTi8IW7BcxC6uuEcUhq8yskynzpAqlci-NhfUoEDsSdNUIXZm4wiK0Z8TzFeEPV-/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbz30pjiKmr5-Tx9xtDonO8bBqRBUExghXWSu8ZfrWYXmby_Jizp3S39Z8qVrGHZSdq3/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -2191,44 +2194,41 @@ async function fetchFromAPI(action, params = {}) {
 // ─── BUG 1 FIX: postToAPI now uses GET (CORS-safe for Apps Script) ──────
 // Google Apps Script Web Apps reject POST requests from browsers due to CORS
 // preflight failures. Encoding the payload as a base64 GET param avoids this.
-async function postToAPI(payload) {
+async async function postToAPI(payload) {
   if (!API_URL || !API_URL.includes('script.google.com')) {
-    showToast('Google Sheets connect হয়নি — Demo mode', 'info'); return false;
+    showToast('Google Sheets URL সেট নেই — Setup Guide দেখুন', 'error'); return false;
   }
+  // Encode payload as base64 GET param (Apps Script reads it from p.data)
+  const jsonStr  = JSON.stringify(payload);
+  const encoded  = encodeURIComponent(btoa(unescape(encodeURIComponent(jsonStr))));
+  const url      = `${API_URL}?action=${encodeURIComponent(payload.action||'')}&data=${encoded}`;
+
   try {
-    const ctrl = new AbortController();
+    // file:// protocol → use JSONP (fetch() blocked by CORS on file://)
+    if (location.protocol === 'file:') {
+      const result = await jsonpFetch(url);
+      if (!result) return false;
+      if (result.status === 'error') { showToast('Backend error: '+(result.message||'অজানা সমস্যা'),'error'); return false; }
+      return result.status === 'success' || result.status === 'ok';
+    }
+    // http/https → regular fetch with timeout
+    const ctrl  = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 25000);
-    // Encode payload as base64 in a GET param so Apps Script can read it
-    const jsonStr = JSON.stringify(payload);
-    const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(jsonStr))));
-    const url = `${API_URL}?action=${encodeURIComponent(payload.action||'')}&data=${encoded}`;
-    const res = await fetch(url, {
-      method: 'GET',
-      redirect: 'follow',
-      signal: ctrl.signal
-    });
+    const res   = await fetch(url, { method:'GET', redirect:'follow', signal:ctrl.signal });
     clearTimeout(timer);
     if (!res.ok) { showToast('Server error: ' + res.status, 'error'); return false; }
     const text = await res.text();
-    // Strip JSONP wrapper if present — match from first { or [ to last } or ]
-    const m = text.match(/[{\[](.|\n)*[}\]]/);
-    const clean = m ? m[0] : text;
-    // BUG 4 FIX: use safeJSONParse to protect big numbers
-    const data = safeJSONParse(clean);
-    // Null-safety: if parse failed, response was not valid JSON (HTML error page etc.)
+    const m    = text.match(/[{\[](.|\n)*[}\]]/);
+    const data = safeJSONParse(m ? m[0] : text);
     if (!data) {
-      console.error('postToAPI: non-JSON response from Apps Script:', text.substring(0, 200));
-      showToast('Apps Script থেকে সঠিক response আসেনি — Script URL ও Deploy settings চেক করুন', 'error');
+      console.error('postToAPI: non-JSON:', text.substring(0,200));
+      showToast('Apps Script থেকে সঠিক response আসেনি — Deploy settings চেক করুন','error');
       return false;
     }
-    if (data.status === 'error') {
-      showToast('Backend error: ' + (data.message || 'অজানা সমস্যা'), 'error');
-      return false;
-    }
-    // Accept both 'success' (write actions) and 'ok' (some backend paths)
+    if (data.status === 'error') { showToast('Backend error: '+(data.message||'অজানা সমস্যা'),'error'); return false; }
     return data.status === 'success' || data.status === 'ok';
   } catch(e) {
-    showToast(e.name === 'AbortError' ? 'Timeout — পুনরায় চেষ্টা করুন' : 'Error: ' + e.message, 'error');
+    showToast(e.name==='AbortError' ? 'Timeout — পুনরায় চেষ্টা করুন' : 'Error: '+e.message, 'error');
     return false;
   }
 }
@@ -2279,7 +2279,7 @@ function unlockApp() {
   if(lb) { lb.style.display='flex'; lb.style.visibility='visible'; lb.style.opacity='1'; }
   isLocked=false;
   // Re-initialize dashboard KPIs if not connected
-  if(!apiConnected) { setTimeout(populateDashboardDemo, 100); }
+  // (live mode only - no demo dashboard)
 }
 function lockApp() {
   pinBuffer=''; updatePinDots();
@@ -2289,85 +2289,7 @@ function lockApp() {
   isLocked=true;
 }
 
-// ─── DEMO DASHBOARD KPI POPULATE ─────────────────────────────
-function populateDashboardDemo(){
-  // ── Revenue: ONLY sum totalAmount from Delivered orders ──
-  const deliveredOrders = sampleSales.filter(r => String(r.status||'').trim() === 'Delivered');
-  const rev = deliveredOrders.reduce((s,r) => s + Number(r.total||0), 0);
 
-  // ── BUG 2 FIX: Due — recalculate from first principles.
-  // Delivered Cash/COD/bKash/Nagad orders = money already collected → due = 0.
-  // Only Bank Transfer / credit orders can carry a genuine outstanding balance.
-  const COLLECTED_METHODS = ['cash','cod','bkash','nagad'];
-  const due = deliveredOrders.reduce((s,r) => {
-    const method = String(r.payment||'').toLowerCase().replace(/[\s-]/g,'');
-    if (COLLECTED_METHODS.includes(method)) return s; // fully collected
-    return s + Math.max(0, Number(r.total||0) + Number(r.delivery||0) - Number(r.paid||0));
-  }, 0);
-
-  // ── Expenses: sum all expense records ──
-  const exp = sampleExpenses.reduce((s,r) => s + Number(r.amount||0), 0);
-
-  // ── BUG 1 FIX: COGS = Σ (Units Sold × Cost Price) for Delivered orders ──
-  // Build product name → cost price lookup from sampleInventory
-  const costMap = {};
-  sampleInventory.forEach(p => {
-    costMap[String(p.name||'').toLowerCase().trim()] = Number(p.cost||0);
-  });
-  const cogs = deliveredOrders.reduce((s,r) => {
-    const key  = String(r.product||'').toLowerCase().trim();
-    const cost = costMap[key] || 0;
-    return s + cost * Number(r.qty||0);
-  }, 0);
-
-  // ── Net Profit = Revenue − COGS − Operating Expenses ──
-  const profit = rev - cogs - exp;
-
-  const pending = sampleSales.filter(r=>r.status==='Pending'||r.status==='Processing').length;
-  const delivered = deliveredOrders.length;
-
-  // ── BUG FIX 4: Business Capital = Sum of each partner's (Investment − Drawings) ──
-  const partnerNames = ['Md Ismail Hosen','Ashikur Rahman','Golam Rabbi'];
-  const capital = partnerNames.reduce((total, name) => {
-    const inv = samplePartner.filter(t=>t.partner===name && t.type==='Investment').reduce((s,t)=>s+Number(t.amount||0),0);
-    const drw = samplePartner.filter(t=>t.partner===name && t.type==='Drawings').reduce((s,t)=>s+Number(t.amount||0),0);
-    return total + (inv - drw);
-  }, 0);
-  const fmt = n => Number(n).toLocaleString();
-  const setEl=(id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
-  setEl('kpi-revenue', fmt(rev));
-  setEl('kpi-profit', fmt(profit));
-  setEl('kpi-expense', fmt(exp));
-  setEl('kpi-due', fmt(due));
-  setEl('kpi-pending', pending);
-  setEl('kpi-delivered', delivered);
-  setEl('kpi-capital', fmt(capital));
-  // FIX 3: kpi-stock in demo mode from sampleInventory
-  const stock = sampleInventory.reduce((s,p)=>s+Number(p.current||0),0);
-  setEl('kpi-stock', stock);
-  // Bug Fix 2: Top Region — derive from demo sales data
-  const regionCount = {};
-  sampleSales.forEach(r => {
-    const region = String(r.div || '').trim();
-    if (region) regionCount[region] = (regionCount[region] || 0) + 1;
-  });
-  const regionKeys = Object.keys(regionCount);
-  if (regionKeys.length > 0) {
-    const topRegion = regionKeys.reduce((a, b) => (regionCount[b] > regionCount[a] ? b : a), regionKeys[0]);
-    setEl('kpi-top-region', topRegion);
-    setEl('kpi-top-region-sub', regionCount[topRegion] + ' orders this month');
-  } else {
-    setEl('kpi-top-region', 'Dhaka');
-    setEl('kpi-top-region-sub', '— orders this month');
-  }
-  // Partner balances on dashboard
-  ['ismail','ashik','rabbi'].forEach((p,i)=>{
-    const names=['Md Ismail Hosen','Ashikur Rahman','Golam Rabbi'];
-    const inv=samplePartner.filter(t=>t.partner===names[i]&&t.type==='Investment').reduce((s,t)=>s+Number(t.amount||0),0);
-    const drw=samplePartner.filter(t=>t.partner===names[i]&&t.type==='Drawings').reduce((s,t)=>s+Number(t.amount||0),0);
-    setEl(p+'-inv','৳'+fmt(inv)); setEl(p+'-drw','৳'+fmt(drw)); setEl(p+'-bal','৳'+fmt(inv-drw));
-  });
-}
 function openChangePinFromLock() {
   fromLock=true;
   document.getElementById('cp-current').closest('.form-group').style.display='none';
@@ -2452,117 +2374,10 @@ function startClock(){
   tick(); setInterval(tick, 1000);
 }
 
-// ─── SAMPLE DATA (demo mode only) ───────────────────────────
-// BUG 2 FIX: Delivered + Cash/COD/bKash/Nagad orders are fully collected money.
-// paid = total + delivery, due = 0 for these. Only Bank Transfer / credit can have due.
-const sampleSales = [
-  {id:'001',date:'19-May-2025',time:'09:15',customer:'Rahman Store',phone:'01712345678',div:'Dhaka',dist:'Gazipur',thana:'Gazipur Sadar',address:'Gazipur Bazar',product:'Amanah Door Lock Pro',qty:2,price:2800,total:5600,paid:5660,due:0,delivery:60,status:'Delivered',payment:'bKash',courier:'Pathao',tracking:'PT123456',notes:''},
-  {id:'002',date:'19-May-2025',time:'10:30',customer:'Karim Electronics',phone:'01812345678',div:'Chittagong',dist:'Chittagong City',thana:'Kotwali',address:'Kotwali Main Road',product:'Amanah CCTV Kit',qty:1,price:8500,total:8500,paid:0,due:8600,delivery:100,status:'Pending',payment:'Cash',courier:'Steadfast',tracking:'SF789012',notes:''},
-  {id:'003',date:'18-May-2025',time:'14:20',customer:'Alam Brothers',phone:'01912345678',div:'Rajshahi',dist:'Rajshahi City',thana:'Boalia',address:'Boalia Road',product:'Amanah Alarm System',qty:3,price:3200,total:9600,paid:9680,due:0,delivery:80,status:'Delivered',payment:'Nagad',courier:'Redx',tracking:'RX345678',notes:''},
-  {id:'004',date:'18-May-2025',time:'16:45',customer:'Hossain Traders',phone:'01612345678',div:'Dhaka',dist:'Dhaka City',thana:'Dhanmondi',address:'Dhanmondi 15',product:'Amanah Smart Lock',qty:1,price:5500,total:5500,paid:3000,due:2560,delivery:60,status:'Processing',payment:'Bank Transfer',courier:'Pathao',tracking:'PT901234',notes:'Urgent'},
-  {id:'005',date:'17-May-2025',time:'11:00',customer:'Noor Enterprise',phone:'01512345678',div:'Sylhet',dist:'Sylhet City',thana:'Sylhet Sadar',address:'Sylhet Center',product:'Amanah Door Lock Pro',qty:4,price:2800,total:11200,paid:11320,due:0,delivery:120,status:'Delivered',payment:'bKash',courier:'SA Paribahan',tracking:'SA567890',notes:''},
-];
 
-const sampleInventory = [
-  {id:'P001',name:'Amanah Door Lock Pro',cat:'Door Security',cost:1800,sell:2800,opening:100,in:50,sold:68,current:82,alert:10,supplier:'SecureTech BD',supplierPhone:'01711112222'},
-  {id:'P002',name:'Amanah CCTV Kit',cat:'Surveillance',cost:5500,sell:8500,opening:40,in:20,sold:35,current:25,alert:10,supplier:'CamWorld',supplierPhone:'01711113333'},
-  {id:'P003',name:'Amanah Alarm System',cat:'Alarm',cost:1900,sell:3200,opening:60,in:0,sold:58,current:2,alert:5,supplier:'AlarmPro',supplierPhone:'01711114444'},
-  {id:'P004',name:'Amanah Smart Lock',cat:'Smart Security',cost:3500,sell:5500,opening:30,in:10,sold:22,current:18,alert:5,supplier:'SecureTech BD',supplierPhone:'01711112222'},
-];
-
-// BUG 3 FIX: Added Staff/Labor entry — all 5 expense categories now have real amounts.
-const sampleExpenses = [
-  {id:1,date:'18-May-2025 10:00',cat:'Marketing / Ad Spend',desc:'Facebook Ad Campaign',amount:12000,payment:'bKash',vendor:'Facebook',invoice:'FB-001',notes:''},
-  {id:2,date:'17-May-2025 14:00',cat:'Product Sourcing',desc:'Door Lock batch purchase',amount:28000,payment:'Bank Transfer',vendor:'SecureTech BD',invoice:'ST-445',notes:''},
-  {id:3,date:'16-May-2025 09:00',cat:'Delivery Cost',desc:'Courier monthly charges',amount:8500,payment:'Cash',vendor:'Pathao',invoice:'PA-223',notes:''},
-  {id:4,date:'15-May-2025 11:00',cat:'Office & Utility',desc:'Office rent May',amount:9700,payment:'Cash',vendor:'Building Owner',invoice:'OR-05',notes:''},
-  {id:5,date:'14-May-2025 16:00',cat:'Staff / Labor',desc:'Delivery staff salary',amount:15000,payment:'bKash',vendor:'Staff Account',invoice:'SL-001',notes:''},
-];
-
-const samplePartner = [
-  {id:1,date:'01-Jan-2025 10:00',partner:'Md Ismail Hosen',type:'Investment',amount:150000,method:'Bank',desc:'Initial capital contribution'},
-  {id:2,date:'01-Jan-2025 10:05',partner:'Ashikur Rahman',type:'Investment',amount:120000,method:'Bank',desc:'Initial capital contribution'},
-  {id:3,date:'01-Jan-2025 10:10',partner:'Golam Rabbi',type:'Investment',amount:75000,method:'Bank',desc:'Initial capital contribution'},
-  {id:4,date:'15-Mar-2025 14:30',partner:'Md Ismail Hosen',type:'Drawings',amount:22000,method:'bKash',desc:'Monthly withdrawal'},
-  {id:5,date:'15-Mar-2025 15:00',partner:'Ashikur Rahman',type:'Drawings',amount:15000,method:'Cash',desc:'Monthly withdrawal'},
-  {id:6,date:'15-Mar-2025 15:30',partner:'Golam Rabbi',type:'Drawings',amount:13000,method:'bKash',desc:'Monthly withdrawal'},
-];
-
-const sampleCRM = [
-  {id:1,name:'Rahman Store',phone:'01712345678',div:'Dhaka',dist:'Gazipur',orders:8,spent:44800,due:0,avg:5600,last:'19-May-2025',type:'Repeat'},
-  {id:2,name:'Karim Electronics',phone:'01812345678',div:'Chittagong',dist:'Chittagong City',orders:3,spent:25500,due:3500,avg:8500,last:'19-May-2025',type:'Regular'},
-  {id:3,name:'Alam Brothers',phone:'01912345678',div:'Rajshahi',dist:'Rajshahi City',orders:5,spent:48000,due:0,avg:9600,last:'18-May-2025',type:'Repeat'},
-  {id:4,name:'Noor Enterprise',phone:'01512345678',div:'Sylhet',dist:'Sylhet City',orders:2,spent:11200,due:0,avg:5600,last:'17-May-2025',type:'New'},
-];
-
-// ─── POPULATE FUNCTIONS ──────────────────────────────────────
-function populateSales(){
-  if (apiConnected) {
-    document.getElementById('sales-body').innerHTML = `<tr><td colspan="19" style="text-align:center;padding:40px;color:var(--text3);">⏳ Google Sheets থেকে data load হচ্ছে...</td></tr>`;
-    return;
-  }
-  renderSalesRows(sampleSales);
-  document.getElementById('sales-count').textContent = sampleSales.length + ' records (demo)';
-}
-
-function populateInventory(){
-  if (apiConnected) {
-    document.getElementById('inv-cards').innerHTML='';
-    document.getElementById('inv-body').innerHTML=`<tr><td colspan="14" style="text-align:center;padding:40px;color:var(--text3);">⏳ Loading...</td></tr>`;
-    return;
-  }
-  renderInventoryData(sampleInventory);
-}
-
-function populateExpenses(){
-  if (apiConnected) {
-    // When connected, NEVER show demo data — show loading state only
-    // liveExpenseData will be populated by loadLiveExpenses()
-    document.getElementById('exp-body').innerHTML='<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text3);">⏳ Google Sheets থেকে data load হচ্ছে...</td></tr>';
-    const el=document.getElementById('exp-total'); if(el) el.textContent='0';
-    // Reset category cards to zero
-    updateExpenseCats([]);
-    return;
-  }
-  updateExpenseCats(sampleExpenses);
-  renderExpenseRows(sampleExpenses);
-  const total = sampleExpenses.reduce((s,e)=>s+e.amount,0);
-  const el = document.getElementById('exp-total');
-  if(el) el.textContent = total.toLocaleString();
-}
-
-function populatePartners(){
-  if (apiConnected) {
-    document.getElementById('partner-body').innerHTML=`<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text3);">⏳ Google Sheets থেকে data load হচ্ছে...</td></tr>`;
-    return;
-  }
-  renderPartnerSummary(samplePartner);
-  renderPartnerTxns(samplePartner);
-}
-
-function populateCRM(){
-  if (apiConnected) { return; }
-  renderCRMRows(sampleCRM);
-  // update demo CRM stats
-  const el1=document.getElementById('crm-total'); if(el1) el1.textContent=sampleCRM.length;
-  const el2=document.getElementById('crm-repeat'); if(el2) el2.textContent=sampleCRM.filter(c=>c.type==='Repeat').length;
-  const el3=document.getElementById('crm-due'); if(el3) el3.textContent=sampleCRM.filter(c=>c.due>0).length;
-  const el4=document.getElementById('crm-top'); if(el4) { const top=sampleCRM.reduce((a,b)=>a.spent>b.spent?a:b,{name:'—'}); el4.textContent=top.name; }
-}
 
 // ─── RENDER FUNCTIONS ────────────────────────────────────────
 function renderSalesRows(rows){
-  // ── BUG 2 FIX: Auto-correct paid/due for Delivered + collected-method orders ──
-  // Cash / COD / bKash / Nagad delivered orders = money already in hand.
-  // Regardless of what was stored, paid must equal total+delivery and due must be 0.
-  const COLLECTED = ['cash','cod','bkash','nagad'];
-  rows = rows.map(r => {
-    if (String(r.status||'').trim() !== 'Delivered') return r;
-    const method = String(r.payment||'').toLowerCase().replace(/[\s-]/g,'');
-    if (!COLLECTED.includes(method)) return r;
-    const fullBill = Number(r.total||0) + Number(r.delivery||0);
-    return {...r, paid: fullBill, due: 0};
-  });
   document.getElementById('sales-body').innerHTML = rows.map(r=>`
     <tr>
       <td class="mono muted">${r.id}</td>
@@ -2828,96 +2643,6 @@ function _populateYearDropdown(currentYear) {
   sel.value = String(chartState.year);
 }
 
-// ─── BUILD DEMO CHART DATA ────────────────────────────────────
-// Builds a liveData-compatible object from sampleSales + sampleExpenses,
-// grouped by month. Revenue = Delivered orders only. Profit = Rev - Expenses.
-function buildDemoChartData() {
-  const MON_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const MONTHS_BACK = 6;
-
-  // Build rolling 6-month window keys (YYYY-MM format)
-  const now = new Date();
-  const months = [];
-  for (let m = MONTHS_BACK - 1; m >= 0; m--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - m, 1);
-    months.push({
-      key: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'),
-      label: MON_NAMES[d.getMonth()]
-    });
-  }
-
-  // Aggregate: Revenue from Delivered orders only, grouped by date
-  const revMap = {}, expMap = {};
-  months.forEach(mo => { revMap[mo.key] = 0; expMap[mo.key] = 0; });
-
-  sampleSales.forEach(r => {
-    if (String(r.status || '').trim() !== 'Delivered') return;
-    if (!r.date) return;
-    // Parse "19-May-2025" or "2025-05-19" format
-    let dt;
-    try {
-      const parts = String(r.date).split('-');
-      // dd-Mon-yyyy (e.g. "19-May-2025")
-      if (parts.length === 3 && isNaN(Number(parts[1]))) {
-        dt = new Date(parts[2] + '-' + parts[1] + '-' + parts[0].padStart(2,'0'));
-      } else {
-        dt = new Date(r.date);
-      }
-    } catch(e) { return; }
-    if (!dt || isNaN(dt.getTime())) return;
-    const key = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
-    if (revMap.hasOwnProperty(key)) revMap[key] += Number(r.total || 0);
-  });
-
-  sampleExpenses.forEach(r => {
-    if (!r.date) return;
-    let dt;
-    try {
-      const parts = String(r.date).split(' ')[0].split('-'); // strip time part
-      if (parts.length === 3 && isNaN(Number(parts[1]))) {
-        dt = new Date(parts[2] + '-' + parts[1] + '-' + parts[0].padStart(2,'0'));
-      } else {
-        dt = new Date(r.date);
-      }
-    } catch(e) { return; }
-    if (!dt || isNaN(dt.getTime())) return;
-    const key = dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0');
-    if (expMap.hasOwnProperty(key)) expMap[key] += Number(r.amount || 0);
-  });
-
-  const labels = [], revArr = [], profArr = [];
-  months.forEach(mo => {
-    labels.push(mo.label);
-    const r = revMap[mo.key] || 0;
-    const e = expMap[mo.key] || 0;
-    revArr.push(Math.round(r));
-    profArr.push(Math.round(Math.max(0, r - e)));
-  });
-
-  // Expense breakdown for the donut chart
-  const cats = ['Marketing / Ad Spend','Product Sourcing','Delivery Cost','Office & Utility','Staff / Labor','Other'];
-  const catTotals = {};
-  cats.forEach(c => { catTotals[c] = 0; });
-  sampleExpenses.forEach(r => {
-    const cat = String(r.cat || '').trim();
-    const amt = Number(r.amount || 0);
-    if (catTotals.hasOwnProperty(cat)) catTotals[cat] += amt;
-    else catTotals['Other'] += amt;
-  });
-  const grandTotal = cats.reduce((s,c) => s + catTotals[c], 0);
-  const expBreakdown = cats
-    .map(c => ({
-      name: c,
-      amount: Math.round(catTotals[c]),
-      pct: grandTotal > 0 ? Math.round((catTotals[c] / grandTotal) * 100) : 0
-    }))
-    .filter(c => c.amount > 0);
-
-  return {
-    monthlyChart: { labels, revenue: revArr, profit: profArr },
-    expBreakdown
-  };
-}
 
 // ─── MAIN DRAW FUNCTION ───────────────────────────────────────
 // drawChart(liveData) — renders both charts from live backend data.
@@ -3068,22 +2793,29 @@ async function loadLiveDashboard(){
   // Helper: set element text safely
   const setEl = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
 
-  // ── BUG 1 FIX: Net Profit — use COGS-aware value from backend (data.profit).
-  // The GAS backend now computes: profit = revenue − cogs − expenses.
-  // We also accept data.cogs separately if the backend sends it, for transparency.
+  // ── Bug Fix 1: Net Profit — always calculated as Revenue − Expenses ──
+  // data.profit from the backend can be 0 or wrong if the sheet formula
+  // references COGS cells that haven't been populated. Compute it here.
   const totalRevenue  = toFloat(data.revenue);
   const totalExpenses = toFloat(data.expenses);
-  const totalCOGS     = toFloat(data.cogs || 0);
-  // Prefer backend's pre-calculated profit (includes COGS). Fallback: revenue−expenses.
-  const netProfit     = toFloat(data.profit) || (totalRevenue - totalCOGS - totalExpenses);
+  // BUG FIX 1: True Net Profit = Revenue - COGS - Expenses
+  // Backend (v21) now provides data.profit already computed with COGS.
+  // We use data.profit from backend directly (it includes COGS deduction).
+  // Fallback: if backend doesn't send cogs, recompute from data.cogs or use data.profit.
+  const totalCOGS     = toFloat(data.cogs);
+  const netProfit     = totalCOGS > 0
+    ? (totalRevenue - totalCOGS - totalExpenses)
+    : toFloat(data.profit) || (totalRevenue - totalExpenses);
 
-  // ── Standard KPI cards ──
+  // ── Bug Fix 3: Standard cards — all values coerced via toFloat / Number() ──
   setEl('kpi-revenue',   fmt(totalRevenue));
-  setEl('kpi-profit',    fmt(netProfit));           // BUG 1 FIX: COGS-aware profit
+  setEl('kpi-profit',    fmt(netProfit));           // Bug Fix 1: use computed value
   setEl('kpi-expense',   fmt(totalExpenses));
-  setEl('kpi-due',       fmt(data.due));            // BUG 2 FIX: backend already excludes collected-method due
-  setEl('kpi-pending',   String(Number(data.pending)   || 0));
-  setEl('kpi-delivered', String(Number(data.delivered) || 0));
+  // BUG FIX 2: data.due from backend is already corrected:
+  // Delivered Cash/COD/bKash/Nagad orders have due=0 (cash collected).
+  setEl('kpi-due',       fmt(data.due));
+  setEl('kpi-pending',   String(Number(data.pending)   || 0));   // Bug Fix 3: coerce to Number
+  setEl('kpi-delivered', String(Number(data.delivered) || 0));   // Bug Fix 3: coerce to Number
   setEl('kpi-capital',   fmt(data.capital));
   setEl('kpi-stock',     String(Number(data.stock) || 0));
 
@@ -3292,30 +3024,20 @@ async function loadLiveExpenses(){
     String(firstRow[2]||'').toLowerCase().includes('cat')
   );
   const rowsToProcess = isHeader ? rawRows.slice(1) : rawRows;
-  // ── BUG 3 FIX: Google Sheets can return formatted strings like "৳8,000" or
-  // "#VALUE!" when currency formatting is applied to the Amount column.
-  // Number("৳8,000") = NaN → 0, causing every non-Marketing row to show ৳0.
-  // safeAmt() strips all non-numeric chars (৳ , spaces) before parsing.
-  const safeAmt = (v) => {
-    if (v === null || v === undefined || v === '') return 0;
-    if (typeof v === 'number') return v;
-    const cleaned = String(v).replace(/[^\d.-]/g, '');
-    const parsed  = parseFloat(cleaned);
-    return isNaN(parsed) ? 0 : parsed;
-  };
-
   const rows = rowsToProcess.map((r,i)=>({
     id: r[0]||i+1,
+    // Format raw date into BD local readable format
     date: formatBDDate(r[1]),
     rawDate: String(r[1]||''),
     cat: String(r[2]||''),
     desc: String(r[3]||''),
-    amount: safeAmt(r[4]),   // BUG 3 FIX: use safeAmt instead of Number()
+    // BUG FIX 3: Coerce amount from sheet (col E = index 4) - handles string/null
+    amount: Number(String(r[4]||'0').replace(/[,৳]/g,''))||0,
     payment: String(r[5]||''),
     vendor: String(r[6]||''),
     invoice: String(r[7]||''),
     notes: String(r[8]||''),
-  })).filter(r=>r.cat && String(r.cat).trim() && safeAmt(r[4])>=0);
+  })).filter(r=>r.cat && String(r.cat).trim() && Number(r.amount)>=0);
   liveExpenseData = rows; // cache so filter works on live data
   renderExpenseRows(rows); updateExpenseCats(rows); showToast('Expenses loaded ✅','success');
 }
@@ -3349,8 +3071,29 @@ async function loadLivePartners(){
   renderPartnerTxns(rows); showToast('Partners loaded ✅','success');
 }
 async function loadLiveCRM(){
-  const data=await fetchFromAPI('crm'); if(!data||!data.data) return;
-  const rows=data.data.map((r,i)=>({id:i+1,name:r[0]||'',phone:r[1]||'',div:r[2]||'',dist:r[3]||'',orders:r[4]||0,spent:r[5]||0,due:r[6]||0,avg:r[7]||0,last:r[9]||'',type:r[8]||'Regular'}));
+  const data=await fetchFromAPI('crm');
+  let rows = [];
+  if(data && data.data && data.data.length > 0){
+    rows = data.data.map((r,i)=>({id:i+1,name:r[0]||'',phone:r[1]||'',div:r[2]||'',dist:r[3]||'',orders:Number(r[4])||0,spent:Number(r[5])||0,due:Number(r[6])||0,avg:Number(r[7])||0,last:r[9]||'',type:r[8]||'Regular'}));
+  } else if(liveSalesData && liveSalesData.length > 0){
+    // Fallback: build CRM from live sales data in JS (no Sheet formula needed)
+    const crmMap = {};
+    liveSalesData.forEach(r=>{
+      const key = r.phone || r.customer;
+      if(!key) return;
+      if(!crmMap[key]) crmMap[key]={name:r.customer,phone:r.phone,div:r.div,dist:r.dist,orders:0,spent:0,due:0,last:r.date};
+      crmMap[key].orders++;
+      crmMap[key].spent += Number(r.total||0);
+      crmMap[key].due   += Number(r.due||0);
+      if(r.date > crmMap[key].last) crmMap[key].last = r.date;
+    });
+    rows = Object.values(crmMap).map((c,i)=>({
+      ...c, id:i+1,
+      avg: c.orders>0 ? Math.round(c.spent/c.orders) : 0,
+      type: c.orders>=3 ? '🔄 Repeat' : '👤 Regular'
+    })).sort((a,b)=>b.spent-a.spent);
+  }
+  if(!rows.length){ document.getElementById('crm-body').innerHTML='<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text3);">কোনো Customer data নেই</td></tr>'; return; }
   renderCRMRows(rows);
   const el1=document.getElementById('crm-total'); if(el1) el1.textContent=rows.length;
   const el2=document.getElementById('crm-repeat'); if(el2) el2.textContent=rows.filter(c=>String(c.type).includes('Repeat')).length;
@@ -3455,68 +3198,9 @@ async function submitOrder(){
     showToast(currentEditOrderId?'✅ Order updated!':'✅ Order saved!','success');
     setTimeout(()=>{ loadLiveSales(); loadLiveDashboard(); loadLiveInventory(); },1500);
   } else {
-    // Demo mode — save locally with correct BD time
-    const nowDate = bdDate();
-    const nowTime = bdTime();
-    const qty = Number(payload.qty)||1;
-    const price = Number(payload.price)||0;
-    const paid = Number(payload.paid)||0;
-    const delivery = Number(payload.delivery)||0;
-    const total = price * qty;
-    const due = Math.max(0, total + delivery - paid);
-
-    if(currentEditOrderId){
-      const idx = sampleSales.findIndex(r=>String(r.id)===String(currentEditOrderId));
-      if(idx>=0){
-        sampleSales[idx]={...sampleSales[idx],
-          customer:payload.customer, phone:payload.phone,
-          div:payload.division, dist:payload.district, thana:payload.thana,
-          address:payload.address, product:payload.product,
-          qty, price, total, paid, due, delivery,
-          status:payload.status, payment:payload.payment,
-          courier:payload.courier, tracking:payload.tracking, notes:payload.notes
-        };
-      }
-      showToast('✅ Order updated! (demo mode)','success');
-    } else {
-      const newId = String(sampleSales.length + 1).padStart(3,'0');
-      sampleSales.unshift({
-        id:newId, date:nowDate, time:nowTime,
-        customer:payload.customer, phone:payload.phone,
-        div:payload.division, dist:payload.district, thana:payload.thana,
-        address:payload.address, product:payload.product,
-        qty, price, total, paid, due, delivery,
-        status:payload.status||'Pending', payment:payload.payment||'Cash',
-        courier:payload.courier||'', tracking:payload.tracking||'', notes:payload.notes||''
-      });
-      // Fix Bug 6: Decrement inventory current stock
-      const invIdx = sampleInventory.findIndex(p=>p.name===payload.product||p.id===payload.product);
-      if(invIdx>=0){
-        sampleInventory[invIdx].sold = (sampleInventory[invIdx].sold||0) + qty;
-        sampleInventory[invIdx].current = Math.max(0,(sampleInventory[invIdx].current||0) - qty);
-      }
-      // Update CRM
-      const crmIdx = sampleCRM.findIndex(c=>c.phone===payload.phone||c.name===payload.customer);
-      if(crmIdx>=0){
-        sampleCRM[crmIdx].orders = (sampleCRM[crmIdx].orders||0) + 1;
-        sampleCRM[crmIdx].spent = (sampleCRM[crmIdx].spent||0) + total;
-        sampleCRM[crmIdx].due = (sampleCRM[crmIdx].due||0) + due;
-        sampleCRM[crmIdx].last = nowDate;
-        sampleCRM[crmIdx].avg = Math.round(sampleCRM[crmIdx].spent / sampleCRM[crmIdx].orders);
-      } else {
-        sampleCRM.unshift({id:sampleCRM.length+1,name:payload.customer,phone:payload.phone,
-          div:payload.division,dist:payload.district,orders:1,spent:total,due,avg:total,last:nowDate,type:'New'});
-      }
-      showToast('✅ Order saved! (demo mode)','success');
-    }
-    renderSalesRows(sampleSales);
-    document.getElementById('sales-count').textContent = sampleSales.length + ' records (demo)';
-    renderInventoryData(sampleInventory);
-    renderCRMRows(sampleCRM);
-    populateDashboardDemo();
-    updatePendingBadge(sampleSales);
+    showToast('Google Sheets connect হয়নি — API URL চেক করুন', 'error');
   }
-}
+
 
 function openEditOrder(r){
   currentEditOrderId=r.id;
@@ -3584,11 +3268,7 @@ async function submitProduct(){
     showToast('✅ Product Google Sheets এ save হয়েছে!','success');
     setTimeout(loadLiveInventory,1500);
   } else {
-    // Demo mode — add locally
-    const newProd={id:payload.id,name:payload.name,cat:payload.category,cost:Number(payload.cost)||0,sell:Number(payload.sell)||0,opening:Number(payload.opening)||0,in:Number(payload.stockIn)||0,sold:0,current:Number(payload.opening)+Number(payload.stockIn)||0,alert:Number(payload.alert)||5,supplier:payload.supplier};
-    sampleInventory.push(newProd);
-    renderInventoryData(sampleInventory);
-    showToast('Product added (demo mode)','info');
+    showToast('Product save হয়নি — API URL চেক করুন', 'error');
   }
 }
 
@@ -3626,10 +3306,7 @@ async function updateProduct(){
     showToast('✅ Product updated!','success');
     setTimeout(loadLiveInventory,1500);
   } else {
-    // Demo mode update
-    const idx=sampleInventory.findIndex(p=>p.id===currentEditProductId);
-    if(idx>=0){ sampleInventory[idx]={...sampleInventory[idx],name:payload.name,cat:payload.category,cost:Number(payload.cost),sell:Number(payload.sell),opening:Number(payload.opening),in:Number(payload.stockIn),alert:Number(payload.alert),supplier:payload.supplier}; renderInventoryData(sampleInventory); }
-    showToast('Updated (demo mode)','info');
+    showToast('Product update হয়নি — API URL চেক করুন','error');
   }
 }
 
@@ -3645,6 +3322,7 @@ function openEditExpense(e){
   document.getElementById('eexp-invoice').value=e.invoice||'';
   document.getElementById('eexp-date').value=e.date||'';
   document.getElementById('eexp-desc').value=e.desc||'';
+  const notesEl=document.getElementById('eexp-notes'); if(notesEl) notesEl.value=e.notes||'';
   openModal('edit-expense');
 }
 
@@ -3676,21 +3354,19 @@ async function updateExpense(){
     showToast('✅ Expense updated!','success');
     setTimeout(loadLiveExpenses,1500);
   } else {
-    const idx=sampleExpenses.findIndex(e=>e.id===id);
-    if(idx>=0){ sampleExpenses[idx]={...sampleExpenses[idx],cat:cat,amount:Number(amt),payment:pay,vendor:vnd,invoice:inv,desc:desc}; renderExpenseRows(sampleExpenses); updateExpenseCats(sampleExpenses); }
-    showToast('Updated (demo mode)','info');
+    showToast('Expense update হয়নি — API URL চেক করুন','error');
   }
 }
 
 // Expense filter — always uses live data when connected, demo otherwise
 function filterExpenses(){
-  const monthSel=document.getElementById('exp-month-filter') || document.querySelector('#page-expense .filter-bar .filter-select:nth-child(2)');
-  const catSel=document.getElementById('exp-cat-filter') || document.querySelector('#page-expense .filter-bar .filter-select:nth-child(1)');
+  const monthSel=document.getElementById('exp-month-filter');
+  const catSel  =document.getElementById('exp-cat-filter');
   const month=monthSel?monthSel.value:'';
   const cat=catSel?catSel.value:'';
   const monthMap={'January':'Jan','February':'Feb','March':'Mar','April':'Apr','May':'May','June':'Jun','July':'Jul','August':'Aug','September':'Sep','October':'Oct','November':'Nov','December':'Dec'};
   // CRITICAL FIX: use live cached data when connected — never revert to demo
-  const source = (apiConnected && liveExpenseData.length > 0) ? liveExpenseData : sampleExpenses;
+  const source = liveExpenseData || [];
   let filtered=source.filter(e=>{
     const catMatch=!cat||cat==='All Categories'||String(e.cat||'')===cat;
     const mKey=monthMap[month]||'';
@@ -3739,9 +3415,7 @@ async function updatePartnerTxn(){
     showToast('✅ Transaction updated!','success');
     setTimeout(()=>{ loadLivePartners(); loadLiveDashboard(); },1500);
   } else {
-    const idx=samplePartner.findIndex(t=>t.id===id);
-    if(idx>=0){ samplePartner[idx]={...samplePartner[idx],partner:prt,type:typ,amount:Number(amt),method:mth,desc:desc}; renderPartnerSummary(samplePartner); renderPartnerTxns(samplePartner); }
-    showToast('Updated (demo mode)','info');
+    showToast('Transaction update হয়নি — API URL চেক করুন','error');
   }
 }
 
@@ -3753,9 +3427,7 @@ async function deleteTransaction(){
     showToast('✅ Transaction deleted!','success');
     setTimeout(()=>{ loadLivePartners(); loadLiveDashboard(); },1500);
   } else {
-    const idx=samplePartner.findIndex(t=>t.id===currentEditTxnId);
-    if(idx>=0){ samplePartner.splice(idx,1); renderPartnerSummary(samplePartner); renderPartnerTxns(samplePartner); }
-    showToast('Deleted (demo mode)','info');
+    showToast('Transaction delete হয়নি — API URL চেক করুন','error');
   }
 }
 
@@ -3771,12 +3443,9 @@ async function submitTransaction(){
   const ok=await postToAPI({action:'addTransaction',partner,type,amount:Number(amount),method,description:desc});
   if(ok){
     showToast('✅ Transaction saved!','success');
-    samplePartner.unshift({id:samplePartner.length+1,date:new Date().toLocaleDateString(),partner,type,amount:Number(amount),method,desc:desc||''});
     setTimeout(()=>{ loadLivePartners(); loadLiveDashboard(); },1500);
   } else {
-    samplePartner.unshift({id:samplePartner.length+1,date:new Date().toLocaleDateString(),partner,type,amount:Number(amount),method,desc:desc||''});
-    renderPartnerSummary(samplePartner); renderPartnerTxns(samplePartner);
-    showToast('Saved (demo mode)','info');
+    showToast('Transaction save হয়নি — API URL চেক করুন','error');
   }
 }
 
@@ -3792,12 +3461,9 @@ async function submitExpense(){
   const ok=await postToAPI({action:'addExpense',category,amount:Number(amount),method,vendor,invoice,description:desc,notes:desc});
   if(ok){
     showToast('✅ Expense saved!','success');
-    sampleExpenses.unshift({id:sampleExpenses.length+1,date:new Date().toLocaleDateString(),cat:category,desc:desc||category,amount:Number(amount),payment:method,vendor:vendor||'',invoice:invoice||''});
     setTimeout(loadLiveExpenses,1500);
   } else {
-    sampleExpenses.unshift({id:sampleExpenses.length+1,date:new Date().toLocaleDateString(),cat:category,desc:desc||category,amount:Number(amount),payment:method,vendor:vendor||'',invoice:invoice||''});
-    renderExpenseRows(sampleExpenses); updateExpenseCats(sampleExpenses);
-    showToast('Saved (demo mode)','info');
+    showToast('Expense save হয়নি — API URL চেক করুন','error');
   }
 }
 
@@ -3809,11 +3475,13 @@ function openModal(id){
   // Special setup for stock-in: populate product dropdown
   if(id==='stock-in'){
     const sel=document.getElementById('stockin-product');
-    const currentData=apiConnected? liveSalesData : sampleInventory;
-    // Use inventory data for product names
-    const invData=apiConnected? liveInventoryData : sampleInventory;
     sel.innerHTML='<option value="">— Product বেছে নিন —</option>';
-    invData.forEach(p=>{ const o=document.createElement('option'); o.value=p.id||p.name; o.textContent=p.name; sel.appendChild(o); });
+    if(liveInventoryData && liveInventoryData.length > 0){
+      liveInventoryData.forEach(p=>{ const o=document.createElement('option'); o.value=p.id||p.name; o.textContent=`${p.name} (Stock: ${p.current||0})`; sel.appendChild(o); });
+    } else {
+      sel.innerHTML='<option value="">⏳ Inventory load হয়নি — Inventory পেজে যান</option>';
+      showToast('Inventory data load করুন আগে — Inventory পেজে click করুন','info');
+    }
     if(sel.options.length<=1){
       // fallback: use known products
       ['Amanah Door Lock Pro','Amanah CCTV Kit','Amanah Alarm System','Amanah Smart Lock'].forEach(name=>{
@@ -3846,16 +3514,7 @@ async function submitStockIn(){
     showToast(`✅ ${product} — ${qty}টি Stock যোগ হয়েছে!`,'success');
     setTimeout(loadLiveInventory,1500);
   } else {
-    // Demo mode — update locally
-    const idx=sampleInventory.findIndex(p=>p.id===product||p.name===product);
-    if(idx>=0){
-      sampleInventory[idx].in=(sampleInventory[idx].in||0)+qty;
-      sampleInventory[idx].current=(sampleInventory[idx].current||0)+qty;
-      renderInventoryData(sampleInventory);
-      showToast(`✅ ${product} — ${qty}টি Stock যোগ হয়েছে! (demo mode)`,'success');
-    } else {
-      showToast('Product পাওয়া যায়নি','error');
-    }
+    showToast('Stock In save হয়নি — API URL চেক করুন','error');
   }
 }
 
@@ -3863,7 +3522,7 @@ async function submitStockIn(){
 function openViewCustomer(c){
   const body=document.getElementById('customer-detail-body');
   // Build orders list from live or demo sales
-  const allOrders=(apiConnected? liveSalesData : sampleSales).filter(r=>(r.phone||'')===(c.phone||'')||(r.customer||'')===(c.name||''));
+  const allOrders=liveSalesData.filter(r=>(r.phone||'')===(c.phone||'')||(r.customer||'')===(c.name||''));
   // BUG 3 & 5 FIX: Recalculate total due from orders including delivery charge
   // Due per order = (product total + delivery) - paid
   const recalcDue = allOrders.reduce((sum, o)=>{
@@ -4017,7 +3676,7 @@ function downloadCustomerCard(){
 }
 
 // ─── UPDATE PENDING BADGE FROM REAL DATA ─────────────────────
-function updatePendingBadge(rows){
+function updatePendingBadge(rows=[]){ rows = rows || [];
   // Filter empty rows first, then count pending/processing from real data only
   const validRows = rows.filter(r => r.customer && String(r.customer).trim());
   const pendingCount = validRows.filter(r=>{
@@ -4051,12 +3710,13 @@ function updatePendingBadge(rows){
 
 
 function filterSales(){
-  const selects=document.querySelectorAll('#page-sales .filter-bar .filter-select');
-  const statusF=selects[0]?.value||'', divF=selects[1]?.value||'', prodF=selects[2]?.value||'';
-  const searchF=(document.querySelector('#page-sales .filter-bar .filter-input')?.value||'').toLowerCase().trim();
-  const dateF=document.querySelector('#page-sales .filter-bar input[type="date"]')?.value||'';
+  const statusF=(document.getElementById('sales-status-filter')?.value)||'';
+  const divF   =(document.getElementById('sales-div-filter')?.value)||'';
+  const prodF  =(document.getElementById('sales-prod-filter')?.value)||'';
+  const searchF=(document.getElementById('sales-search-input')?.value||document.querySelector('#page-sales .filter-bar .filter-input')?.value||'').toLowerCase().trim();
+  const dateF  =(document.getElementById('sales-date-filter')?.value||document.querySelector('#page-sales .filter-bar input[type="date"]')?.value)||'';
   // Use live data if connected, otherwise sample data
-  const data=apiConnected? liveSalesData : sampleSales;
+  const data=liveSalesData;
   const filtered=data.filter(r=>{
     // SAFE: always stringify before comparison — Google Sheets may send numbers
     const rStatus=String(r.status||'');
@@ -4091,7 +3751,7 @@ let livePartnerData = [];
 function filterPartners(){
   const selects=document.querySelectorAll('#page-partner .filter-bar .filter-select');
   const partnerF=selects[0]?.value||'', typeF=selects[1]?.value||'';
-  const data=apiConnected? livePartnerData : samplePartner;
+  const data=livePartnerData || [];
   const filtered=data.filter(t=>
     (!partnerF||t.partner===partnerF)&&(!typeF||t.type===typeF)
   );
@@ -4130,7 +3790,7 @@ function exportToCSV(tableId,filename){
 
 // ─── GLOBAL SEARCH ───────────────────────────────────────────
 function globalSearch(q){
-  const data = apiConnected ? liveSalesData : sampleSales;
+  const data = liveSalesData || [];
   // If query is empty or cleared — reset to full list without navigating away
   if(!q || !q.trim()){
     const activePage = document.querySelector('.page.active');
@@ -4193,9 +3853,9 @@ function toggleNotifications(){
   notifPanelOpen = !notifPanelOpen;
   if(notifPanelOpen){
     // Build notifications from current data
-    const pendingOrders = (apiConnected? liveSalesData : sampleSales).filter(r=>String(r.status||'').toLowerCase()==='pending');
-    const lowStock = (apiConnected? liveInventoryData : sampleInventory).filter(p=>p.current<=p.alert);
-    const dueOrders = (apiConnected? liveSalesData : sampleSales).filter(r=>Number(r.due||0)>0);
+    const pendingOrders = liveSalesData.filter(r=>String(r.status||'').toLowerCase()==='pending');
+    const lowStock = liveInventoryData.filter(p=>p.current<=p.alert);
+    const dueOrders = liveSalesData.filter(r=>Number(r.due||0)>0);
     let html = '<div style="padding:12px 16px;border-bottom:1px solid var(--border);font-weight:700;font-size:13px;display:flex;justify-content:space-between;align-items:center;">🔔 Notifications<span onclick="toggleNotifications()" style="cursor:pointer;color:var(--text3);font-size:16px;">✕</span></div>';
     html += '<div style="display:flex;flex-direction:column;gap:0;">';
     if(pendingOrders.length>0) html += `<div style="padding:10px 16px;border-bottom:1px solid var(--border2);font-size:12px;"><span style="color:var(--orange);">📋</span> <strong>${pendingOrders.length} টি Pending</strong> অর্ডার আছে প্রসেস করার জন্য।</div>`;
@@ -4247,15 +3907,22 @@ document.addEventListener('DOMContentLoaded', ()=>{
 });
 
 // ─── WINDOW ONLOAD ───────────────────────────────────────────
+// ─── SHOW LOADING STATE (live mode only) ───────────────────────
+function showLoadingState() {
+  const lr = (cols, msg) => `<tr><td colspan="${cols}" style="text-align:center;padding:40px;color:var(--text3);">${msg}</td></tr>`;
+  const sb = document.getElementById('sales-body'); if(sb) sb.innerHTML = lr(19,'⏳ Google Sheets থেকে data load হচ্ছে...');
+  const ib = document.getElementById('inv-body');   if(ib) ib.innerHTML = lr(14,'⏳ Loading inventory...');
+  const ic = document.getElementById('inv-cards');  if(ic) ic.innerHTML = '';
+  const eb = document.getElementById('exp-body');   if(eb) eb.innerHTML = lr(10,'⏳ Loading expenses...');
+  const pb = document.getElementById('partner-body'); if(pb) pb.innerHTML = lr(9,'⏳ Loading partner transactions...');
+  updateExpenseCats([]);
+}
+
 window.onload = async function(){
   try {
-    // Demo data
-    populateSales(); populateInventory(); populateExpenses(); populatePartners(); populateCRM();
-    populateDashboardDemo();
-    // Update pending badge from demo data
-    updatePendingBadge(sampleSales);
-    // ── BUG FIX 5: Build real demo chart data from sampleSales + sampleExpenses ──
-    setTimeout(() => { drawChart(buildDemoChartData()); }, 100);
+    // Show loading states while live data loads
+    showLoadingState();
+    // Charts drawn from live data after connection
 
     // Refresh button (safe insert)
     try {
@@ -4281,7 +3948,8 @@ window.onload = async function(){
     });
 
     startClock();
-    showToast('InnoGix Business OS v9 loaded ✅','success');
+    _populateYearDropdown(new Date().getFullYear());
+    showToast('InnoGix Business OS v22 loaded ✅','success');
 
     // Google Sheets connection
     if(API_URL&&API_URL.includes('script.google.com')){
@@ -4295,15 +3963,12 @@ window.onload = async function(){
         },500);
         setInterval(()=>loadLiveDashboard(),60000);
       } else {
-        showToast('⚠️ Demo mode — Setup Guide থেকে URL যোগ করুন','info');
+        showToast('⚠️ Connection failed — Google Sheets URL চেক করুন','error');
         document.getElementById('conn-banner').classList.add('show');
       }
     } else {
-      setTimeout(()=>{
-        showToast('Demo mode চলছে — Google Sheets URL যোগ করুন','info');
-        const cb=document.getElementById('conn-banner');
-        if(cb) cb.classList.add('show');
-      },1500);
+      showToast('⚠️ API URL সেট করুন — Setup Guide দেখুন','info');
+      document.getElementById('conn-banner').classList.add('show');
     }
   } catch(err){
     console.error('onload error:', err);
@@ -4323,7 +3988,7 @@ window.onload = async function(){
 //             rgnDrillUp()               [one level at a time]
 //             rgnGoToLevel(n)            [breadcrumb jump: 0=div,1=dist]
 //
-// Data flow: reads liveSalesData (if API connected) or sampleSales (demo)
+// Data flow: reads liveSalesData exclusively (live mode only)
 // Field mapping:
 //   r.div   → Division string  (e.g. "Dhaka")
 //   r.dist  → District string  (e.g. "Gazipur")
@@ -4360,8 +4025,8 @@ const _rgn = {
 // ─── Data builder ────────────────────────────────────────────────
 function rgnBuildData() {
   const rows = (apiConnected && liveSalesData && liveSalesData.length)
-    ? liveSalesData
-    : sampleSales;
+    || [];
+
 
   const result = {};
 
