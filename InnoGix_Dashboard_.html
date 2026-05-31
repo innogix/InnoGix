@@ -2052,7 +2052,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyXG0FD6ee_QI96RtkNt47AQrECy8LVQmAn6HT_7MWnyMWEnk8jOv0PT1NnXvr5nbb1/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbyiQgCH0An7Uxy1-QAoSaNID1_lSh21fwWZb6zXSXxVVTaH5lnM1ez-ZZz7MvauBRcA/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -2247,14 +2247,26 @@ function safeNum(v) {
 // ─── PIN LOCK ────────────────────────────────────────────────
 const DEFAULT_PIN = '1234';
 let pinBuffer = '', isLocked = true, fromLock = false;
+// localStorage এর পরিবর্তে in-memory + localStorage (fallback)
+let _pinMemory = null;
 function getStoredPin() {
-  const stored = localStorage.getItem('innogix_pin');
-  // FIX 5: If no PIN saved (browser cleared), show gentle notice on lock screen
-  if(!stored){
+  if (_pinMemory) return _pinMemory;
+  try {
+    const stored = localStorage.getItem('innogix_pin');
+    if(!stored){
+      const noticeEl = document.getElementById('pin-default-notice');
+      if(noticeEl) noticeEl.style.display = 'block';
+    }
+    return stored || DEFAULT_PIN;
+  } catch(e) {
     const noticeEl = document.getElementById('pin-default-notice');
     if(noticeEl) noticeEl.style.display = 'block';
+    return _pinMemory || DEFAULT_PIN;
   }
-  return stored || DEFAULT_PIN;
+}
+function savePin(pin) {
+  _pinMemory = pin;
+  try { localStorage.setItem('innogix_pin', pin); } catch(e) {}
 }
 function pinPress(d) {
   if (pinBuffer.length >= 4) return;
@@ -2312,7 +2324,7 @@ function changePin() {
   if (!fromLock && currentEl.closest('.form-group').style.display !== 'none') {
     if (currentEl.value.trim() !== getStoredPin()) { errEl.textContent='❌ বর্তমান PIN ভুল'; return; }
   }
-  localStorage.setItem('innogix_pin', newPin);
+  savePin(newPin);
   closeModal('change-pin');
   currentEl.value=''; document.getElementById('cp-new').value=''; document.getElementById('cp-confirm').value='';
   currentEl.closest('.form-group').style.display=''; fromLock=false; errEl.textContent='';
@@ -2404,7 +2416,10 @@ function renderSalesRows(rows){
       <td class="mono muted" style="font-size:11px;">${r.tracking||'—'}</td>
       <td><span class="status ${(r.delStatus||'').toLowerCase().replace(/ /g,'')}">${r.delStatus||'Not Sent'}</span></td>
       <td class="muted" style="font-size:11px;max-width:120px;white-space:normal;">${r.notes||'—'}</td>
-      <td><button class="btn" style="padding:4px 10px;font-size:11px;" onclick='openEditOrder(${JSON.stringify(r)})'>✏️ Edit</button></td>
+      <td style="display:flex;gap:4px;">
+        <button class="btn" style="padding:4px 10px;font-size:11px;" onclick='openEditOrder(${JSON.stringify(r)})'>✏️ Edit</button>
+        <button class="btn" style="padding:4px 10px;font-size:11px;background:var(--red);color:#fff;border-color:var(--red);" onclick='deleteOrder(${JSON.stringify({id:r.id,customer:r.customer})})'>🗑️</button>
+      </td>
     </tr>`).join('');
 }
 
@@ -2477,6 +2492,7 @@ function renderInventoryData(rows){
       <td>${p.supplier||'—'}</td>
       <td>
         <button class="btn" style="padding:4px 10px;font-size:11px;" onclick='openEditProduct(${JSON.stringify(p)})'>✏️ Edit</button>
+        <button class="btn" style="padding:4px 8px;font-size:11px;background:var(--red);color:#fff;border-color:var(--red);" onclick='deleteProduct(${JSON.stringify({id:p.id,name:p.name})})'>🗑️</button>
       </td>
     </tr>`;
   }).join('');
@@ -2492,7 +2508,10 @@ function renderExpenseRows(rows){
       <td>${e.vendor||'—'}</td>
       <td class="mono muted">${e.invoice||'—'}</td>
       <td class="muted">${e.notes||'—'}</td>
-      <td><button class="btn" style="padding:4px 10px;font-size:11px;" onclick='openEditExpense(${JSON.stringify(e)})'>✏️ Edit</button></td>
+      <td style="display:flex;gap:4px;">
+        <button class="btn" style="padding:4px 10px;font-size:11px;" onclick='openEditExpense(${JSON.stringify(e)})'>✏️ Edit</button>
+        <button class="btn" style="padding:4px 10px;font-size:11px;background:var(--red);color:#fff;border-color:var(--red);" onclick='deleteExpense(${JSON.stringify({id:e.id,cat:e.cat})})'>🗑️</button>
+      </td>
     </tr>`).join('');
   // Update total
   const total = rows.reduce((s,e)=>s+Number(e.amount||0),0);
@@ -2529,7 +2548,8 @@ function renderPartnerSummary(txns){
   document.getElementById('partner-cards').innerHTML = partners.map(p=>{
     const inv = txns.filter(t=>t.partner===p.name&&t.type==='Investment').reduce((s,t)=>s+Number(t.amount||0),0);
     const drw = txns.filter(t=>t.partner===p.name&&t.type==='Drawings').reduce((s,t)=>s+Number(t.amount||0),0);
-    const bal = inv - drw;
+    const prf = txns.filter(t=>t.partner===p.name&&t.type==='Profit Share').reduce((s,t)=>s+Number(t.amount||0),0);
+    const bal = inv - drw + prf;
     return `<div class="partner-bal-card ${p.cls}">
       <div class="p-initial">${p.initial}</div>
       <div class="p-name" style="color:${p.color};">${p.name}</div>
@@ -2537,7 +2557,8 @@ function renderPartnerSummary(txns){
       <div class="p-stats">
         <div class="p-stat"><label>Invested</label><span style="color:var(--blue);">৳${inv.toLocaleString()}</span></div>
         <div class="p-stat"><label>Drawings</label><span style="color:var(--red);">৳${drw.toLocaleString()}</span></div>
-        <div class="p-stat"><label>Net Balance</label><span style="color:var(--green);">৳${bal.toLocaleString()}</span></div>
+        ${prf > 0 ? `<div class="p-stat"><label>Profit Share</label><span style="color:var(--orange);">৳${prf.toLocaleString()}</span></div>` : ''}
+        <div class="p-stat"><label>Net Balance</label><span style="color:${bal>=0?'var(--green)':'var(--red)'};">৳${Math.abs(bal).toLocaleString()}${bal<0?' ↓':''}</span></div>
       </div>
     </div>`;
   }).join('');
@@ -2571,6 +2592,7 @@ function renderPartnerTxns(rows){
       <td class="mono" style="color:${runColor};font-weight:700;">৳${Math.abs(runTotal).toLocaleString()}${runTotal<0?' ↓':''}</td>
       <td>
         <button class="btn" style="padding:4px 10px;font-size:11px;" onclick='openEditPartnerTxn(${JSON.stringify(t)})'>✏️ Edit</button>
+        <button class="btn" style="padding:4px 8px;font-size:11px;background:var(--red);color:#fff;border-color:var(--red);" onclick='deletePartnerTxn(${JSON.stringify({id:t.id,partner:t.partner})})'>🗑️</button>
       </td>
     </tr>`;
   }).join('');
@@ -2679,29 +2701,34 @@ function drawChart(liveData) {
     else sub.textContent = 'Last ' + months.length + ' months performance';
   }
 
-  const maxVal = Math.max(...revenue, ...profit, 1);
+  const maxVal = Math.max(...revenue, ...profit.map(Math.abs), 1);
+  const minVal = Math.min(...profit, 0); // negative profit support
   const chart  = document.getElementById('rev-chart');
   if (!chart) return;
 
   // Format helper: ৳1,23,000 style with exact amount always visible
   const fmtBar = n => {
     if (n === 0) return '';
-    if (n >= 100000) return '৳' + (n/100000).toFixed(1) + 'L';
-    if (n >= 1000)   return '৳' + (n/1000).toFixed(0) + 'k';
-    return '৳' + n;
+    const abs = Math.abs(n);
+    const sign = n < 0 ? '-' : '';
+    if (abs >= 100000) return sign + '৳' + (abs/100000).toFixed(1) + 'L';
+    if (abs >= 1000)   return sign + '৳' + (abs/1000).toFixed(0) + 'k';
+    return sign + '৳' + abs;
   };
 
-  // Bar height min 4px so zero-months still visible as a thin line
-  const pct = (v) => Math.max(v / maxVal * 100, v > 0 ? 2 : 0.5);
+  // Bar height — supports negative profit (shown in red below baseline)
+  const pct = (v) => Math.max(Math.abs(v) / maxVal * 100, Math.abs(v) > 0 ? 2 : 0.5);
 
   chart.innerHTML = months.map((m, i) => {
     const rv = revenue[i] || 0;
     const pf = profit[i]  || 0;
-    // Show amount label above bar; if bar is too small (<12%), show inside tooltip via title attr
     const rvLabel = fmtBar(rv);
     const pfLabel = fmtBar(pf);
     const rvH = pct(rv);
     const pfH = pct(pf);
+    const pfColor = pf >= 0 ? 'var(--gold)' : 'var(--red)';
+    const pfBorderRadius = pf >= 0 ? '3px 3px 0 0' : '0 0 3px 3px';
+    const pfTitle = pf >= 0 ? 'Profit' : 'Loss';
     return `
     <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:0;height:100%;justify-content:flex-end;min-width:0;">
       <div style="width:100%;display:flex;gap:2px;align-items:flex-end;height:160px;position:relative;">
@@ -2710,10 +2737,10 @@ function drawChart(liveData) {
           style="background:var(--green);opacity:.85;height:${rvH}%;flex:1;position:relative;border-radius:3px 3px 0 0;">
           ${rvH >= 14 ? `<span style="position:absolute;top:-17px;left:0;right:0;text-align:center;font-size:8px;color:var(--green);font-family:'IBM Plex Mono',monospace;white-space:nowrap;">${rvLabel}</span>` : ''}
         </div>
-        <!-- Profit bar -->
-        <div class="bar" title="Profit: ৳${pf.toLocaleString('en-BD')}"
-          style="background:var(--gold);height:${pfH}%;flex:1;position:relative;border-radius:3px 3px 0 0;">
-          ${pfH >= 14 ? `<span style="position:absolute;top:-17px;left:0;right:0;text-align:center;font-size:8px;color:var(--gold);font-family:'IBM Plex Mono',monospace;white-space:nowrap;">${pfLabel}</span>` : ''}
+        <!-- Profit/Loss bar -->
+        <div class="bar" title="${pfTitle}: ${fmtBar(pf)}"
+          style="background:${pfColor};height:${pfH}%;flex:1;position:relative;border-radius:${pfBorderRadius};">
+          ${pfH >= 14 ? `<span style="position:absolute;${pf>=0?'top:-17px':'bottom:-17px'};left:0;right:0;text-align:center;font-size:8px;color:${pfColor};font-family:'IBM Plex Mono',monospace;white-space:nowrap;">${pfLabel}</span>` : ''}
         </div>
       </div>
       <span style="font-size:9px;color:var(--text3);margin-top:3px;white-space:nowrap;">${m}</span>
@@ -3178,8 +3205,16 @@ async function submitOrder(){
   const payload={
     action: currentEditOrderId ? 'updateOrder' : 'addOrder',
     orderId: currentEditOrderId||null,
-    // BUG 2 FIX: send full ISO timestamp so Apps Script saves exact BD time
-    timestamp: new Date().toISOString(),
+    // BD local time সরাসরি string আকারে পাঠাও (UTC toISOString এড়িয়ে চলো)
+    timestamp: (()=>{
+      const d=new Date();
+      const opts={timeZone:'Asia/Dhaka'};
+      const day=new Intl.DateTimeFormat('en-GB',{...opts,day:'2-digit'}).format(d);
+      const mon=new Intl.DateTimeFormat('en-GB',{...opts,month:'short'}).format(d);
+      const yr=new Intl.DateTimeFormat('en-GB',{...opts,year:'numeric'}).format(d);
+      const hr=new Intl.DateTimeFormat('en-GB',{...opts,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(d);
+      return day+'-'+mon+'-'+yr+' '+hr;
+    })(),
     customer: m.querySelector('#order-customer').value,
     phone: m.querySelector('#order-phone').value,
     division: m.querySelector('#order-division').value,
@@ -3206,7 +3241,54 @@ async function submitOrder(){
   } else {
     showToast('Google Sheets connect হয়নি — API URL চেক করুন', 'error');
   }
+}
 
+
+// ─── DELETE FUNCTIONS ────────────────────────────────────────────────
+
+async function deleteOrder(info) {
+  if (!confirm('⚠️ Order #' + info.id + ' (' + info.customer + ') ডিলিট করবেন?\nএই কাজ undo করা যাবে না।')) return;
+  const ok = await postToAPI({action:'deleteOrder', orderId: String(info.id)});
+  if (ok) {
+    showToast('✅ Order #' + info.id + ' ডিলিট হয়েছে', 'success');
+    setTimeout(() => { loadLiveSales(); loadLiveDashboard(); loadLiveInventory(); }, 1000);
+  } else {
+    showToast('❌ ডিলিট হয়নি — আবার চেষ্টা করুন', 'error');
+  }
+}
+
+async function deleteExpense(info) {
+  if (!confirm('⚠️ Expense #' + info.id + ' (' + info.cat + ') ডিলিট করবেন?\nএই কাজ undo করা যাবে না।')) return;
+  const ok = await postToAPI({action:'deleteExpense', expId: String(info.id)});
+  if (ok) {
+    showToast('✅ Expense #' + info.id + ' ডিলিট হয়েছে', 'success');
+    setTimeout(() => { loadLiveExpenses(); loadLiveDashboard(); }, 1000);
+  } else {
+    showToast('❌ ডিলিট হয়নি — আবার চেষ্টা করুন', 'error');
+  }
+}
+
+async function deleteProduct(info) {
+  if (!confirm('⚠️ Product "' + info.name + '" (' + info.id + ') ডিলিট করবেন?\nএই কাজ undo করা যাবে না।')) return;
+  const ok = await postToAPI({action:'deleteProduct', productId: String(info.id)});
+  if (ok) {
+    showToast('✅ Product ' + info.id + ' ডিলিট হয়েছে', 'success');
+    setTimeout(() => { loadLiveInventory(); loadLiveDashboard(); }, 1000);
+  } else {
+    showToast('❌ ডিলিট হয়নি — আবার চেষ্টা করুন', 'error');
+  }
+}
+
+async function deletePartnerTxn(info) {
+  if (!confirm('⚠️ ' + info.partner + '-এর Transaction #' + info.id + ' ডিলিট করবেন?\nএই কাজ undo করা যাবে না।')) return;
+  const ok = await postToAPI({action:'deleteTransaction', txnId: String(info.id)});
+  if (ok) {
+    showToast('✅ Transaction #' + info.id + ' ডিলিট হয়েছে', 'success');
+    setTimeout(() => { loadLivePartners(); }, 1000);
+  } else {
+    showToast('❌ ডিলিট হয়নি — আবার চেষ্টা করুন', 'error');
+  }
+}
 
 function openEditOrder(r){
   currentEditOrderId=r.id;
