@@ -2289,7 +2289,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbxpD_shUzEMn4BfkGgx1956d9vjtdsNOYT2Cj1RWqPViwnuLP9qU8xFScJoQBFAY5A7fA/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbxqaQ_jDqsOq_t2rHPP2mc-rCNrUAq60HeJLkKMz4l_DMAeUh2BoGOtoJd2I1BheVLc/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -3141,8 +3141,7 @@ async function loadLiveDashboard(){
         setEl('kpi-top-region', topRegion || '—');
         setEl('kpi-top-region-sub', topCount + ' orders this month');
         // Bug 3 Fix: Top Region card clickable → filter sales by region
-        const card = document.getElementById('kpi-card-top-region');
-        if(card){ card.style.cursor='pointer'; card.onclick=()=>{ showPage('sales', null); setTimeout(()=>{ const divSel=document.getElementById('filter-division'); if(divSel){ divSel.value=topRegion; divSel.dispatchEvent(new Event('change')); } },500); }; }
+        // Top Region card-এ onclick="openTopRegionModal()" already set in HTML — no override needed
       } else {
         setEl('kpi-top-region', '—'); setEl('kpi-top-region-sub', 'No data');
       }
@@ -3231,7 +3230,16 @@ async function loadLiveSales(){
       thana:String(r[7]||''), address:String(r[8]||''),
       product:String(r[9]||''), qty:Number(r[10])||0,
       price:Number(r[11])||0, total:Number(r[12])||0,
-      paid:Number(r[13])||0, due:Number(r[14])||0, delivery:Number(r[15])||0,
+      paid:Number(r[13])||0,
+      // COD/Cash/bKash/Nagad Delivered হলে due=0 (GS-এর raw value ভুল হতে পারে)
+      due: (()=>{
+        const st  = String(r[16]||'').trim();
+        const pmt = String(r[17]||'').trim().toLowerCase();
+        const rawDue = Number(r[14])||0;
+        const isCollected = st==='Delivered' && (pmt==='cod'||pmt==='cash'||pmt==='bkash'||pmt==='nagad');
+        return isCollected ? 0 : rawDue;
+      })(),
+      delivery:Number(r[15])||0,
       status:String(r[16]||'Pending'), payment:String(r[17]||'Cash'),
       courier:String(r[18]||''), tracking:String(r[19]||''), delStatus:String(r[20]||'Not Sent'), notes:String(r[21]||''),
     };
@@ -3418,11 +3426,15 @@ async function loadLiveCRM(){
         };
       }
       crmMap[key].orders++;
-      const st = String(r.status||'').trim();
+      const st  = String(r.status||'').trim();
+      const pmt = String(r.payment||'').trim().toLowerCase();
       // শুধু valid order-এর জন্য spent ও due যোগ করো
       if(st !== 'Cancelled' && st !== 'Returned'){
         crmMap[key].spent += safeN(r.total);
-        crmMap[key].due   += safeN(r.due);
+        // COD/Cash/bKash/Nagad Delivered হলে due = 0 (টাকা collect হয়েছে)
+        const isCollectedOnDelivery = st === 'Delivered' &&
+          (pmt === 'cod' || pmt === 'cash' || pmt === 'bkash' || pmt === 'nagad');
+        crmMap[key].due += isCollectedOnDelivery ? 0 : safeN(r.due);
       }
       // সর্বশেষ order date
       const d = String(r.date||'').trim();
