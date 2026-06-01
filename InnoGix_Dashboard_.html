@@ -1073,6 +1073,7 @@ tbody td.muted{color:var(--text3);}
           <span class="table-count" id="sales-count">155 records</span>
           <div class="table-actions">
             <button class="btn primary" onclick="openModal('add-order')">+ New Order</button>
+            <button class="btn" style="background:rgba(88,166,255,0.15);border-color:rgba(88,166,255,0.4);color:#58a6ff;" onclick="openModal('import-csv')">📥 Import CSV</button>
             <button class="btn">⬇ Export</button>
             <button class="btn">🖨 Print</button>
           </div>
@@ -2211,6 +2212,83 @@ tbody td.muted{color:var(--text3);}
      TOP REGION MODAL — ISOLATED ADDITION
      Opened by openTopRegionModal(); closed by closeModal()
 ════════════════════════════════════════════════════════ -->
+
+<!-- ══ IMPORT CSV MODAL ══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-import-csv" onclick="if(event.target===this)closeModal('import-csv')">
+  <div class="modal" style="max-width:620px;">
+    <div class="modal-head">
+      <span class="modal-title">📥 CSV Import — Order List</span>
+      <button class="modal-close" onclick="closeModal('import-csv')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px;">
+
+      <!-- Instructions -->
+      <div style="background:rgba(88,166,255,0.08);border:1px solid rgba(88,166,255,0.3);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.8;color:var(--text2);">
+        <strong style="color:#58a6ff;">📋 CSV Format নির্দেশনা:</strong><br>
+        আপনার CSV-এ নিচের column গুলো থাকলেই হবে (যেকোনো order-এ):<br>
+        <span style="color:var(--text3);font-family:'IBM Plex Mono',monospace;font-size:11px;">
+        Customer, Phone, Division, District, Thana, Address, Product, Qty, Unit Price, Paid, Delivery, Status, Payment, Courier, Notes
+        </span><br>
+        <span style="color:var(--gold);">⚠️ Header row থাকা আবশ্যক। Currency symbol (৳ , ,) থাকলে auto-remove হবে।</span>
+      </div>
+
+      <!-- File Upload -->
+      <div id="imp-drop-zone" style="border:2px dashed var(--border);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:14px;"
+        onclick="document.getElementById('imp-file-input').click()"
+        ondragover="event.preventDefault();this.style.borderColor='var(--green)'"
+        ondragleave="this.style.borderColor='var(--border)'"
+        ondrop="impHandleDrop(event)">
+        <div style="font-size:32px;margin-bottom:8px;">📂</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text1);">CSV ফাইল এখানে drop করুন</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px;">অথবা click করে select করুন</div>
+        <input type="file" id="imp-file-input" accept=".csv,.txt" style="display:none" onchange="impReadFile(this.files[0])">
+      </div>
+
+      <!-- Preview Table -->
+      <div id="imp-preview-wrap" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div>
+            <span style="font-size:13px;font-weight:600;color:var(--text1);">Preview</span>
+            <span id="imp-preview-count" style="font-size:12px;color:var(--text3);margin-left:8px;"></span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span id="imp-error-count" style="font-size:12px;color:var(--red);"></span>
+            <button class="btn" style="padding:4px 12px;font-size:12px;" onclick="impReset()">🔄 Reset</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;max-height:240px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead id="imp-thead" style="position:sticky;top:0;background:var(--card-bg2);"></thead>
+            <tbody id="imp-tbody"></tbody>
+          </table>
+        </div>
+        <div id="imp-col-map-wrap" style="margin-top:14px;display:none;">
+          <div style="font-size:12px;font-weight:600;color:var(--gold);margin-bottom:8px;">⚙️ Column Mapping (auto-detected — প্রয়োজনে ঠিক করুন):</div>
+          <div id="imp-col-map" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div id="imp-progress-wrap" style="display:none;margin-bottom:14px;">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:8px;" id="imp-progress-text">Importing...</div>
+        <div style="background:var(--bg);border-radius:8px;height:8px;overflow:hidden;">
+          <div id="imp-progress-bar" style="height:100%;background:var(--green);width:0%;transition:width .3s;"></div>
+        </div>
+      </div>
+
+      <!-- Result -->
+      <div id="imp-result" style="display:none;padding:12px;border-radius:8px;font-size:13px;font-weight:600;text-align:center;"></div>
+
+    </div>
+    <div class="modal-footer" style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn" onclick="closeModal('import-csv')">বাতিল</button>
+      <button class="btn primary" id="imp-submit-btn" onclick="impSubmit()" style="display:none;">
+        📥 <span id="imp-submit-text">Import করুন</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-top-region">
   <div class="modal" style="max-width:860px;">
 
@@ -4449,8 +4527,8 @@ const _rgn = {
 
 // ─── Data builder ────────────────────────────────────────────────
 function rgnBuildData() {
-  const rows = (apiConnected && liveSalesData && liveSalesData.length)
-    || [];
+  const rows = (apiConnected && liveSalesData && liveSalesData.length > 0)
+    ? liveSalesData : [];
 
 
   const result = {};
@@ -4958,6 +5036,254 @@ function calcFallbackCopy(text, onSuccess) {
 // Init calculator on first load
 calcRun();
 // ─── END ORDER CALCULATOR ────────────────────────────────────────────
+
+// ─── CSV IMPORT ──────────────────────────────────────────────────────
+
+// Expected fields এবং সম্ভাব্য column name variants
+const IMP_FIELDS = {
+  customer: ['customer','customer name','name','কাস্টমার','নাম','ক্রেতা'],
+  phone:    ['phone','mobile','contact','ফোন','মোবাইল','number','phone no','phone number'],
+  division: ['division','বিভাগ','div'],
+  district: ['district','জেলা','dist'],
+  thana:    ['thana','upazila','উপজেলা','থানা','thana/upazila'],
+  address:  ['address','ঠিকানা','addr'],
+  product:  ['product','পণ্য','item','product name'],
+  qty:      ['qty','quantity','পরিমাণ','পিস','pieces','count'],
+  price:    ['unit price','price','মূল্য','দাম','unit','rate'],
+  paid:     ['paid','পরিশোধ','advance','আগাম'],
+  delivery: ['delivery','delivery charge','ডেলিভারি','shipping'],
+  status:   ['status','অবস্থা','order status'],
+  payment:  ['payment','payment method','পেমেন্ট','method'],
+  courier:  ['courier','কুরিয়ার','courier service'],
+  notes:    ['notes','note','মন্তব্য','remarks'],
+};
+
+let impRawRows = [];
+let impHeaders = [];
+let impColMap  = {};
+let impParsed  = [];
+
+function impReset() {
+  impRawRows=[]; impHeaders=[]; impColMap={}; impParsed=[];
+  document.getElementById('imp-preview-wrap').style.display='none';
+  document.getElementById('imp-progress-wrap').style.display='none';
+  document.getElementById('imp-result').style.display='none';
+  document.getElementById('imp-submit-btn').style.display='none';
+  document.getElementById('imp-drop-zone').style.display='block';
+  document.getElementById('imp-file-input').value='';
+}
+
+function impHandleDrop(e) {
+  e.preventDefault();
+  document.getElementById('imp-drop-zone').style.borderColor='var(--border)';
+  const file = e.dataTransfer.files[0];
+  if(file) impReadFile(file);
+}
+
+function impReadFile(file) {
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = e.target.result;
+    impParseCSV(text);
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function impParseCSV(text) {
+  // BOM remove
+  text = text.replace(/^﻿/,'');
+  // Line split
+    const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim());
+  if(lines.length < 2){ showToast('CSV-এ কোনো data নেই','error'); return; }
+
+  // Parse function — handles quoted fields
+  function parseLine(line) {
+    const result = [];
+    let cur = '', inQ = false;
+    for(let i=0;i<line.length;i++){
+      const ch = line[i];
+      if(ch==='"'){ inQ=!inQ; continue; }
+      if(ch===','&&!inQ){ result.push(cur.trim()); cur=''; continue; }
+      cur += ch;
+    }
+    result.push(cur.trim());
+    return result;
+  }
+
+  impHeaders = parseLine(lines[0]).map(h=>h.replace(/[^a-zA-Z0-9ঀ-৿ ]/g,'').trim());
+  impRawRows = lines.slice(1).map(l=>parseLine(l));
+
+  // Auto-detect column mapping
+  impColMap = {};
+  Object.entries(IMP_FIELDS).forEach(([field, variants])=>{
+    for(let i=0;i<impHeaders.length;i++){
+      const h = impHeaders[i].toLowerCase().trim();
+      if(variants.some(v=>h.includes(v)||v.includes(h))){
+        impColMap[field] = i;
+        break;
+      }
+    }
+  });
+
+  impShowPreview();
+}
+
+function impCleanNum(v) {
+  const s = String(v||'').replace(/[৳,\s]/g,'').replace(/[^0-9.-]/g,'');
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+
+function impShowPreview() {
+  document.getElementById('imp-drop-zone').style.display='none';
+  document.getElementById('imp-preview-wrap').style.display='block';
+  document.getElementById('imp-submit-btn').style.display='inline-flex';
+
+  // Preview table header
+  const showCols = Math.min(impHeaders.length, 8);
+  document.getElementById('imp-thead').innerHTML =
+    '<tr>' + impHeaders.slice(0,showCols).map(h=>`<th style="padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;color:var(--gold);font-size:11px;">${h}</th>`).join('') + '</tr>';
+
+  // Preview rows (max 5)
+  const preview = impRawRows.slice(0,5);
+  document.getElementById('imp-tbody').innerHTML = preview.map(row=>
+    '<tr>' + row.slice(0,showCols).map(cell=>`<td style="padding:5px 10px;border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;">${cell||'—'}</td>`).join('') + '</tr>'
+  ).join('');
+
+  // Count
+  const total = impRawRows.filter(r=>r.some(c=>c.trim())).length;
+  document.getElementById('imp-preview-count').textContent = `${total}টি row পাওয়া গেছে`;
+  document.getElementById('imp-submit-text').textContent = `${total}টি Order Import করুন`;
+
+  // Column map UI
+  const mapWrap = document.getElementById('imp-col-map');
+  const requiredFields = ['customer','phone','product','qty','price'];
+  const missingRequired = requiredFields.filter(f=>impColMap[f]===undefined);
+
+  mapWrap.innerHTML = Object.entries(IMP_FIELDS).map(([field, variants])=>{
+    const idx = impColMap[field];
+    const isRequired = requiredFields.includes(field);
+    const color = idx!==undefined ? 'var(--green)' : (isRequired?'var(--red)':'var(--text3)');
+    return `<div style="display:flex;align-items:center;gap:6px;font-size:12px;">
+      <span style="color:${color};min-width:80px;">${field}${isRequired?'*':''}</span>
+      <select onchange="impColMap['${field}']=this.value===''?undefined:Number(this.value)"
+        style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text1);font-size:11px;">
+        <option value="">— নেই —</option>
+        ${impHeaders.map((h,i)=>`<option value="${i}" ${idx===i?'selected':''}>${h}</option>`).join('')}
+      </select>
+    </div>`;
+  }).join('');
+
+  document.getElementById('imp-col-map-wrap').style.display='block';
+
+  if(missingRequired.length > 0){
+    document.getElementById('imp-error-count').textContent = `⚠️ Required: ${missingRequired.join(', ')}`;
+  }
+}
+
+async function impSubmit() {
+  const rows = impRawRows.filter(r=>r.some(c=>String(c).trim()));
+  if(!rows.length){ showToast('কোনো data নেই','error'); return; }
+
+  // Required check
+  if(impColMap['customer']===undefined || impColMap['product']===undefined){
+    showToast('Customer ও Product column map করুন','error'); return;
+  }
+
+  document.getElementById('imp-submit-btn').disabled = true;
+  document.getElementById('imp-preview-wrap').style.display='none';
+  document.getElementById('imp-progress-wrap').style.display='block';
+
+  let success=0, failed=0;
+
+  for(let i=0;i<rows.length;i++){
+    const r = rows[i];
+    const get = (field) => {
+      const idx = impColMap[field];
+      return idx!==undefined ? String(r[idx]||'').trim() : '';
+    };
+
+    // BD local time
+    const now = new Date();
+    const bdTime = (()=>{
+      const d=now;
+      const opts={timeZone:'Asia/Dhaka'};
+      const day=new Intl.DateTimeFormat('en-GB',{...opts,day:'2-digit'}).format(d);
+      const mon=new Intl.DateTimeFormat('en-GB',{...opts,month:'short'}).format(d);
+      const yr =new Intl.DateTimeFormat('en-GB',{...opts,year:'numeric'}).format(d);
+      const hr =new Intl.DateTimeFormat('en-GB',{...opts,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(d);
+      return day+'-'+mon+'-'+yr+' '+hr;
+    })();
+
+    const qty      = impCleanNum(get('qty'))   || 1;
+    const price    = impCleanNum(get('price'))  || 0;
+    const paid     = impCleanNum(get('paid'))   || 0;
+    const delivery = impCleanNum(get('delivery'))|| 0;
+    const total    = qty * price;
+    const due      = Math.max(0, total + delivery - paid);
+
+    const payload = {
+      action:    'addOrder',
+      timestamp: bdTime,
+      customer:  get('customer') || 'Unknown',
+      phone:     get('phone'),
+      division:  get('division'),
+      district:  get('district'),
+      thana:     get('thana'),
+      address:   get('address'),
+      product:   get('product'),
+      qty:       qty,
+      price:     price,
+      paid:      paid,
+      delivery:  delivery,
+      status:    get('status')  || 'Pending',
+      payment:   get('payment') || 'COD',
+      courier:   get('courier') || '',
+      notes:     get('notes')   || '',
+    };
+
+    try {
+      const ok = await postToAPI(payload);
+      if(ok) success++; else failed++;
+    } catch(e){ failed++; }
+
+    // Progress update
+    const pct = Math.round(((i+1)/rows.length)*100);
+    document.getElementById('imp-progress-bar').style.width = pct+'%';
+    document.getElementById('imp-progress-text').textContent = `Importing... ${i+1}/${rows.length} (${pct}%)`;
+
+    // Rate limit — একটু delay দাও
+    await new Promise(r=>setTimeout(r,300));
+  }
+
+  // Done
+  document.getElementById('imp-progress-wrap').style.display='none';
+  const res = document.getElementById('imp-result');
+  res.style.display='block';
+  if(failed===0){
+    res.style.background='rgba(34,201,122,0.1)';
+    res.style.border='1px solid rgba(34,201,122,0.3)';
+    res.style.color='var(--green)';
+    res.textContent = `✅ ${success}টি order সফলভাবে import হয়েছে!`;
+    // Refresh all
+    setTimeout(()=>{
+      closeModal('import-csv');
+      impReset();
+      loadLiveSales().then(()=>{ loadLiveCRM(); });
+      loadLiveDashboard();
+      loadLiveInventory();
+      showToast(`✅ ${success}টি order import সম্পন্ন!`,'success');
+    }, 2000);
+  } else {
+    res.style.background='rgba(248,81,73,0.1)';
+    res.style.border='1px solid rgba(248,81,73,0.3)';
+    res.style.color='var(--red)';
+    res.textContent = `✅ ${success}টি সফল | ❌ ${failed}টি failed`;
+    document.getElementById('imp-submit-btn').disabled=false;
+  }
+}
+// ─── END CSV IMPORT ──────────────────────────────────────────────────
 </script>
 </body>
 </html>
