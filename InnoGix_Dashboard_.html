@@ -2367,7 +2367,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzYaMJYEC086v3-w0ZXd2npZRrehvlj70VYHuxucX8ldh7xxEpqLcJ0eV_d7L45-tQKcw/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbx1m9CAv2v9qHgB30ozCuWYkUsfdyCDwZ6dfqZL0AxX2mSUdLZVCkzM7wJxpNNopIU/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -3491,15 +3491,8 @@ async function loadLiveCRM(){
   if(salesSource && salesSource.length > 0){
     const crmMap = {};
     salesSource.forEach(r => {
-      const rawPhone = String(r.phone||'').trim().replace(/[^0-9+]/g,'');
-      const rawName  = String(r.customer||'').trim().toUpperCase();
-      // FIX v24: Smarter key — phone normalize করো (leading 0 / +88 দিয়ে same নম্বর)
-      // 01711... এবং +8801711... এবং 8801711... একই key হবে
-      let phoneKey = rawPhone;
-      if(phoneKey.startsWith('+88')) phoneKey = phoneKey.slice(3);
-      if(phoneKey.startsWith('88') && phoneKey.length === 13) phoneKey = phoneKey.slice(2);
-      // key: phone থাকলে phone, না থাকলে name
-      const key = phoneKey || rawName;
+      // Cancelled/Returned বাদ দাও spent থেকে, কিন্তু customer record রাখো
+      const key = (String(r.phone||'').trim()) || (String(r.customer||'').trim().toUpperCase());
       if(!key) return;
       if(!crmMap[key]){
         crmMap[key] = {
@@ -4459,7 +4452,7 @@ window.onload = async function(){
 
     startClock();
     _populateYearDropdown(new Date().getFullYear());
-    showToast('InnoGix Business OS v24 loaded ✅','success');
+    showToast('InnoGix Business OS v22 loaded ✅','success');
 
     // Google Sheets connection
     if(API_URL&&API_URL.includes('script.google.com')){
@@ -5047,26 +5040,21 @@ calcRun();
 // ─── CSV IMPORT ──────────────────────────────────────────────────────
 
 // Expected fields এবং সম্ভাব্য column name variants
-// FIX v24: date, time, tracking, delStatus field যোগ করা হয়েছে
 const IMP_FIELDS = {
-  date:     ['date','তারিখ','order date','date of order'],
-  time:     ['time','সময়','order time'],
   customer: ['customer','customer name','name','কাস্টমার','নাম','ক্রেতা'],
-  phone:    ['phone','mobile','contact','ফোন','মোবাইল','phone no','phone number'],
+  phone:    ['phone','mobile','contact','ফোন','মোবাইল','number','phone no','phone number'],
   division: ['division','বিভাগ','div'],
   district: ['district','জেলা','dist'],
   thana:    ['thana','upazila','উপজেলা','থানা','thana/upazila'],
   address:  ['address','ঠিকানা','addr'],
   product:  ['product','পণ্য','item','product name'],
   qty:      ['qty','quantity','পরিমাণ','পিস','pieces','count'],
-  price:    ['unit price','price','মূল্য','দাম','rate'],
+  price:    ['unit price','price','মূল্য','দাম','unit','rate'],
   paid:     ['paid','পরিশোধ','advance','আগাম'],
-  delivery: ['delivery charge','delivery','ডেলিভারি','shipping'],
-  status:   ['order status','status','অবস্থা'],
-  payment:  ['payment method','payment','পেমেন্ট','method'],
+  delivery: ['delivery','delivery charge','ডেলিভারি','shipping'],
+  status:   ['status','অবস্থা','order status'],
+  payment:  ['payment','payment method','পেমেন্ট','method'],
   courier:  ['courier','কুরিয়ার','courier service'],
-  tracking: ['tracking no','tracking','ট্র্যাকিং','tracking number','track'],
-  delstatus:['delivery status','del status','delstatus','ডেলিভারি স্ট্যাটাস'],
   notes:    ['notes','note','মন্তব্য','remarks'],
 };
 
@@ -5104,12 +5092,12 @@ function impReadFile(file) {
 
 function impParseCSV(text) {
   // BOM remove
-  text = text.replace(/^\uFEFF/,'').replace(/^﻿/,'');
+  text = text.replace(/^﻿/,'');
   // Line split
-  const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim());
+    const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim());
   if(lines.length < 2){ showToast('CSV-এ কোনো data নেই','error'); return; }
 
-  // Parse function — handles quoted fields properly
+  // Parse function — handles quoted fields
   function parseLine(line) {
     const result = [];
     let cur = '', inQ = false;
@@ -5123,49 +5111,26 @@ function impParseCSV(text) {
     return result;
   }
 
-  // FIX v24: header cleanup — শুধু leading/trailing whitespace ও quotes বাদ দাও
-  // আগের regex /[^a-zA-Z0-9ঀ-৿ ]/g # চিহ্ন সহ অনেক কিছু বাদ দিত — ঠিক করা হয়েছে
-  impHeaders = parseLine(lines[0]).map(h => h.replace(/^["'\s]+|["'\s]+$/g,'').trim());
+  impHeaders = parseLine(lines[0]).map(h=>h.replace(/[^a-zA-Z0-9ঀ-৿ ]/g,'').trim());
   impRawRows = lines.slice(1).map(l=>parseLine(l));
 
-  // FIX v24: Improved column matching — false positive বন্ধ করা হয়েছে
-  // Priority: exact match > startsWith > word-boundary contains
-  // 'unit' যেন 'unit price' এর সাথে match না করে ভুলে
+  // Auto-detect column mapping
   impColMap = {};
   Object.entries(IMP_FIELDS).forEach(([field, variants])=>{
-    let found = -1;
-    const headers = impHeaders.map(h => h.toLowerCase().trim());
-
-    // Pass 1: exact match
-    if(found < 0){
-      for(let i=0;i<headers.length;i++){
-        if(variants.some(v => v === headers[i])){ found=i; break; }
+    for(let i=0;i<impHeaders.length;i++){
+      const h = impHeaders[i].toLowerCase().trim();
+      if(variants.some(v=>h.includes(v)||v.includes(h))){
+        impColMap[field] = i;
+        break;
       }
     }
-    // Pass 2: header starts with variant (e.g. "unit price" starts with "unit price")
-    if(found < 0){
-      for(let i=0;i<headers.length;i++){
-        if(variants.some(v => headers[i].startsWith(v) || v.startsWith(headers[i]))){ found=i; break; }
-      }
-    }
-    // Pass 3: variant is a substring of header (only if variant >= 5 chars to avoid short false matches)
-    if(found < 0){
-      for(let i=0;i<headers.length;i++){
-        if(variants.some(v => v.length >= 5 && headers[i].includes(v))){ found=i; break; }
-      }
-    }
-    if(found >= 0) impColMap[field] = found;
   });
 
   impShowPreview();
 }
 
 function impCleanNum(v) {
-  // FIX v24: Bengali numeral support — ০১২৩ → 0123
-  let s = String(v||'')
-    .replace(/[০১২৩৪৫৬৭৮৯]/g, d => '০১২৩৪৫৬৭৮৯'.indexOf(d))
-    .replace(/[৳,\s]/g,'')
-    .replace(/[^0-9.-]/g,'');
+  const s = String(v||'').replace(/[৳,\s]/g,'').replace(/[^0-9.-]/g,'');
   const n = parseFloat(s);
   return isNaN(n) ? 0 : n;
 }
@@ -5232,44 +5197,6 @@ async function impSubmit() {
 
   let success=0, failed=0;
 
-  // FIX v24: Current BD time — fallback হিসেবে ব্যবহার হবে যদি CSV-এ date না থাকে
-  function getBDTimeNow() {
-    const d = new Date();
-    const opts = {timeZone:'Asia/Dhaka'};
-    const day = new Intl.DateTimeFormat('en-GB',{...opts,day:'2-digit'}).format(d);
-    const mon = new Intl.DateTimeFormat('en-GB',{...opts,month:'short'}).format(d);
-    const yr  = new Intl.DateTimeFormat('en-GB',{...opts,year:'numeric'}).format(d);
-    const hr  = new Intl.DateTimeFormat('en-GB',{...opts,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(d);
-    return day+'-'+mon+'-'+yr+' '+hr;
-  }
-
-  // FIX v24: CSV-এর date parse করো — dd-Mon-yyyy বা dd/mm/yyyy বা yyyy-mm-dd সব support
-  function parseDateFromCSV(raw) {
-    if(!raw || !raw.trim()) return '';
-    const s = raw.trim();
-    // Already in dd-Mon-yyyy format (e.g. 31-May-2026)
-    if(/^\d{1,2}-[A-Za-z]{3}-\d{4}$/.test(s)) return s;
-    // dd/mm/yyyy
-    const m1 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if(m1) {
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      return String(m1[1]).padStart(2,'0')+'-'+months[parseInt(m1[2])-1]+'-'+m1[3];
-    }
-    // yyyy-mm-dd
-    const m2 = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-    if(m2) {
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      return String(m2[3]).padStart(2,'0')+'-'+months[parseInt(m2[2])-1]+'-'+m2[1];
-    }
-    // dd-mm-yyyy
-    const m3 = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
-    if(m3) {
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      return String(m3[1]).padStart(2,'0')+'-'+months[parseInt(m3[2])-1]+'-'+m3[3];
-    }
-    return s; // যেভাবে আছে সেভাবে পাঠাও
-  }
-
   for(let i=0;i<rows.length;i++){
     const r = rows[i];
     const get = (field) => {
@@ -5277,20 +5204,28 @@ async function impSubmit() {
       return idx!==undefined ? String(r[idx]||'').trim() : '';
     };
 
-    // FIX v24: CSV-এর original date/time preserve করো
-    const csvDate = parseDateFromCSV(get('date'));
-    const csvTime = get('time') || '00:00:00';
-    // timestamp = CSV date থাকলে সেটা, না থাকলে এখনকার BD time
-    const timestamp = csvDate ? (csvDate + ' ' + csvTime) : getBDTimeNow();
+    // BD local time
+    const now = new Date();
+    const bdTime = (()=>{
+      const d=now;
+      const opts={timeZone:'Asia/Dhaka'};
+      const day=new Intl.DateTimeFormat('en-GB',{...opts,day:'2-digit'}).format(d);
+      const mon=new Intl.DateTimeFormat('en-GB',{...opts,month:'short'}).format(d);
+      const yr =new Intl.DateTimeFormat('en-GB',{...opts,year:'numeric'}).format(d);
+      const hr =new Intl.DateTimeFormat('en-GB',{...opts,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(d);
+      return day+'-'+mon+'-'+yr+' '+hr;
+    })();
 
-    const qty      = impCleanNum(get('qty'))    || 1;
-    const price    = impCleanNum(get('price'))   || 0;
-    const paid     = impCleanNum(get('paid'))    || 0;
+    const qty      = impCleanNum(get('qty'))   || 1;
+    const price    = impCleanNum(get('price'))  || 0;
+    const paid     = impCleanNum(get('paid'))   || 0;
     const delivery = impCleanNum(get('delivery'))|| 0;
+    const total    = qty * price;
+    const due      = Math.max(0, total + delivery - paid);
 
     const payload = {
       action:    'addOrder',
-      timestamp: timestamp,
+      timestamp: bdTime,
       customer:  get('customer') || 'Unknown',
       phone:     get('phone'),
       division:  get('division'),
@@ -5302,12 +5237,10 @@ async function impSubmit() {
       price:     price,
       paid:      paid,
       delivery:  delivery,
-      status:    get('status')    || 'Pending',
-      payment:   get('payment')   || 'COD',
-      courier:   get('courier')   || '',
-      tracking:  get('tracking')  || '',       // FIX v24: tracking যোগ করা হয়েছে
-      delStatus: get('delstatus') || 'Not Sent', // FIX v24: delivery status যোগ করা হয়েছে
-      notes:     get('notes')     || '',
+      status:    get('status')  || 'Pending',
+      payment:   get('payment') || 'COD',
+      courier:   get('courier') || '',
+      notes:     get('notes')   || '',
     };
 
     try {
