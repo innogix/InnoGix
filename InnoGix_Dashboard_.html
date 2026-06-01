@@ -867,6 +867,7 @@ tbody td.muted{color:var(--text3);}
   <div class="nav-item" onclick="showPage('expense',this)"><span class="nav-icon">💸</span>Expenses</div>
   <div class="nav-item" onclick="showPage('partner',this)"><span class="nav-icon">🤝</span>Partners</div>
   <div class="nav-item" onclick="showPage('crm',this)"><span class="nav-icon">👥</span>Customers</div>
+  <div class="nav-item" onclick="showPage('calculator',this)"><span class="nav-icon">🧮</span>Order Calculator</div>
 
   <div class="sidebar-section">System</div>
   <div class="nav-item" onclick="showPage('architecture',this)"><span class="nav-icon">🏗️</span>Architecture Guide</div>
@@ -929,25 +930,25 @@ tbody td.muted{color:var(--text3);}
           <div class="kpi-icon">💰</div>
           <div class="kpi-label">Total Revenue</div>
           <div class="kpi-value"><span class="tk">৳</span><span id="kpi-revenue">—</span></div>
-          <div class="kpi-change up">▲ 18% from last month</div>
+          <div id="kpi-revenue-change" class="kpi-change up">▲ 18% from last month</div>
         </div>
         <div class="kpi-card gold">
           <div class="kpi-icon">📈</div>
           <div class="kpi-label">Net Profit</div>
           <div class="kpi-value"><span class="tk">৳</span><span id="kpi-profit">—</span></div>
-          <div class="kpi-change up">▲ 12% from last month</div>
+          <div id="kpi-profit-change" class="kpi-change up">▲ 12% from last month</div>
         </div>
         <div class="kpi-card red">
           <div class="kpi-icon">💸</div>
           <div class="kpi-label">Total Expenses</div>
           <div class="kpi-value"><span class="tk">৳</span><span id="kpi-expense">—</span></div>
-          <div class="kpi-change down">▲ 5% from last month</div>
+          <div id="kpi-expense-change" class="kpi-change down">▲ 5% from last month</div>
         </div>
         <div class="kpi-card blue">
           <div class="kpi-icon">⏳</div>
           <div class="kpi-label">Total Due</div>
           <div class="kpi-value"><span class="tk">৳</span><span id="kpi-due">—</span></div>
-          <div class="kpi-change down">▼ 8% from last month</div>
+          <div id="kpi-due-change" class="kpi-change down">▼ 8% from last month</div>
         </div>
         <div class="kpi-card orange">
           <div class="kpi-icon">📦</div>
@@ -1310,6 +1311,242 @@ tbody td.muted{color:var(--text3);}
         </div>
       </div>
     </div>
+
+
+    <!-- ══════════════════════════════
+         PAGE: ORDER CALCULATOR
+    ══════════════════════════════ -->
+    <div class="page" id="page-calculator">
+      <div class="breadcrumb">InnoGix OS / <span>Order Calculator</span></div>
+      <div class="section-head">
+        <h2>Order Calculator</h2>
+        <p>Price Calculator — তথ্য দিন, মোট প্রাইস ও কাস্টমার মেসেজ তৈরি হবে</p>
+      </div>
+
+      <!-- Calculator wrapper — scoped styles -->
+      <style>
+        .calc-wrap { max-width: 560px; }
+        .calc-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+        .calc-card-title { font-size: 12px; font-weight: 600; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+        .calc-field { margin-bottom: 12px; }
+        .calc-field:last-child { margin-bottom: 0; }
+        .calc-field > label { font-size: 12px; font-weight: 500; color: var(--text3); display: block; margin-bottom: 5px; }
+        .calc-field input, .calc-field select {
+          width: 100%; font-size: 15px; font-weight: 500;
+          background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+          padding: 11px 13px; color: var(--text1); outline: none; transition: border-color .15s;
+          -webkit-appearance: none; appearance: none;
+        }
+        .calc-field input:focus, .calc-field select:focus { border-color: var(--green); }
+        .calc-hidden { display: none !important; }
+        .calc-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; }
+        .calc-toggle-label { font-size: 14px; font-weight: 500; color: var(--text1); }
+        .calc-toggle-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+        .calc-switch { position: relative; width: 48px; height: 26px; flex-shrink: 0; }
+        .calc-switch input { opacity: 0; width: 0; height: 0; }
+        .calc-slider { position: absolute; inset: 0; background: var(--card-bg2); border-radius: 26px; cursor: pointer; transition: background .2s; border: 1px solid var(--border); }
+        .calc-slider::before { content: ''; position: absolute; width: 20px; height: 20px; left: 2px; top: 2px; background: var(--text3); border-radius: 50%; transition: transform .2s, background .2s; }
+        .calc-switch input:checked + .calc-slider { background: rgba(34,201,122,0.15); border-color: rgba(34,201,122,0.4); }
+        .calc-switch input:checked + .calc-slider::before { transform: translateX(22px); background: var(--green); }
+        .calc-wire-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .calc-wire-grid .calc-field { margin-bottom: 0; }
+        .calc-unit-tabs { display: flex; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 12px; }
+        .calc-utab { flex: 1; font-size: 14px; font-weight: 600; padding: 10px; background: var(--bg); color: var(--text3); border: none; cursor: pointer; transition: background .15s, color .15s; text-align: center; }
+        .calc-utab.active { background: var(--green); color: #0d1117; }
+        .calc-wire-input-wrap { position: relative; }
+        .calc-wire-input-wrap input { padding-right: 56px; }
+        .calc-wire-unit-badge { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: 600; color: var(--green); font-family: 'IBM Plex Mono', monospace; pointer-events: none; }
+        .calc-wire-info { background: var(--bg); border-radius: 8px; padding: 10px 13px; font-size: 13px; color: var(--text3); line-height: 1.6; margin-top: 10px; border: 1px solid var(--border); }
+        .calc-wire-info strong { color: var(--text1); }
+        .calc-result { background: var(--bg); border: 1px solid rgba(34,201,122,0.3); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+        .calc-r-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .calc-r-row:last-of-type { border-bottom: none; }
+        .calc-r-label { color: var(--text3); }
+        .calc-r-val { font-weight: 600; color: var(--text1); font-family: 'IBM Plex Mono', monospace; font-size: 14px; }
+        .calc-r-green { color: var(--green) !important; }
+        .calc-r-dim { opacity: 0.4; }
+        .calc-r-total { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; margin-top: 6px; border-top: 2px solid rgba(34,201,122,0.3); }
+        .calc-r-total-lbl { font-size: 17px; font-weight: 700; color: var(--text1); }
+        .calc-r-total-val { font-size: 24px; font-weight: 700; color: var(--green); font-family: 'IBM Plex Mono', monospace; }
+        .calc-btn-gen { width: 100%; font-size: 16px; font-weight: 700; color: #0d1117; background: var(--green); border: none; padding: 15px; border-radius: 10px; cursor: pointer; margin-bottom: 14px; transition: opacity .15s; }
+        .calc-btn-gen:active { opacity: 0.85; }
+        .calc-msg-card { background: var(--card-bg); border: 1px solid rgba(34,201,122,0.3); border-radius: 12px; overflow: hidden; display: none; }
+        .calc-msg-head { padding: 10px 16px; background: rgba(34,201,122,0.08); border-bottom: 1px solid rgba(34,201,122,0.3); display: flex; justify-content: space-between; align-items: center; }
+        .calc-msg-head-lbl { font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600; color: var(--green); letter-spacing: 1.5px; text-transform: uppercase; }
+        .calc-copy-btn { font-size: 13px; font-weight: 700; color: #0d1117; background: var(--green); border: none; padding: 6px 16px; border-radius: 6px; cursor: pointer; }
+        .calc-copy-btn.done { background: var(--gold); }
+        .calc-msg-body { font-size: 14px; color: var(--text1); line-height: 1.9; padding: 16px; white-space: pre-wrap; border-bottom: 1px solid var(--border); }
+        .calc-copy-big-btn { width: 100%; font-size: 17px; font-weight: 700; color: #0d1117; background: var(--green); border: none; border-radius: 10px; padding: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: opacity .15s, background .2s; }
+        .calc-copy-big-btn:active { opacity: 0.85; }
+        .calc-copy-big-btn.done { background: var(--gold); }
+      </style>
+
+      <div class="calc-wrap">
+
+        <!-- Customer -->
+        <div class="calc-card">
+          <div class="calc-card-title">👤 কাস্টমার</div>
+          <div class="calc-field">
+            <label>কাস্টমারের নাম</label>
+            <input type="text" id="calc-cust-name" placeholder="যেমন: রহিম ভাই" oninput="calcRun()">
+          </div>
+        </div>
+
+        <!-- Base Price -->
+        <div class="calc-card">
+          <div class="calc-card-title">🏷️ বেস প্রাইস</div>
+          <div class="calc-field">
+            <label>অর্ডার টাইপ</label>
+            <select id="calc-order-type" onchange="calcHandleOrderType()">
+              <option value="5599">রেগুলার প্রাইস — ৳ ৫,৫৯৯</option>
+              <option value="3999" selected>লঞ্চিং অফার — ৳ ৩,৯৯৯</option>
+              <option value="3599">প্রিঅর্ডার (৫০০ অ্যাডভান্স) — ৳ ৩,৫৯৯</option>
+              <option value="custom">কাস্টম — নিজে টাইপ করুন</option>
+            </select>
+          </div>
+          <div class="calc-field calc-hidden" id="calc-custom-price-wrap">
+            <label>কাস্টম বেস প্রাইস (৳)</label>
+            <input type="number" id="calc-custom-price" placeholder="যেমন: 4500" min="0" oninput="calcRun()">
+          </div>
+        </div>
+
+        <!-- Doors -->
+        <div class="calc-card">
+          <div class="calc-card-title">🚪 দরজার সংখ্যা</div>
+          <div class="calc-field">
+            <label>মোট দরজা কতটি?</label>
+            <select id="calc-door-count" onchange="calcHandleDoors()">
+              <option value="1">১টি দরজা</option>
+              <option value="2">২টি দরজা</option>
+              <option value="3">৩টি দরজা</option>
+              <option value="4">৪টি দরজা</option>
+              <option value="5">৫টি দরজা</option>
+              <option value="6">৬টি দরজা</option>
+              <option value="7">৭টি দরজা</option>
+              <option value="8">৮টি দরজা</option>
+              <option value="9">৯টি দরজা</option>
+              <option value="10">১০টি দরজা</option>
+              <option value="custom">১০ এর বেশি</option>
+            </select>
+          </div>
+          <div class="calc-field calc-hidden" id="calc-custom-door-wrap">
+            <label>দরজার সংখ্যা লিখুন</label>
+            <input type="number" id="calc-custom-door" placeholder="যেমন: 15" min="11" oninput="calcRun()">
+          </div>
+          <div class="calc-field">
+            <label>প্রতিটি অতিরিক্ত দরজার দাম (৳)</label>
+            <input type="number" id="calc-door-price" value="300" min="0" oninput="calcRun()">
+          </div>
+        </div>
+
+        <!-- Wire -->
+        <div class="calc-card">
+          <div class="calc-card-title">🔌 তারের হিসাব</div>
+          <div style="background:var(--bg);border-radius:10px;padding:12px 14px;margin-bottom:14px;border:1px solid var(--border);">
+            <div class="calc-toggle-row">
+              <div>
+                <div class="calc-toggle-label">১০০ ফিট তার ফ্রি</div>
+                <div class="calc-toggle-sub" id="calc-free-wire-sub">চালু আছে — ১০০ ফিট বিনামূল্যে</div>
+              </div>
+              <label class="calc-switch">
+                <input type="checkbox" id="calc-free-wire-toggle" checked onchange="calcHandleFreeWire()">
+                <span class="calc-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div style="font-size:12px;font-weight:500;color:var(--text3);margin-bottom:6px;">তার মাপের একক</div>
+          <div class="calc-unit-tabs">
+            <button class="calc-utab active" id="calc-tab-ft" onclick="calcSetUnit('ft')">ফিট (ft)</button>
+            <button class="calc-utab" id="calc-tab-mt" onclick="calcSetUnit('mt')">মিটার (m)</button>
+          </div>
+          <div class="calc-field">
+            <label id="calc-wire-amt-label">কাস্টমারের মোট তার লাগবে (ফিট)</label>
+            <div class="calc-wire-input-wrap">
+              <input type="number" id="calc-wire-amount" value="100" min="0" oninput="calcRun()">
+              <span class="calc-wire-unit-badge" id="calc-wire-unit-badge">ft</span>
+            </div>
+          </div>
+          <div class="calc-wire-grid">
+            <div class="calc-field">
+              <label id="calc-wire-price-label">তারের দাম — প্রতি ফিট (৳)</label>
+              <input type="number" id="calc-wire-price" value="5" min="0" step="0.5" oninput="calcRun()">
+            </div>
+            <div class="calc-field">
+              <label>মোট তারের খরচ</label>
+              <input type="text" id="calc-wire-cost-display" readonly style="background:var(--card-bg2);color:var(--green);font-weight:600;cursor:default;">
+            </div>
+          </div>
+          <div class="calc-wire-info">
+            ফ্রি: <strong id="calc-wi-free">১০০ ফিট</strong> &nbsp;|&nbsp;
+            অতিরিক্ত: <strong id="calc-wi-extra">০ ফিট</strong> &nbsp;|&nbsp;
+            খরচ: <strong id="calc-wi-cost" style="color:var(--green);">৳ ০</strong>
+          </div>
+        </div>
+
+        <!-- Delivery -->
+        <div class="calc-card">
+          <div class="calc-card-title">🚚 ডেলিভারি চার্জ</div>
+          <div class="calc-field">
+            <label>এলাকা</label>
+            <select id="calc-delivery-type" onchange="calcHandleDelivery()">
+              <option value="120">ঢাকার ভেতরে — ৳ ১২০</option>
+              <option value="150" selected>ঢাকার বাইরে — ৳ ১৫০</option>
+              <option value="0">ফ্রি ডেলিভারি</option>
+              <option value="custom">কাস্টম চার্জ</option>
+            </select>
+          </div>
+          <div class="calc-field calc-hidden" id="calc-custom-delivery-wrap">
+            <label>কাস্টম ডেলিভারি চার্জ (৳)</label>
+            <input type="number" id="calc-custom-delivery" placeholder="যেমন: 180" min="0" oninput="calcRun()">
+          </div>
+        </div>
+
+        <!-- Result -->
+        <div class="calc-result">
+          <div class="calc-r-row">
+            <span class="calc-r-label">বেস প্রাইস</span>
+            <span class="calc-r-val" id="calc-r-base">৳ 3,999</span>
+          </div>
+          <div class="calc-r-row" id="calc-r-door-row">
+            <span class="calc-r-label" id="calc-r-door-label">অতিরিক্ত দরজা</span>
+            <span class="calc-r-val" id="calc-r-door-val">৳ 0</span>
+          </div>
+          <div class="calc-r-row" id="calc-r-free-row">
+            <span class="calc-r-label calc-r-green">ফ্রি তার</span>
+            <span class="calc-r-val calc-r-green">১০০ ফিট</span>
+          </div>
+          <div class="calc-r-row" id="calc-r-wire-row">
+            <span class="calc-r-label" id="calc-r-wire-label">অতিরিক্ত তার</span>
+            <span class="calc-r-val" id="calc-r-wire-val">৳ 0</span>
+          </div>
+          <div class="calc-r-row">
+            <span class="calc-r-label" id="calc-r-delivery-label">ডেলিভারি</span>
+            <span class="calc-r-val" id="calc-r-delivery-val">৳ 150</span>
+          </div>
+          <div class="calc-r-total">
+            <span class="calc-r-total-lbl">মোট</span>
+            <span class="calc-r-total-val" id="calc-r-total">৳ 4,149</span>
+          </div>
+        </div>
+
+        <button class="calc-btn-gen" onclick="calcGenerateMsg()">✉️ মেসেজ তৈরি করুন</button>
+
+        <div class="calc-msg-card" id="calc-msg-card">
+          <div class="calc-msg-head">
+            <span class="calc-msg-head-lbl">কাস্টমাইজড মেসেজ</span>
+            <button class="calc-copy-btn" id="calc-copy-btn" onclick="calcCopyMsg()">কপি করুন</button>
+          </div>
+          <div class="calc-msg-body" id="calc-msg-body"></div>
+          <div style="padding:14px 16px;">
+            <button class="calc-copy-big-btn" id="calc-copy-big-btn" onclick="calcCopyMsg()">
+              <span style="font-size:20px;">📋</span>
+              <span id="calc-copy-big-text">এক ক্লিকে মেসেজ কপি করুন</span>
+            </button>
+          </div>
+        </div>
+
+      </div><!-- /.calc-wrap -->
+    </div><!-- /#page-calculator -->
 
     <!-- ══════════════════════════════
          PAGE: ARCHITECTURE GUIDE
@@ -2052,7 +2289,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyiQgCH0An7Uxy1-QAoSaNID1_lSh21fwWZb6zXSXxVVTaH5lnM1ez-ZZz7MvauBRcA/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbxpD_shUzEMn4BfkGgx1956d9vjtdsNOYT2Cj1RWqPViwnuLP9qU8xFScJoQBFAY5A7fA/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -2336,7 +2573,7 @@ function changePin() {
 const pageTitles = {
   dashboard:['Dashboard','— Live Overview'], sales:['Sales & Orders','— Order Management'],
   inventory:['Inventory','— Stock Management'], expense:['Expenses','— Cost Tracking'],
-  partner:['Partners','— Accounting'], crm:['Customers','— CRM'],
+  partner:['Partners','— Accounting'], crm:['Customers','— CRM'], calculator:['Order Calculator','— Price Calculator'],
   architecture:['Architecture','— System Guide'], formulas:['Formula Guide','— Reference'],
   setup:['Setup Roadmap','— Implementation Plan'],
 };
@@ -2819,71 +3056,96 @@ function drawChart(liveData) {
 async function loadLiveDashboard(){
   const data = await fetchFromAPI('dashboard'); if(!data) return;
 
-  // Helper: safely parse any value to a clean float (handles strings, #REF!, nulls)
-  const toFloat = v => parseFloat(safeNum(v)) || 0;
-  // Helper: format a number with Bengali locale thousands separators
-  const fmt = n => Number(toFloat(n)).toLocaleString('en-BD');
-  // Helper: set element text safely
-  const setEl = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+  // ── Helpers ──
+  const toFloat = v => { const n = parseFloat(String(v||'').replace(/[^0-9.-]/g,'')); return isNaN(n)?0:n; };
+  const fmt = n => Math.round(toFloat(n)).toLocaleString('en-BD');
+  const setEl = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+  const setChange = (id, curr, prev) => {
+    const el = document.getElementById(id); if(!el) return;
+    if(prev === 0){ el.textContent = curr > 0 ? '▲ নতুন' : '—'; el.className='kpi-change '+(curr>0?'up':''); return; }
+    const pct = Math.round(((curr - prev) / Math.abs(prev)) * 100);
+    const sign = pct >= 0 ? '▲' : '▼';
+    el.textContent = sign + ' ' + Math.abs(pct) + '% from last month';
+    el.className = 'kpi-change ' + (pct >= 0 ? 'up' : 'down');
+  };
 
-  // ── Bug Fix 1: Net Profit — always calculated as Revenue − Expenses ──
-  // data.profit from the backend can be 0 or wrong if the sheet formula
-  // references COGS cells that haven't been populated. Compute it here.
+  // ── Core values ──
   const totalRevenue  = toFloat(data.revenue);
   const totalExpenses = toFloat(data.expenses);
-  // BUG FIX 1: True Net Profit = Revenue - COGS - Expenses
-  // Backend (v21) now provides data.profit already computed with COGS.
-  // We use data.profit from backend directly (it includes COGS deduction).
-  // Fallback: if backend doesn't send cogs, recompute from data.cogs or use data.profit.
   const totalCOGS     = toFloat(data.cogs);
   const netProfit     = totalCOGS > 0
     ? (totalRevenue - totalCOGS - totalExpenses)
     : toFloat(data.profit) || (totalRevenue - totalExpenses);
+  const totalDue = toFloat(data.due);
 
-  // ── Bug Fix 3: Standard cards — all values coerced via toFloat / Number() ──
   setEl('kpi-revenue',   fmt(totalRevenue));
-  setEl('kpi-profit',    fmt(netProfit));           // Bug Fix 1: use computed value
+  setEl('kpi-profit',    fmt(netProfit));
   setEl('kpi-expense',   fmt(totalExpenses));
-  // BUG FIX 2: data.due from backend is already corrected:
-  // Delivered Cash/COD/bKash/Nagad orders have due=0 (cash collected).
-  setEl('kpi-due',       fmt(data.due));
-  setEl('kpi-pending',   String(Number(data.pending)   || 0));   // Bug Fix 3: coerce to Number
-  setEl('kpi-delivered', String(Number(data.delivered) || 0));   // Bug Fix 3: coerce to Number
+  setEl('kpi-due',       fmt(totalDue));
+  setEl('kpi-pending',   String(Number(data.pending)   || 0));
+  setEl('kpi-delivered', String(Number(data.delivered) || 0));
   setEl('kpi-capital',   fmt(data.capital));
   setEl('kpi-stock',     String(Number(data.stock) || 0));
 
-  // ── Bug Fix 2: Top Region — derive from live sales data (Division field) ──
-  // The backend ?action=dashboard response does NOT include a topRegion key.
-  // We compute it client-side from liveSalesData (populated by loadLiveSales).
-  // If sales haven't loaded yet, fall back to a quick re-fetch from ?action=sales.
+  // ── Bug 3 Fix: Dynamic % change from monthly chart data ──
+  const chart = data.monthlyChart;
+  if(chart && chart.revenue && chart.revenue.length >= 2){
+    const len = chart.revenue.length;
+    const curRev  = chart.revenue[len-1]  || 0;
+    const prevRev = chart.revenue[len-2]  || 0;
+    const curProf = chart.profit[len-1]   || 0;
+    const prevProf= chart.profit[len-2]   || 0;
+    const curExp  = (data.expBreakdown||[]).reduce((s,e)=>s+e.amount,0);
+    const prevExp = chart.revenue.length >= 2 ? (chart.revenue[len-2] - (chart.profit[len-2]||0)) : 0;
+    setChange('kpi-revenue-change', curRev,  prevRev);
+    setChange('kpi-profit-change',  curProf, prevProf);
+    setChange('kpi-expense-change', curExp,  prevExp);
+    // Due: compare current total due vs delivered count change
+    const curDel  = Number(data.delivered)||0;
+    const kpiDue  = document.getElementById('kpi-due-change');
+    if(kpiDue){ kpiDue.textContent = totalDue > 0 ? '৳'+fmt(totalDue)+' বাকি আছে' : '✅ কোনো বাকি নেই'; kpiDue.className='kpi-change '+(totalDue>0?'down':'up'); }
+  }
+
+  // ── Bug 4 Fix: Total Due — sum ALL due from sales (not just delivered) ──
+  // Backend already sends correct due. If 0 but sales have due, recalc from liveSalesData
+  if(totalDue === 0 && liveSalesData && liveSalesData.length > 0){
+    const realDue = liveSalesData.reduce((s,r)=>{
+      const d = parseFloat(String(r.due||'').replace(/[^0-9.-]/g,''))||0;
+      const st = String(r.status||'').trim();
+      // Count due for non-cancelled, non-returned orders
+      if(st !== 'Cancelled' && st !== 'Returned') return s + d;
+      return s;
+    }, 0);
+    if(realDue > 0) setEl('kpi-due', fmt(realDue));
+  }
+
+  // ── Top Region — from live sales, this month ──
   (async () => {
     let salesRows = liveSalesData;
     if (!salesRows || salesRows.length === 0) {
-      // Attempt a lightweight re-fetch so Top Region isn't blank on first load
       try {
         const sd = await fetchFromAPI('sales');
-        if (sd && sd.data) {
-          salesRows = sd.data.map(r => ({ div: String(r[5] || '') })).filter(r => r.div.trim());
-        }
+        if (sd && sd.data) salesRows = sd.data.map(r=>({div:String(r[5]||''),status:String(r[16]||'')}));
       } catch(e) { salesRows = []; }
     }
     if (salesRows && salesRows.length > 0) {
-      // Count orders by Division (field: .div)
       const regionCount = {};
+      const nowMonth = new Date().getMonth();
       salesRows.forEach(r => {
         const region = String(r.div || '').trim();
         if (region) regionCount[region] = (regionCount[region] || 0) + 1;
       });
-      // Find the region with the highest order count
-      const topRegion = Object.keys(regionCount).reduce(
-        (a, b) => (regionCount[b] > regionCount[a] ? b : a), Object.keys(regionCount)[0]
-      );
-      const topCount = regionCount[topRegion] || 0;
-      setEl('kpi-top-region', topRegion || '—');
-      setEl('kpi-top-region-sub', topCount + ' orders this month');
-    } else {
-      setEl('kpi-top-region', '—');
-      setEl('kpi-top-region-sub', 'No data');
+      if(Object.keys(regionCount).length > 0){
+        const topRegion = Object.keys(regionCount).reduce((a,b)=>regionCount[b]>regionCount[a]?b:a, Object.keys(regionCount)[0]);
+        const topCount = regionCount[topRegion] || 0;
+        setEl('kpi-top-region', topRegion || '—');
+        setEl('kpi-top-region-sub', topCount + ' orders this month');
+        // Bug 3 Fix: Top Region card clickable → filter sales by region
+        const card = document.getElementById('kpi-card-top-region');
+        if(card){ card.style.cursor='pointer'; card.onclick=()=>{ showPage('sales', null); setTimeout(()=>{ const divSel=document.getElementById('filter-division'); if(divSel){ divSel.value=topRegion; divSel.dispatchEvent(new Event('change')); } },500); }; }
+      } else {
+        setEl('kpi-top-region', '—'); setEl('kpi-top-region-sub', 'No data');
+      }
     }
   })();
 
@@ -3104,34 +3366,97 @@ async function loadLivePartners(){
   renderPartnerTxns(rows); showToast('Partners loaded ✅','success');
 }
 async function loadLiveCRM(){
-  const data=await fetchFromAPI('crm');
-  let rows = [];
-  if(data && data.data && data.data.length > 0){
-    rows = data.data.map((r,i)=>({id:i+1,name:r[0]||'',phone:r[1]||'',div:r[2]||'',dist:r[3]||'',orders:Number(r[4])||0,spent:Number(r[5])||0,due:Number(r[6])||0,avg:Number(r[7])||0,last:r[9]||'',type:r[8]||'Regular'}));
-  } else if(liveSalesData && liveSalesData.length > 0){
-    // Fallback: build CRM from live sales data in JS (no Sheet formula needed)
-    const crmMap = {};
-    liveSalesData.forEach(r=>{
-      const key = r.phone || r.customer;
-      if(!key) return;
-      if(!crmMap[key]) crmMap[key]={name:r.customer,phone:r.phone,div:r.div,dist:r.dist,orders:0,spent:0,due:0,last:r.date};
-      crmMap[key].orders++;
-      crmMap[key].spent += Number(r.total||0);
-      crmMap[key].due   += Number(r.due||0);
-      if(r.date > crmMap[key].last) crmMap[key].last = r.date;
-    });
-    rows = Object.values(crmMap).map((c,i)=>({
-      ...c, id:i+1,
-      avg: c.orders>0 ? Math.round(c.spent/c.orders) : 0,
-      type: c.orders>=3 ? '🔄 Repeat' : '👤 Regular'
-    })).sort((a,b)=>b.spent-a.spent);
+  // ── Bug 1 Fix: Always build CRM from live sales data directly ──
+  // CRM sheet formulas can lag or have column misalignment.
+  // Safer: aggregate from liveSalesData which is always fresh and correctly parsed.
+
+  // সর্বদা liveSalesData থেকে build করি — sheet formula-র উপর নির্ভর করব না
+  const safeN = v => { const n = parseFloat(String(v||'').replace(/[^0-9.-]/g,'')); return isNaN(n)?0:n; };
+
+  let salesSource = liveSalesData;
+  // যদি liveSalesData খালি থাকে, সরাসরি API থেকে আনো
+  if(!salesSource || salesSource.length === 0){
+    try {
+      const sd = await fetchFromAPI('sales');
+      if(sd && sd.data){
+        salesSource = sd.data.map((r,i)=>({
+          id: r[0]||i+1,
+          customer: String(r[3]||'').trim(),
+          phone:    String(r[4]||'').trim(),
+          div:      String(r[5]||'').trim(),
+          dist:     String(r[6]||'').trim(),
+          product:  String(r[9]||'').trim(),
+          qty:      safeN(r[10]),
+          price:    safeN(r[11]),
+          total:    safeN(r[12]),  // col M = total
+          paid:     safeN(r[13]),  // col N = paid
+          due:      safeN(r[14]),  // col O = due
+          delivery: safeN(r[15]),
+          status:   String(r[16]||'').trim(),
+          payment:  String(r[17]||'').trim(),
+          date:     String(r[1]||'').trim(),
+        })).filter(r=>r.customer);
+        liveSalesData = salesSource;
+      }
+    } catch(e){ salesSource = []; }
   }
-  if(!rows.length){ document.getElementById('crm-body').innerHTML='<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text3);">কোনো Customer data নেই</td></tr>'; return; }
+
+  const rows = [];
+  if(salesSource && salesSource.length > 0){
+    const crmMap = {};
+    salesSource.forEach(r => {
+      // Cancelled/Returned বাদ দাও spent থেকে, কিন্তু customer record রাখো
+      const key = (String(r.phone||'').trim()) || (String(r.customer||'').trim().toUpperCase());
+      if(!key) return;
+      if(!crmMap[key]){
+        crmMap[key] = {
+          name: String(r.customer||'').trim(),
+          phone: String(r.phone||'').trim(),
+          div: String(r.div||'').trim(),
+          dist: String(r.dist||'').trim(),
+          orders: 0, spent: 0, due: 0, last: ''
+        };
+      }
+      crmMap[key].orders++;
+      const st = String(r.status||'').trim();
+      // শুধু valid order-এর জন্য spent ও due যোগ করো
+      if(st !== 'Cancelled' && st !== 'Returned'){
+        crmMap[key].spent += safeN(r.total);
+        crmMap[key].due   += safeN(r.due);
+      }
+      // সর্বশেষ order date
+      const d = String(r.date||'').trim();
+      if(d && (!crmMap[key].last || d > crmMap[key].last)) crmMap[key].last = d;
+    });
+
+    Object.values(crmMap).forEach((c,i)=>{
+      rows.push({
+        id: i+1,
+        name:   c.name,
+        phone:  c.phone,
+        div:    c.div,
+        dist:   c.dist,
+        orders: c.orders,
+        spent:  Math.round(c.spent),
+        due:    Math.round(c.due),
+        avg:    c.orders > 0 ? Math.round(c.spent / c.orders) : 0,
+        last:   c.last,
+        type:   c.orders >= 3 ? '🔄 Repeat' : '👤 Regular'
+      });
+    });
+    rows.sort((a,b) => b.spent - a.spent);
+    rows.forEach((r,i) => r.id = i+1);
+  }
+
+  if(!rows.length){
+    document.getElementById('crm-body').innerHTML='<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--text3);">কোনো Customer data নেই</td></tr>';
+    return;
+  }
   renderCRMRows(rows);
-  const el1=document.getElementById('crm-total'); if(el1) el1.textContent=rows.length;
+  const el1=document.getElementById('crm-total');  if(el1) el1.textContent=rows.length;
   const el2=document.getElementById('crm-repeat'); if(el2) el2.textContent=rows.filter(c=>String(c.type).includes('Repeat')).length;
-  const el3=document.getElementById('crm-due'); if(el3) el3.textContent=rows.filter(c=>c.due>0).length;
-  const el4=document.getElementById('crm-top'); if(el4){ const top=rows.reduce((a,b)=>a.spent>b.spent?a:b,{name:'—'}); el4.textContent=top.name; }
+  const el3=document.getElementById('crm-due');    if(el3) el3.textContent=rows.filter(c=>c.due>0).length;
+  const el4=document.getElementById('crm-top');    if(el4){ const top=rows[0]||{name:'—'}; el4.textContent=top.name; }
 }
 
 // ─── CONNECTION TEST ─────────────────────────────────────────
@@ -3237,7 +3562,7 @@ async function submitOrder(){
   const ok=await postToAPI(payload);
   if(ok){
     showToast(currentEditOrderId?'✅ Order updated!':'✅ Order saved!','success');
-    setTimeout(()=>{ loadLiveSales(); loadLiveDashboard(); loadLiveInventory(); },1500);
+    setTimeout(()=>{ loadLiveSales().then(()=>{ loadLiveCRM(); }); loadLiveDashboard(); loadLiveInventory(); },1500);
   } else {
     showToast('Google Sheets connect হয়নি — API URL চেক করুন', 'error');
   }
@@ -3251,7 +3576,7 @@ async function deleteOrder(info) {
   const ok = await postToAPI({action:'deleteOrder', orderId: String(info.id)});
   if (ok) {
     showToast('✅ Order #' + info.id + ' ডিলিট হয়েছে', 'success');
-    setTimeout(() => { loadLiveSales(); loadLiveDashboard(); loadLiveInventory(); }, 1000);
+    setTimeout(() => { loadLiveSales().then(()=>{ loadLiveCRM(); }); loadLiveDashboard(); loadLiveInventory(); }, 1000);
   } else {
     showToast('❌ ডিলিট হয়নি — আবার চেষ্টা করুন', 'error');
   }
@@ -4433,6 +4758,194 @@ function rgnGoToLevel(level) {
   }
 }
 
+
+// ─── ORDER CALCULATOR ────────────────────────────────────────────────
+let calcUnit = 'ft';
+let calcFreeWireOn = true;
+const CALC_FREE_WIRE_FT = 100;
+
+function calcToFt(v) { return calcUnit==='mt' ? v*3.28084 : v; }
+function calcFmtTk(n) { return '৳ ' + Math.round(n).toLocaleString('en'); }
+
+function calcGetBase() {
+  const t = document.getElementById('calc-order-type').value;
+  return t==='custom' ? (parseFloat(document.getElementById('calc-custom-price').value)||0) : parseInt(t);
+}
+function calcGetDoors() {
+  const t = document.getElementById('calc-door-count').value;
+  return t==='custom' ? (parseInt(document.getElementById('calc-custom-door').value)||0) : parseInt(t);
+}
+function calcGetDelivery() {
+  const t = document.getElementById('calc-delivery-type').value;
+  return t==='custom' ? (parseFloat(document.getElementById('calc-custom-delivery').value)||0) : parseFloat(t);
+}
+function calcGetWireAmtFt() {
+  const v = parseFloat(document.getElementById('calc-wire-amount').value)||0;
+  return calcUnit==='mt' ? v*3.28084 : v;
+}
+function calcGetWirePricePerFt() {
+  const p = parseFloat(document.getElementById('calc-wire-price').value)||0;
+  return calcUnit==='mt' ? p/3.28084 : p;
+}
+function calcHandleOrderType() {
+  const v = document.getElementById('calc-order-type').value;
+  document.getElementById('calc-custom-price-wrap').classList.toggle('calc-hidden', v!=='custom');
+  calcRun();
+}
+function calcHandleDoors() {
+  const v = document.getElementById('calc-door-count').value;
+  document.getElementById('calc-custom-door-wrap').classList.toggle('calc-hidden', v!=='custom');
+  calcRun();
+}
+function calcHandleDelivery() {
+  const v = document.getElementById('calc-delivery-type').value;
+  document.getElementById('calc-custom-delivery-wrap').classList.toggle('calc-hidden', v!=='custom');
+  calcRun();
+}
+function calcHandleFreeWire() {
+  calcFreeWireOn = document.getElementById('calc-free-wire-toggle').checked;
+  document.getElementById('calc-free-wire-sub').textContent = calcFreeWireOn
+    ? 'চালু আছে — ১০০ ফিট বিনামূল্যে' : 'বন্ধ — সব তারের জন্য চার্জ হবে';
+  document.getElementById('calc-r-free-row').classList.toggle('calc-hidden', !calcFreeWireOn);
+  calcRun();
+}
+function calcSetUnit(u) {
+  calcUnit = u;
+  document.getElementById('calc-tab-ft').classList.toggle('active', u==='ft');
+  document.getElementById('calc-tab-mt').classList.toggle('active', u==='mt');
+  document.getElementById('calc-wire-unit-badge').textContent = u==='ft' ? 'ft' : 'm';
+  document.getElementById('calc-wire-amt-label').textContent = u==='ft'
+    ? 'কাস্টমারের মোট তার লাগবে (ফিট)' : 'কাস্টমারের মোট তার লাগবে (মিটার)';
+  document.getElementById('calc-wire-price-label').textContent = u==='ft'
+    ? 'তারের দাম — প্রতি ফিট (৳)' : 'তারের দাম — প্রতি মিটার (৳)';
+  calcRun();
+}
+function calcRun() {
+  const base = calcGetBase();
+  const doors = calcGetDoors();
+  const doorPrice = parseFloat(document.getElementById('calc-door-price').value)||300;
+  const extraDoors = Math.max(0, doors-1);
+  const doorCost = extraDoors * doorPrice;
+  const wireAmtFt = calcGetWireAmtFt();
+  const freeQty = calcFreeWireOn ? CALC_FREE_WIRE_FT : 0;
+  const extraWireFt = Math.max(0, wireAmtFt-freeQty);
+  const pricePerFt = calcGetWirePricePerFt();
+  const wireCost = extraWireFt * pricePerFt;
+  const delivery = calcGetDelivery();
+  const total = base + doorCost + wireCost + delivery;
+
+  document.getElementById('calc-r-base').textContent = calcFmtTk(base);
+  const dLabel = extraDoors>0 ? `অতিরিক্ত ${extraDoors}টি দরজা (×৳${Math.round(doorPrice)})` : 'অতিরিক্ত দরজা';
+  document.getElementById('calc-r-door-label').textContent = dLabel;
+  document.getElementById('calc-r-door-val').textContent = calcFmtTk(doorCost);
+  document.getElementById('calc-r-door-row').classList.toggle('calc-r-dim', extraDoors===0);
+
+  const wireAmtRaw = parseFloat(document.getElementById('calc-wire-amount').value)||0;
+  const wLabel = extraWireFt>0
+    ? `অতিরিক্ত তার (${calcUnit==='mt' ? wireAmtRaw+'m' : Math.round(wireAmtFt)+'ft'})`
+    : 'অতিরিক্ত তার';
+  document.getElementById('calc-r-wire-label').textContent = wLabel;
+  document.getElementById('calc-r-wire-val').textContent = calcFmtTk(wireCost);
+  document.getElementById('calc-r-wire-row').classList.toggle('calc-r-dim', extraWireFt<=0);
+
+  const dt = document.getElementById('calc-delivery-type').value;
+  const dlivLabel = dt==='0' ? 'ডেলিভারি (ফ্রি)' : dt==='120' ? 'ডেলিভারি (ঢাকার ভেতরে)'
+    : dt==='150' ? 'ডেলিভারি (ঢাকার বাইরে)' : 'ডেলিভারি (কাস্টম)';
+  document.getElementById('calc-r-delivery-label').textContent = dlivLabel;
+  document.getElementById('calc-r-delivery-val').textContent = delivery===0 ? 'ফ্রি' : calcFmtTk(delivery);
+  document.getElementById('calc-r-total').textContent = calcFmtTk(total);
+
+  const freeLabel = calcFreeWireOn ? '১০০ ফিট' : '০ (বন্ধ)';
+  const extraLabel = calcUnit==='mt'
+    ? (Math.max(0, wireAmtRaw - (calcFreeWireOn ? wireAmtRaw - extraWireFt/3.28084 : 0))).toFixed(1)+' মি.'
+    : Math.round(extraWireFt)+' ফিট';
+  document.getElementById('calc-wi-free').textContent = freeLabel;
+  document.getElementById('calc-wi-extra').textContent = extraWireFt>0 ? extraLabel : '০';
+  document.getElementById('calc-wi-cost').textContent = calcFmtTk(wireCost);
+  document.getElementById('calc-wire-cost-display').value = calcFmtTk(wireCost);
+}
+function calcGenerateMsg() {
+  const name = (document.getElementById('calc-cust-name').value.trim() || 'ভাই');
+  const base = calcGetBase();
+  const doors = calcGetDoors();
+  const doorPrice = parseFloat(document.getElementById('calc-door-price').value)||300;
+  const extraDoors = Math.max(0, doors-1);
+  const doorCost = extraDoors * doorPrice;
+  const wireAmtRaw = parseFloat(document.getElementById('calc-wire-amount').value)||0;
+  const wireAmtFt = calcGetWireAmtFt();
+  const freeQty = calcFreeWireOn ? CALC_FREE_WIRE_FT : 0;
+  const extraWireFt = Math.max(0, wireAmtFt-freeQty);
+  const pricePerFt = calcGetWirePricePerFt();
+  const wireCost = Math.round(extraWireFt * pricePerFt);
+  const delivery = calcGetDelivery();
+  const total = base + doorCost + wireCost + delivery;
+  const isPreorder = document.getElementById('calc-order-type').value === '3599';
+
+  let m = `${name} ভাই, আপনার জন্য প্রাইস হিসাব করলাম 😊
+
+`;
+  m += `📦 InnoGix আমানাহ সিকিউরিটি
+`;
+  m += `━━━━━━━━━━━━━━━━━
+`;
+  m += `✅ বেস প্রাইস: ৳${Math.round(base).toLocaleString('en')}
+`;
+  if (extraDoors>0) m += `✅ অতিরিক্ত ${extraDoors}টি দরজা (${extraDoors}×৳${Math.round(doorPrice)}): ৳${Math.round(doorCost).toLocaleString('en')}
+`;
+  if (calcFreeWireOn) m += `✅ ফ্রি তার: ১০০ ফিট
+`;
+  if (wireCost>0) {
+    const freeStr = calcFreeWireOn ? `(১০০ ফিট ফ্রি বাদে অতিরিক্ত ${Math.round(extraWireFt)} ফিট)` : `(${wireAmtRaw} ${calcUnit==='mt'?'মিটার':'ফিট'})`;
+    m += `✅ অতিরিক্ত তার ${freeStr}: ৳${wireCost.toLocaleString('en')}
+`;
+  }
+  const dt = document.getElementById('calc-delivery-type').value;
+  if (delivery===0) { m += `✅ ডেলিভারি: ফ্রি
+`; }
+  else { const dlbl = dt==='120'?'ঢাকার ভেতরে':dt==='150'?'ঢাকার বাইরে':'কাস্টম'; m += `✅ ডেলিভারি (${dlbl}): ৳${Math.round(delivery).toLocaleString('en')}
+`; }
+  m += `━━━━━━━━━━━━━━━━━
+`;
+  m += `💰 মোট: ৳${total.toLocaleString('en')} টাকা
+
+`;
+  if (isPreorder) { m += `📌 প্রিঅর্ডার: ৳৫০০ অ্যাডভান্স দিলে এই দামে পাবেন।
+বাকি ৳${(total-500).toLocaleString('en')} ডেলিভারির সময় দিলেই হবে।
+
+`; }
+  else { m += `📌 ক্যাশ অন ডেলিভারিতে নিতে পারবেন।
+
+`; }
+  m += `অর্ডার করবেন? আপনার ঠিকানা ও ফোন নম্বর দিলেই পাঠিয়ে দেব 🙂`;
+
+  document.getElementById('calc-msg-body').textContent = m;
+  document.getElementById('calc-msg-card').style.display = 'block';
+  setTimeout(()=>document.getElementById('calc-msg-card').scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+function calcCopyMsg() {
+  const text = document.getElementById('calc-msg-body').textContent;
+  function onSuccess() {
+    const b=document.getElementById('calc-copy-btn');
+    b.textContent='✓ কপি হয়েছে'; b.classList.add('done');
+    const bb=document.getElementById('calc-copy-big-btn');
+    const bt=document.getElementById('calc-copy-big-text');
+    bb.classList.add('done'); bt.textContent='✓ কপি হয়েছে — মেসেঞ্জারে পেস্ট করুন';
+    setTimeout(()=>{ b.textContent='কপি করুন'; b.classList.remove('done'); bb.classList.remove('done'); bt.textContent='এক ক্লিকে মেসেজ কপি করুন'; },3000);
+  }
+  if (navigator.clipboard&&navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(onSuccess).catch(()=>calcFallbackCopy(text,onSuccess));
+  } else { calcFallbackCopy(text,onSuccess); }
+}
+function calcFallbackCopy(text, onSuccess) {
+  const ta=document.createElement('textarea');
+  ta.value=text; ta.style.cssText='position:fixed;top:0;left:0;opacity:0;font-size:16px;';
+  document.body.appendChild(ta); ta.focus(); ta.select(); ta.setSelectionRange(0,ta.value.length);
+  try { if(document.execCommand('copy')) onSuccess(); } catch(e){}
+  document.body.removeChild(ta);
+}
+// Init calculator on first load
+calcRun();
+// ─── END ORDER CALCULATOR ────────────────────────────────────────────
 </script>
 </body>
 </html>
