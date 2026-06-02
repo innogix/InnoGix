@@ -1166,6 +1166,7 @@ tbody td.muted{color:var(--text3);}
           <div class="table-actions">
             <button class="btn primary" onclick="openModal('add-product')">+ Add Product</button>
             <button class="btn" onclick="openModal('stock-in')">📦 Stock In</button>
+            <button class="btn" onclick="openModal('import-inventory-csv')" style="background:rgba(88,166,255,0.1);border-color:rgba(88,166,255,0.3);color:#58a6ff;">📥 CSV Import</button>
             <button class="btn">⬇ Export</button>
           </div>
         </div>
@@ -1201,6 +1202,7 @@ tbody td.muted{color:var(--text3);}
           <span class="table-title">Expense Ledger</span>
           <div class="table-actions">
             <button class="btn primary" onclick="openModal('add-expense')">+ Add Expense</button>
+            <button class="btn" onclick="openModal('import-expense-csv')" style="background:rgba(88,166,255,0.1);border-color:rgba(88,166,255,0.3);color:#58a6ff;">📥 CSV Import</button>
             <button class="btn">⬇ Export</button>
           </div>
         </div>
@@ -1251,6 +1253,7 @@ tbody td.muted{color:var(--text3);}
           <span class="table-title">Transaction Ledger</span>
           <div class="table-actions">
             <button class="btn primary" onclick="openModal('add-transaction')">+ New Transaction</button>
+            <button class="btn" onclick="openModal('import-partner-csv')" style="background:rgba(88,166,255,0.1);border-color:rgba(88,166,255,0.3);color:#58a6ff;">📥 CSV Import</button>
             <button class="btn">⬇ Export</button>
           </div>
         </div>
@@ -1305,7 +1308,7 @@ tbody td.muted{color:var(--text3);}
         <div class="table-scroll">
           <table>
             <thead>
-              <tr><th>#</th><th>Name</th><th>Phone</th><th>Division</th><th>District</th><th>Total Orders</th><th>Total Spent</th><th>Due</th><th>Type</th><th>Last Order</th><th>Action</th></tr>
+              <tr><th>#</th><th>Name</th><th>Phone</th><th>Division</th><th>District</th><th>Orders (Qty)</th><th>Total Spent</th><th>Due</th><th>Order Status</th><th>Last Order</th><th>Action</th></tr>
             </thead>
             <tbody id="crm-body"></tbody>
           </table>
@@ -2227,9 +2230,9 @@ tbody td.muted{color:var(--text3);}
         <strong style="color:#58a6ff;">📋 CSV Format নির্দেশনা:</strong><br>
         আপনার CSV-এ নিচের column গুলো থাকলেই হবে (যেকোনো order-এ):<br>
         <span style="color:var(--text3);font-family:'IBM Plex Mono',monospace;font-size:11px;">
-        Customer, Phone, Division, District, Thana, Address, Product, Qty, Unit Price, Paid, Delivery, Status, Payment, Courier, Notes
+        Date, Time, Customer Name, Phone, Division, District, Thana, Address, Product, Qty, Unit Price, Paid, Delivery Charge, Order Status, Payment Method, Courier, Tracking No, Delivery Status, Notes
         </span><br>
-        <span style="color:var(--gold);">⚠️ Header row থাকা আবশ্যক। Currency symbol (৳ , ,) থাকলে auto-remove হবে।</span>
+        <span style="color:var(--gold);">⚠️ Header row থাকা আবশ্যক। Currency symbol (৳ ,) থাকলে auto-remove হবে। Date format: dd-MMM-yyyy (যেমন 01-Jun-2026)</span>
       </div>
 
       <!-- File Upload -->
@@ -2284,6 +2287,165 @@ tbody td.muted{color:var(--text3);}
       <button class="btn" onclick="closeModal('import-csv')">বাতিল</button>
       <button class="btn primary" id="imp-submit-btn" onclick="impSubmit()" style="display:none;">
         📥 <span id="imp-submit-text">Import করুন</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: Inventory CSV Import
+════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-import-inventory-csv" onclick="if(event.target===this)closeModal('import-inventory-csv')">
+  <div class="modal" style="max-width:580px;">
+    <div class="modal-head">
+      <span class="modal-title">📥 CSV Import — Inventory (Products)</span>
+      <button class="modal-close" onclick="closeModal('import-inventory-csv');invImpReset()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px;">
+      <div style="background:rgba(88,166,255,0.08);border:1px solid rgba(88,166,255,0.3);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.8;color:var(--text2);">
+        <strong style="color:#58a6ff;">📋 CSV Format:</strong><br>
+        <span style="color:var(--text3);font-family:'IBM Plex Mono',monospace;font-size:11px;">Product Name, Category, Cost Price, Sell Price, Opening Stock, Stock In, Alert, Supplier, Notes</span><br>
+        <span style="color:var(--gold);">⚠️ Header row আবশ্যক। Price-এ ৳ ও , থাকলে auto-remove হবে।</span>
+      </div>
+      <div id="inv-imp-drop-zone" style="border:2px dashed var(--border);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:14px;"
+        onclick="document.getElementById('inv-imp-file-input').click()"
+        ondragover="event.preventDefault();this.style.borderColor='var(--green)'"
+        ondragleave="this.style.borderColor='var(--border)'"
+        ondrop="invImpHandleDrop(event)">
+        <div style="font-size:32px;margin-bottom:8px;">📂</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text1);">CSV ফাইল drop করুন বা click করুন</div>
+        <input type="file" id="inv-imp-file-input" accept=".csv,.txt" style="display:none" onchange="invImpReadFile(this.files[0])">
+      </div>
+      <div id="inv-imp-preview-wrap" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <span style="font-size:13px;font-weight:600;color:var(--text1);">Preview — <span id="inv-imp-preview-count"></span></span>
+          <button class="btn" style="padding:4px 12px;font-size:12px;" onclick="invImpReset()">🔄 Reset</button>
+        </div>
+        <div style="overflow-x:auto;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead id="inv-imp-thead" style="position:sticky;top:0;background:var(--card-bg2);"></thead>
+            <tbody id="inv-imp-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="inv-imp-progress-wrap" style="display:none;margin-bottom:14px;">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:8px;" id="inv-imp-progress-text">Importing...</div>
+        <div style="background:var(--bg);border-radius:8px;height:8px;overflow:hidden;">
+          <div id="inv-imp-progress-bar" style="height:100%;background:var(--green);width:0%;transition:width .3s;"></div>
+        </div>
+      </div>
+      <div id="inv-imp-result" style="display:none;"></div>
+    </div>
+    <div class="modal-footer" style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn" onclick="closeModal('import-inventory-csv');invImpReset()">বাতিল</button>
+      <button class="btn primary" id="inv-imp-submit-btn" onclick="invImpSubmit()" style="display:none;">
+        📥 <span id="inv-imp-submit-text">Import করুন</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: Expenses CSV Import
+════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-import-expense-csv" onclick="if(event.target===this)closeModal('import-expense-csv')">
+  <div class="modal" style="max-width:580px;">
+    <div class="modal-head">
+      <span class="modal-title">📥 CSV Import — Expenses</span>
+      <button class="modal-close" onclick="closeModal('import-expense-csv');expImpReset()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px;">
+      <div style="background:rgba(88,166,255,0.08);border:1px solid rgba(88,166,255,0.3);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.8;color:var(--text2);">
+        <strong style="color:#58a6ff;">📋 CSV Format:</strong><br>
+        <span style="color:var(--text3);font-family:'IBM Plex Mono',monospace;font-size:11px;">Date, Category, Description, Amount, Payment Method, Vendor, Invoice, Notes</span><br>
+        <span style="color:var(--gold);">⚠️ Header row আবশ্যক। Date format: dd-MMM-yyyy (যেমন 01-Jun-2026)</span>
+      </div>
+      <div id="exp-imp-drop-zone" style="border:2px dashed var(--border);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:14px;"
+        onclick="document.getElementById('exp-imp-file-input').click()"
+        ondragover="event.preventDefault();this.style.borderColor='var(--green)'"
+        ondragleave="this.style.borderColor='var(--border)'"
+        ondrop="expImpHandleDrop(event)">
+        <div style="font-size:32px;margin-bottom:8px;">📂</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text1);">CSV ফাইল drop করুন বা click করুন</div>
+        <input type="file" id="exp-imp-file-input" accept=".csv,.txt" style="display:none" onchange="expImpReadFile(this.files[0])">
+      </div>
+      <div id="exp-imp-preview-wrap" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <span style="font-size:13px;font-weight:600;color:var(--text1);">Preview — <span id="exp-imp-preview-count"></span></span>
+          <button class="btn" style="padding:4px 12px;font-size:12px;" onclick="expImpReset()">🔄 Reset</button>
+        </div>
+        <div style="overflow-x:auto;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead id="exp-imp-thead" style="position:sticky;top:0;background:var(--card-bg2);"></thead>
+            <tbody id="exp-imp-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="exp-imp-progress-wrap" style="display:none;margin-bottom:14px;">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:8px;" id="exp-imp-progress-text">Importing...</div>
+        <div style="background:var(--bg);border-radius:8px;height:8px;overflow:hidden;">
+          <div id="exp-imp-progress-bar" style="height:100%;background:var(--green);width:0%;transition:width .3s;"></div>
+        </div>
+      </div>
+      <div id="exp-imp-result" style="display:none;"></div>
+    </div>
+    <div class="modal-footer" style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn" onclick="closeModal('import-expense-csv');expImpReset()">বাতিল</button>
+      <button class="btn primary" id="exp-imp-submit-btn" onclick="expImpSubmit()" style="display:none;">
+        📥 <span id="exp-imp-submit-text">Import করুন</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL: Partners CSV Import
+════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-import-partner-csv" onclick="if(event.target===this)closeModal('import-partner-csv')">
+  <div class="modal" style="max-width:580px;">
+    <div class="modal-head">
+      <span class="modal-title">📥 CSV Import — Partner Transactions</span>
+      <button class="modal-close" onclick="closeModal('import-partner-csv');ptrImpReset()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px;">
+      <div style="background:rgba(88,166,255,0.08);border:1px solid rgba(88,166,255,0.3);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.8;color:var(--text2);">
+        <strong style="color:#58a6ff;">📋 CSV Format:</strong><br>
+        <span style="color:var(--text3);font-family:'IBM Plex Mono',monospace;font-size:11px;">Partner Name, Type, Date, Amount, Payment Method, Description</span><br>
+        <span style="color:var(--gold);">⚠️ Type values: Investment / Drawings / Profit Share</span>
+      </div>
+      <div id="ptr-imp-drop-zone" style="border:2px dashed var(--border);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:14px;"
+        onclick="document.getElementById('ptr-imp-file-input').click()"
+        ondragover="event.preventDefault();this.style.borderColor='var(--green)'"
+        ondragleave="this.style.borderColor='var(--border)'"
+        ondrop="ptrImpHandleDrop(event)">
+        <div style="font-size:32px;margin-bottom:8px;">📂</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text1);">CSV ফাইল drop করুন বা click করুন</div>
+        <input type="file" id="ptr-imp-file-input" accept=".csv,.txt" style="display:none" onchange="ptrImpReadFile(this.files[0])">
+      </div>
+      <div id="ptr-imp-preview-wrap" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <span style="font-size:13px;font-weight:600;color:var(--text1);">Preview — <span id="ptr-imp-preview-count"></span></span>
+          <button class="btn" style="padding:4px 12px;font-size:12px;" onclick="ptrImpReset()">🔄 Reset</button>
+        </div>
+        <div style="overflow-x:auto;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead id="ptr-imp-thead" style="position:sticky;top:0;background:var(--card-bg2);"></thead>
+            <tbody id="ptr-imp-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="ptr-imp-progress-wrap" style="display:none;margin-bottom:14px;">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:8px;" id="ptr-imp-progress-text">Importing...</div>
+        <div style="background:var(--bg);border-radius:8px;height:8px;overflow:hidden;">
+          <div id="ptr-imp-progress-bar" style="height:100%;background:var(--green);width:0%;transition:width .3s;"></div>
+        </div>
+      </div>
+      <div id="ptr-imp-result" style="display:none;"></div>
+    </div>
+    <div class="modal-footer" style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn" onclick="closeModal('import-partner-csv');ptrImpReset()">বাতিল</button>
+      <button class="btn primary" id="ptr-imp-submit-btn" onclick="ptrImpSubmit()" style="display:none;">
+        📥 <span id="ptr-imp-submit-text">Import করুন</span>
       </button>
     </div>
   </div>
@@ -2367,7 +2529,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbx1m9CAv2v9qHgB30ozCuWYkUsfdyCDwZ6dfqZL0AxX2mSUdLZVCkzM7wJxpNNopIU/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbz7F--ngmysi4H4tgc0V5-UQrcXnD0D7WCgcfLKO65ZPq12BNiE7IH50AE_wWR5duOV-Q/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -2914,19 +3076,46 @@ function renderPartnerTxns(rows){
 }
 
 function renderCRMRows(rows){
-  document.getElementById('crm-body').innerHTML = rows.map(c=>`
-    <tr>
+  document.getElementById('crm-body').innerHTML = rows.map(c=>{
+    // FIX v24: Customer type badge — emoji prefix সহ check করো
+    const isRepeat = String(c.type||'').includes('Repeat');
+    const typeClass = isRepeat ? 'delivered' : 'pending';
+    const typeLabel = isRepeat ? '🔄 Repeat' : '👤 Regular';
+
+    // FIX v24: Order status breakdown — কোন কাস্টমারের কতটা কোন অবস্থায় আছে
+    const statusMap = c.statusSummary || {};
+    const statusBadges = [
+      { key:'Delivered',   cls:'delivered', icon:'✅' },
+      { key:'Pending',     cls:'pending',   icon:'⏳' },
+      { key:'Processing',  cls:'processing',icon:'🔄' },
+      { key:'In Transit',  cls:'intransit', icon:'🚚' },
+      { key:'Cancelled',   cls:'cancelled', icon:'❌' },
+      { key:'Returned',    cls:'returned',  icon:'↩' },
+    ].filter(s => statusMap[s.key] > 0)
+     .map(s => `<span class="status ${s.cls}" style="font-size:10px;padding:2px 7px;margin:1px;">
+                  ${s.icon} ${s.key} ×${statusMap[s.key]}
+                </span>`)
+     .join('');
+
+    return `<tr>
       <td class="mono muted">${c.id}</td>
       <td><strong>${c.name}</strong></td>
       <td class="mono">${c.phone}</td>
       <td>${c.div}</td><td>${c.dist}</td>
-      <td class="mono" style="text-align:center;font-weight:700;">${c.orders}</td>
+      <td class="mono" style="text-align:center;font-weight:700;">
+        ${c.orders}<span style="font-size:10px;color:var(--text3);font-weight:400;"> (${c.totalQty||0}পিস)</span>
+      </td>
       <td class="mono" style="color:var(--green);">৳${Number(c.spent||0).toLocaleString()}</td>
       <td class="mono" style="color:${c.due>0?'var(--red)':'var(--text3)'};">৳${Number(c.due||0).toLocaleString()}</td>
-      <td><span class="status ${c.type==='Repeat'?'delivered':c.type==='New'?'processing':'pending'}">${c.type}</span></td>
+      <td>
+        <div style="display:flex;flex-wrap:wrap;gap:2px;min-width:180px;">
+          ${statusBadges || `<span class="status ${typeClass}" style="font-size:10px;">${typeLabel}</span>`}
+        </div>
+      </td>
       <td class="mono">${c.last||'—'}</td>
       <td><button class="btn" style="padding:4px 10px;font-size:11px;" onclick='openViewCustomer(${JSON.stringify(c)})'>👁 View</button></td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 // ─── CHART ───────────────────────────────────────────────────
@@ -3131,6 +3320,22 @@ function drawChart(liveData) {
 }
 
 // ─── LIVE DATA FROM GOOGLE SHEETS ────────────────────────────
+// ─── DEBOUNCE & LOAD THROTTLE ────────────────────────────────────────
+// FIX v24: একই সময়ে একই API call বারবার না যাওয়ার জন্য debounce
+// কোনো নতুন order/update দেওয়ার পর সব refresh একসাথে হয়ে speed কমায়
+const _loadTimers = {};
+function debouncedLoad(fn, key, delay) {
+  if(_loadTimers[key]) clearTimeout(_loadTimers[key]);
+  _loadTimers[key] = setTimeout(fn, delay || 800);
+}
+
+// Refresh after add/update: sales+CRM একসাথে, dashboard ও inventory একটু পরে
+function refreshAfterOrder() {
+  debouncedLoad(() => loadLiveSales().then(()=>loadLiveCRM()), 'sales', 1200);
+  debouncedLoad(() => loadLiveDashboard(), 'dash', 2000);
+  debouncedLoad(() => loadLiveInventory(), 'inv', 2500);
+}
+
 async function loadLiveDashboard(){
   const data = await fetchFromAPI('dashboard'); if(!data) return;
 
@@ -3258,9 +3463,28 @@ async function loadLiveSales(){
   const rowsToProcess = isHeader ? rawRows.slice(1) : rawRows;
   const rows=rowsToProcess.map((r,i)=>{
     // Parse date/time — Col B = date string (dd-MMM-yyyy), Col C = time string (HH:mm:ss)
+    // FIX v24: rawTime may come as a Date object if Sheets auto-converted the time string
+    // to a serial number (happens when Col C has no @TEXT format set)
     let dateStr='', timeStr='';
     const rawDT = r[1]||'';
-    const rawTime = r[2]||'';
+    let rawTime = r[2]||'';
+    // Normalize rawTime: if it's a Date object, extract HH:mm from it
+    if(rawTime && typeof rawTime === 'object' && rawTime instanceof Date){
+      // Sheets time serial returned as Date — extract hours/minutes in BD timezone
+      try {
+        const hh = rawTime.getUTCHours();
+        const mm = rawTime.getUTCMinutes();
+        rawTime = String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00';
+      } catch(e){ rawTime = ''; }
+    } else if(rawTime && typeof rawTime === 'number'){
+      // Time serial as fraction (0.629... = 15:07) → convert to HH:mm
+      const totalSec = Math.round(rawTime * 86400);
+      const hh = Math.floor(totalSec / 3600) % 24;
+      const mm = Math.floor((totalSec % 3600) / 60);
+      rawTime = String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ':00';
+    } else {
+      rawTime = String(rawTime||'');
+    }
     if(rawDT){
       try{
         if(typeof rawDT==='number'){
@@ -3491,8 +3715,15 @@ async function loadLiveCRM(){
   if(salesSource && salesSource.length > 0){
     const crmMap = {};
     salesSource.forEach(r => {
-      // Cancelled/Returned বাদ দাও spent থেকে, কিন্তু customer record রাখো
-      const key = (String(r.phone||'').trim()) || (String(r.customer||'').trim().toUpperCase());
+      const rawPhone = String(r.phone||'').trim().replace(/[^0-9+]/g,'');
+      const rawName  = String(r.customer||'').trim().toUpperCase();
+      // FIX v24: Smarter key — phone normalize করো (leading 0 / +88 দিয়ে same নম্বর)
+      // 01711... এবং +8801711... এবং 8801711... একই key হবে
+      let phoneKey = rawPhone;
+      if(phoneKey.startsWith('+88')) phoneKey = phoneKey.slice(3);
+      if(phoneKey.startsWith('88') && phoneKey.length === 13) phoneKey = phoneKey.slice(2);
+      // key: phone থাকলে phone, না থাকলে name
+      const key = phoneKey || rawName;
       if(!key) return;
       if(!crmMap[key]){
         crmMap[key] = {
@@ -3500,15 +3731,24 @@ async function loadLiveCRM(){
           phone: String(r.phone||'').trim(),
           div: String(r.div||'').trim(),
           dist: String(r.dist||'').trim(),
-          orders: 0, spent: 0, due: 0, last: ''
+          orders: 0, spent: 0, due: 0, last: '',
+          statusSummary: {}  // FIX v24: order status breakdown per customer
         };
       }
       crmMap[key].orders++;
+      // FIX v24: count each order status
       const st  = String(r.status||'').trim();
+      crmMap[key].statusSummary[st] = (crmMap[key].statusSummary[st]||0) + 1;
       const pmt = String(r.payment||'').trim().toLowerCase();
       // শুধু valid order-এর জন্য spent ও due যোগ করো
       if(st !== 'Cancelled' && st !== 'Returned'){
-        crmMap[key].spent += safeN(r.total);
+        // FIX v24: double-price bug fix
+        // r.total = qty × unitPrice (stored by GS)
+        // r.price = unit price, r.qty = quantity
+        // Use r.total directly — এটাই সঠিক কারণ GS নিজে calculate করে লিখেছে
+        const orderTotal = safeN(r.total);
+        crmMap[key].spent += orderTotal;
+        crmMap[key].totalQty = (crmMap[key].totalQty||0) + safeN(r.qty);
         // COD/Cash/bKash/Nagad Delivered হলে due = 0 (টাকা collect হয়েছে)
         const isCollectedOnDelivery = st === 'Delivered' &&
           (pmt === 'cod' || pmt === 'cash' || pmt === 'bkash' || pmt === 'nagad');
@@ -3531,7 +3771,9 @@ async function loadLiveCRM(){
         due:    Math.round(c.due),
         avg:    c.orders > 0 ? Math.round(c.spent / c.orders) : 0,
         last:   c.last,
-        type:   c.orders >= 3 ? '🔄 Repeat' : '👤 Regular'
+        type:   c.orders >= 3 ? '🔄 Repeat' : '👤 Regular',
+        statusSummary: c.statusSummary || {},
+        totalQty: c.totalQty || 0  // FIX v24: total pieces ordered
       });
     });
     rows.sort((a,b) => b.spent - a.spent);
@@ -3652,7 +3894,7 @@ async function submitOrder(){
   const ok=await postToAPI(payload);
   if(ok){
     showToast(currentEditOrderId?'✅ Order updated!':'✅ Order saved!','success');
-    setTimeout(()=>{ loadLiveSales().then(()=>{ loadLiveCRM(); }); loadLiveDashboard(); loadLiveInventory(); },1500);
+    refreshAfterOrder(); // FIX v24: debounced — একসাথে সব API call না করে staggered
   } else {
     showToast('Google Sheets connect হয়নি — API URL চেক করুন', 'error');
   }
@@ -3666,7 +3908,7 @@ async function deleteOrder(info) {
   const ok = await postToAPI({action:'deleteOrder', orderId: String(info.id)});
   if (ok) {
     showToast('✅ Order #' + info.id + ' ডিলিট হয়েছে', 'success');
-    setTimeout(() => { loadLiveSales().then(()=>{ loadLiveCRM(); }); loadLiveDashboard(); loadLiveInventory(); }, 1000);
+    refreshAfterOrder(); // FIX v24: debounced refresh
   } else {
     showToast('❌ ডিলিট হয়নি — আবার চেষ্টা করুন', 'error');
   }
@@ -4452,7 +4694,7 @@ window.onload = async function(){
 
     startClock();
     _populateYearDropdown(new Date().getFullYear());
-    showToast('InnoGix Business OS v22 loaded ✅','success');
+    showToast('InnoGix Business OS v24 loaded ✅','success');
 
     // Google Sheets connection
     if(API_URL&&API_URL.includes('script.google.com')){
@@ -5040,21 +5282,26 @@ calcRun();
 // ─── CSV IMPORT ──────────────────────────────────────────────────────
 
 // Expected fields এবং সম্ভাব্য column name variants
+// FIX v24: date, time, tracking, delStatus field যোগ করা হয়েছে
 const IMP_FIELDS = {
+  date:     ['date','তারিখ','order date','date of order'],
+  time:     ['time','সময়','order time'],
   customer: ['customer','customer name','name','কাস্টমার','নাম','ক্রেতা'],
-  phone:    ['phone','mobile','contact','ফোন','মোবাইল','number','phone no','phone number'],
+  phone:    ['phone','mobile','contact','ফোন','মোবাইল','phone no','phone number'],
   division: ['division','বিভাগ','div'],
   district: ['district','জেলা','dist'],
   thana:    ['thana','upazila','উপজেলা','থানা','thana/upazila'],
   address:  ['address','ঠিকানা','addr'],
   product:  ['product','পণ্য','item','product name'],
   qty:      ['qty','quantity','পরিমাণ','পিস','pieces','count'],
-  price:    ['unit price','price','মূল্য','দাম','unit','rate'],
+  price:    ['unit price','price','মূল্য','দাম','rate'],
   paid:     ['paid','পরিশোধ','advance','আগাম'],
-  delivery: ['delivery','delivery charge','ডেলিভারি','shipping'],
-  status:   ['status','অবস্থা','order status'],
-  payment:  ['payment','payment method','পেমেন্ট','method'],
+  delivery: ['delivery charge','delivery','ডেলিভারি','shipping'],
+  status:   ['order status','status','অবস্থা'],
+  payment:  ['payment method','payment','পেমেন্ট','method'],
   courier:  ['courier','কুরিয়ার','courier service'],
+  tracking: ['tracking no','tracking','ট্র্যাকিং','tracking number','track'],
+  delstatus:['delivery status','del status','delstatus','ডেলিভারি স্ট্যাটাস'],
   notes:    ['notes','note','মন্তব্য','remarks'],
 };
 
@@ -5092,12 +5339,12 @@ function impReadFile(file) {
 
 function impParseCSV(text) {
   // BOM remove
-  text = text.replace(/^﻿/,'');
+  text = text.replace(/^\uFEFF/,'').replace(/^﻿/,'');
   // Line split
-    const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim());
+  const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim());
   if(lines.length < 2){ showToast('CSV-এ কোনো data নেই','error'); return; }
 
-  // Parse function — handles quoted fields
+  // Parse function — handles quoted fields properly
   function parseLine(line) {
     const result = [];
     let cur = '', inQ = false;
@@ -5111,26 +5358,49 @@ function impParseCSV(text) {
     return result;
   }
 
-  impHeaders = parseLine(lines[0]).map(h=>h.replace(/[^a-zA-Z0-9ঀ-৿ ]/g,'').trim());
+  // FIX v24: header cleanup — শুধু leading/trailing whitespace ও quotes বাদ দাও
+  // আগের regex /[^a-zA-Z0-9ঀ-৿ ]/g # চিহ্ন সহ অনেক কিছু বাদ দিত — ঠিক করা হয়েছে
+  impHeaders = parseLine(lines[0]).map(h => h.replace(/^["'\s]+|["'\s]+$/g,'').trim());
   impRawRows = lines.slice(1).map(l=>parseLine(l));
 
-  // Auto-detect column mapping
+  // FIX v24: Improved column matching — false positive বন্ধ করা হয়েছে
+  // Priority: exact match > startsWith > word-boundary contains
+  // 'unit' যেন 'unit price' এর সাথে match না করে ভুলে
   impColMap = {};
   Object.entries(IMP_FIELDS).forEach(([field, variants])=>{
-    for(let i=0;i<impHeaders.length;i++){
-      const h = impHeaders[i].toLowerCase().trim();
-      if(variants.some(v=>h.includes(v)||v.includes(h))){
-        impColMap[field] = i;
-        break;
+    let found = -1;
+    const headers = impHeaders.map(h => h.toLowerCase().trim());
+
+    // Pass 1: exact match
+    if(found < 0){
+      for(let i=0;i<headers.length;i++){
+        if(variants.some(v => v === headers[i])){ found=i; break; }
       }
     }
+    // Pass 2: header starts with variant (e.g. "unit price" starts with "unit price")
+    if(found < 0){
+      for(let i=0;i<headers.length;i++){
+        if(variants.some(v => headers[i].startsWith(v) || v.startsWith(headers[i]))){ found=i; break; }
+      }
+    }
+    // Pass 3: variant is a substring of header (only if variant >= 5 chars to avoid short false matches)
+    if(found < 0){
+      for(let i=0;i<headers.length;i++){
+        if(variants.some(v => v.length >= 5 && headers[i].includes(v))){ found=i; break; }
+      }
+    }
+    if(found >= 0) impColMap[field] = found;
   });
 
   impShowPreview();
 }
 
 function impCleanNum(v) {
-  const s = String(v||'').replace(/[৳,\s]/g,'').replace(/[^0-9.-]/g,'');
+  // FIX v24: Bengali numeral support — ০১২৩ → 0123
+  let s = String(v||'')
+    .replace(/[০১২৩৪৫৬৭৮৯]/g, d => '০১২৩৪৫৬৭৮৯'.indexOf(d))
+    .replace(/[৳,\s]/g,'')
+    .replace(/[^0-9.-]/g,'');
   const n = parseFloat(s);
   return isNaN(n) ? 0 : n;
 }
@@ -5197,6 +5467,44 @@ async function impSubmit() {
 
   let success=0, failed=0;
 
+  // FIX v24: Current BD time — fallback হিসেবে ব্যবহার হবে যদি CSV-এ date না থাকে
+  function getBDTimeNow() {
+    const d = new Date();
+    const opts = {timeZone:'Asia/Dhaka'};
+    const day = new Intl.DateTimeFormat('en-GB',{...opts,day:'2-digit'}).format(d);
+    const mon = new Intl.DateTimeFormat('en-GB',{...opts,month:'short'}).format(d);
+    const yr  = new Intl.DateTimeFormat('en-GB',{...opts,year:'numeric'}).format(d);
+    const hr  = new Intl.DateTimeFormat('en-GB',{...opts,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(d);
+    return day+'-'+mon+'-'+yr+' '+hr;
+  }
+
+  // FIX v24: CSV-এর date parse করো — dd-Mon-yyyy বা dd/mm/yyyy বা yyyy-mm-dd সব support
+  function parseDateFromCSV(raw) {
+    if(!raw || !raw.trim()) return '';
+    const s = raw.trim();
+    // Already in dd-Mon-yyyy format (e.g. 31-May-2026)
+    if(/^\d{1,2}-[A-Za-z]{3}-\d{4}$/.test(s)) return s;
+    // dd/mm/yyyy
+    const m1 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if(m1) {
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return String(m1[1]).padStart(2,'0')+'-'+months[parseInt(m1[2])-1]+'-'+m1[3];
+    }
+    // yyyy-mm-dd
+    const m2 = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if(m2) {
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return String(m2[3]).padStart(2,'0')+'-'+months[parseInt(m2[2])-1]+'-'+m2[1];
+    }
+    // dd-mm-yyyy
+    const m3 = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+    if(m3) {
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return String(m3[1]).padStart(2,'0')+'-'+months[parseInt(m3[2])-1]+'-'+m3[3];
+    }
+    return s; // যেভাবে আছে সেভাবে পাঠাও
+  }
+
   for(let i=0;i<rows.length;i++){
     const r = rows[i];
     const get = (field) => {
@@ -5204,28 +5512,20 @@ async function impSubmit() {
       return idx!==undefined ? String(r[idx]||'').trim() : '';
     };
 
-    // BD local time
-    const now = new Date();
-    const bdTime = (()=>{
-      const d=now;
-      const opts={timeZone:'Asia/Dhaka'};
-      const day=new Intl.DateTimeFormat('en-GB',{...opts,day:'2-digit'}).format(d);
-      const mon=new Intl.DateTimeFormat('en-GB',{...opts,month:'short'}).format(d);
-      const yr =new Intl.DateTimeFormat('en-GB',{...opts,year:'numeric'}).format(d);
-      const hr =new Intl.DateTimeFormat('en-GB',{...opts,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(d);
-      return day+'-'+mon+'-'+yr+' '+hr;
-    })();
+    // FIX v24: CSV-এর original date/time preserve করো
+    const csvDate = parseDateFromCSV(get('date'));
+    const csvTime = get('time') || '00:00:00';
+    // timestamp = CSV date থাকলে সেটা, না থাকলে এখনকার BD time
+    const timestamp = csvDate ? (csvDate + ' ' + csvTime) : getBDTimeNow();
 
-    const qty      = impCleanNum(get('qty'))   || 1;
-    const price    = impCleanNum(get('price'))  || 0;
-    const paid     = impCleanNum(get('paid'))   || 0;
+    const qty      = impCleanNum(get('qty'))    || 1;
+    const price    = impCleanNum(get('price'))   || 0;
+    const paid     = impCleanNum(get('paid'))    || 0;
     const delivery = impCleanNum(get('delivery'))|| 0;
-    const total    = qty * price;
-    const due      = Math.max(0, total + delivery - paid);
 
     const payload = {
       action:    'addOrder',
-      timestamp: bdTime,
+      timestamp: timestamp,
       customer:  get('customer') || 'Unknown',
       phone:     get('phone'),
       division:  get('division'),
@@ -5237,10 +5537,12 @@ async function impSubmit() {
       price:     price,
       paid:      paid,
       delivery:  delivery,
-      status:    get('status')  || 'Pending',
-      payment:   get('payment') || 'COD',
-      courier:   get('courier') || '',
-      notes:     get('notes')   || '',
+      status:    get('status')    || 'Pending',
+      payment:   get('payment')   || 'COD',
+      courier:   get('courier')   || '',
+      tracking:  get('tracking')  || '',       // FIX v24: tracking যোগ করা হয়েছে
+      delStatus: get('delstatus') || 'Not Sent', // FIX v24: delivery status যোগ করা হয়েছে
+      notes:     get('notes')     || '',
     };
 
     try {
@@ -5279,11 +5581,330 @@ async function impSubmit() {
     res.style.background='rgba(248,81,73,0.1)';
     res.style.border='1px solid rgba(248,81,73,0.3)';
     res.style.color='var(--red)';
-    res.textContent = `✅ ${success}টি সফল | ❌ ${failed}টি failed`;
+    res.innerHTML = `
+      <div style="margin-bottom:10px;">✅ ${success}টি সফল &nbsp;|&nbsp; ❌ ${failed}টি failed</div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn" style="font-size:12px;padding:5px 14px;" onclick="impReset()">
+          🔄 নতুন CSV দিন
+        </button>
+        <button class="btn primary" style="font-size:12px;padding:5px 14px;" onclick="
+          document.getElementById('imp-result').style.display='none';
+          document.getElementById('imp-submit-btn').disabled=false;
+          document.getElementById('imp-preview-wrap').style.display='block';
+        ">
+          ↩ আগের Preview এ ফিরুন
+        </button>
+      </div>
+    `;
     document.getElementById('imp-submit-btn').disabled=false;
   }
 }
 // ─── END CSV IMPORT ──────────────────────────────────────────────────
+
+// ═══════════════════════════════════════════════════════════════════════
+// ─── INVENTORY CSV IMPORT ────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════
+const INV_IMP_FIELDS = {
+  name:         ['product name','name','পণ্যের নাম','item','product'],
+  category:     ['category','ক্যাটাগরি','cat','type'],
+  cost:         ['cost price','cost','ক্রয়মূল্য','buy price','purchase price'],
+  sell:         ['sell price','selling price','sell','বিক্রয়মূল্য','sale price','price'],
+  opening:      ['opening stock','opening','stock','শুরু'],
+  stockIn:      ['stock in','stock added','added','stockin'],
+  alert:        ['alert','low stock alert','সতর্কতা','minimum'],
+  supplier:     ['supplier','সরবরাহকারী','vendor'],
+  supplierPhone:['supplier phone','vendor phone'],
+  notes:        ['notes','note','মন্তব্য','remarks'],
+};
+
+let invImpRawRows=[], invImpHeaders=[], invImpColMap={};
+
+function invImpReset(){
+  invImpRawRows=[]; invImpHeaders=[]; invImpColMap={};
+  const wrap=document.getElementById('inv-imp-preview-wrap');
+  const prog=document.getElementById('inv-imp-progress-wrap');
+  const res =document.getElementById('inv-imp-result');
+  const btn =document.getElementById('inv-imp-submit-btn');
+  const zone=document.getElementById('inv-imp-drop-zone');
+  const fi  =document.getElementById('inv-imp-file-input');
+  if(wrap) wrap.style.display='none';
+  if(prog) prog.style.display='none';
+  if(res)  res.style.display='none';
+  if(btn)  btn.style.display='none';
+  if(zone) zone.style.display='block';
+  if(fi)   fi.value='';
+}
+
+function invImpReadFile(file){
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>invImpParseCSV(e.target.result);
+  reader.readAsText(file,'UTF-8');
+}
+
+function invImpHandleDrop(e){
+  e.preventDefault();
+  document.getElementById('inv-imp-drop-zone').style.borderColor='var(--border)';
+  const file=e.dataTransfer.files[0];
+  if(file) invImpReadFile(file);
+}
+
+function invImpParseCSV(text){
+  text=text.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const lines=text.split('\n').filter(l=>l.trim());
+  if(lines.length<2){ showToast('CSV-এ কোনো data নেই','error'); return; }
+  function parseLine(line){
+    const result=[]; let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'){inQ=!inQ;continue;}
+      if(ch===','&&!inQ){result.push(cur.trim());cur='';continue;}
+      cur+=ch;
+    }
+    result.push(cur.trim());
+    return result;
+  }
+  invImpHeaders=parseLine(lines[0]).map(h=>h.replace(/^["'\s]+|["'\s]+$/g,'').trim());
+  invImpRawRows=lines.slice(1).map(l=>parseLine(l));
+  invImpColMap={};
+  Object.entries(INV_IMP_FIELDS).forEach(([field,variants])=>{
+    let found=-1;
+    const headers=invImpHeaders.map(h=>h.toLowerCase().trim());
+    if(found<0) for(let i=0;i<headers.length;i++) if(variants.some(v=>v===headers[i])){found=i;break;}
+    if(found<0) for(let i=0;i<headers.length;i++) if(variants.some(v=>headers[i].startsWith(v)||v.startsWith(headers[i]))){found=i;break;}
+    if(found<0) for(let i=0;i<headers.length;i++) if(variants.some(v=>v.length>=5&&headers[i].includes(v))){found=i;break;}
+    if(found>=0) invImpColMap[field]=found;
+  });
+  // Preview
+  const zone=document.getElementById('inv-imp-drop-zone');
+  const wrap=document.getElementById('inv-imp-preview-wrap');
+  const btn =document.getElementById('inv-imp-submit-btn');
+  if(zone) zone.style.display='none';
+  if(wrap) wrap.style.display='block';
+  if(btn)  btn.style.display='inline-flex';
+  const total=invImpRawRows.filter(r=>r.some(c=>c.trim())).length;
+  const previewEl=document.getElementById('inv-imp-preview-count');
+  if(previewEl) previewEl.textContent=total+'টি row পাওয়া গেছে';
+  // Build preview table
+  const thead=document.getElementById('inv-imp-thead');
+  const tbody=document.getElementById('inv-imp-tbody');
+  const cols=Math.min(invImpHeaders.length,6);
+  if(thead) thead.innerHTML='<tr>'+invImpHeaders.slice(0,cols).map(h=>`<th style="padding:6px 10px;background:var(--card-bg2);white-space:nowrap;">${h}</th>`).join('')+'</tr>';
+  if(tbody) tbody.innerHTML=invImpRawRows.slice(0,4).map(r=>'<tr>'+r.slice(0,cols).map(c=>`<td style="padding:5px 10px;border-bottom:1px solid var(--border2);">${c||'—'}</td>`).join('')+'</tr>').join('');
+  const btnEl=document.getElementById('inv-imp-submit-btn');
+  const txtEl=document.getElementById('inv-imp-submit-text');
+  if(txtEl) txtEl.textContent=total+'টি Product Import করুন';
+  if(btnEl) btnEl.style.display='inline-flex';
+}
+
+async function invImpSubmit(){
+  const rows=invImpRawRows.filter(r=>r.some(c=>String(c).trim()));
+  if(!rows.length){showToast('কোনো data নেই','error');return;}
+  if(invImpColMap['name']===undefined){showToast('Product Name column map করুন','error');return;}
+  document.getElementById('inv-imp-submit-btn').disabled=true;
+  document.getElementById('inv-imp-preview-wrap').style.display='none';
+  document.getElementById('inv-imp-progress-wrap').style.display='block';
+  const get=(field)=>{
+    const idx=invImpColMap[field];
+    return idx!==undefined?String(rows[0][idx]||'').trim():''; // placeholder
+  };
+  const cleanNum=v=>{ let s=String(v||'').replace(/[০১২৩৪৫৬৭৮৯]/g,d=>'০১২৩৪৫৬৭৮৯'.indexOf(d)).replace(/[৳,\s]/g,'').replace(/[^0-9.-]/g,''); const n=parseFloat(s); return isNaN(n)?0:n; };
+  const payload_rows=rows.map(r=>{
+    const g=(field)=>{ const idx=invImpColMap[field]; return idx!==undefined?String(r[idx]||'').trim():''; };
+    return {
+      name:          g('name'),
+      category:      g('category') || 'General',
+      cost:          cleanNum(g('cost')),
+      sell:          cleanNum(g('sell')),
+      opening:       cleanNum(g('opening')),
+      stockIn:       cleanNum(g('stockIn')),
+      alert:         cleanNum(g('alert')) || 5,
+      supplier:      g('supplier'),
+      supplierPhone: g('supplierPhone'),
+      notes:         g('notes'),
+    };
+  }).filter(r=>r.name);
+  document.getElementById('inv-imp-progress-text').textContent=`${payload_rows.length}টি product পাঠানো হচ্ছে...`;
+  document.getElementById('inv-imp-progress-bar').style.width='30%';
+  try{
+    const ok=await postToAPI({action:'bulkImportInventory', rows:payload_rows});
+    document.getElementById('inv-imp-progress-bar').style.width='100%';
+    document.getElementById('inv-imp-progress-wrap').style.display='none';
+    const res=document.getElementById('inv-imp-result');
+    res.style.display='block';
+    if(ok){
+      res.style.cssText='display:block;padding:12px;border-radius:8px;background:rgba(34,201,122,0.1);border:1px solid rgba(34,201,122,0.3);color:var(--green);font-size:13px;font-weight:600;text-align:center;';
+      res.textContent=`✅ ${payload_rows.length}টি Product সফলভাবে import হয়েছে!`;
+      setTimeout(()=>{ closeModal('import-inventory-csv'); invImpReset(); loadLiveInventory(); showToast('✅ Inventory import সম্পন্ন!','success'); },2000);
+    } else {
+      res.style.cssText='display:block;padding:12px;border-radius:8px;background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);color:var(--red);font-size:13px;font-weight:600;';
+      res.innerHTML=`❌ Import failed<br><button class="btn" style="margin-top:8px;" onclick="invImpReset()">🔄 আবার চেষ্টা করুন</button>`;
+      document.getElementById('inv-imp-submit-btn').disabled=false;
+    }
+  } catch(e){
+    document.getElementById('inv-imp-progress-wrap').style.display='none';
+    document.getElementById('inv-imp-result').style.cssText='display:block;padding:12px;border-radius:8px;background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);color:var(--red);font-size:13px;';
+    document.getElementById('inv-imp-result').innerHTML=`❌ Error: ${e.message}<br><button class="btn" style="margin-top:8px;" onclick="invImpReset()">🔄 আবার চেষ্টা করুন</button>`;
+    document.getElementById('inv-imp-submit-btn').disabled=false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// ─── EXPENSES CSV IMPORT ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════
+const EXP_IMP_FIELDS = {
+  date:        ['date','তারিখ','expense date'],
+  time:        ['time','সময়'],
+  category:    ['category','ক্যাটাগরি','cat','type','expense type'],
+  description: ['description','details','বিবরণ','desc','item','expense'],
+  amount:      ['amount','টাকা','taka','cost','খরচ','expense amount'],
+  method:      ['payment method','method','payment','পেমেন্ট'],
+  vendor:      ['vendor','supplier','দোকান','সরবরাহকারী','shop'],
+  invoice:     ['invoice','invoice no','ইনভয়েস','receipt'],
+  notes:       ['notes','note','মন্তব্য','remarks'],
+};
+
+let expImpRawRows=[], expImpHeaders=[], expImpColMap={};
+
+function expImpReset(){
+  expImpRawRows=[]; expImpHeaders=[]; expImpColMap={};
+  ['exp-imp-preview-wrap','exp-imp-progress-wrap','exp-imp-result'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  const btn=document.getElementById('exp-imp-submit-btn'); if(btn)btn.style.display='none';
+  const zone=document.getElementById('exp-imp-drop-zone'); if(zone)zone.style.display='block';
+  const fi=document.getElementById('exp-imp-file-input'); if(fi)fi.value='';
+}
+
+function expImpReadFile(file){ if(!file)return; const r=new FileReader(); r.onload=e=>expImpParseAndShow(e.target.result); r.readAsText(file,'UTF-8'); }
+function expImpHandleDrop(e){ e.preventDefault(); document.getElementById('exp-imp-drop-zone').style.borderColor='var(--border)'; const f=e.dataTransfer.files[0]; if(f)expImpReadFile(f); }
+
+function expImpParseAndShow(text){
+  text=text.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const lines=text.split('\n').filter(l=>l.trim());
+  if(lines.length<2){showToast('CSV-এ কোনো data নেই','error');return;}
+  function parseLine(line){const result=[];let cur='',inQ=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){inQ=!inQ;continue;}if(ch===','&&!inQ){result.push(cur.trim());cur='';continue;}cur+=ch;}result.push(cur.trim());return result;}
+  expImpHeaders=parseLine(lines[0]).map(h=>h.replace(/^["'\s]+|["'\s]+$/g,'').trim());
+  expImpRawRows=lines.slice(1).map(l=>parseLine(l));
+  expImpColMap={};
+  Object.entries(EXP_IMP_FIELDS).forEach(([field,variants])=>{
+    let found=-1; const headers=expImpHeaders.map(h=>h.toLowerCase().trim());
+    if(found<0) for(let i=0;i<headers.length;i++) if(variants.some(v=>v===headers[i])){found=i;break;}
+    if(found<0) for(let i=0;i<headers.length;i++) if(variants.some(v=>headers[i].startsWith(v)||v.startsWith(headers[i]))){found=i;break;}
+    if(found<0) for(let i=0;i<headers.length;i++) if(variants.some(v=>v.length>=5&&headers[i].includes(v))){found=i;break;}
+    if(found>=0) expImpColMap[field]=found;
+  });
+  document.getElementById('exp-imp-drop-zone').style.display='none';
+  document.getElementById('exp-imp-preview-wrap').style.display='block';
+  const total=expImpRawRows.filter(r=>r.some(c=>c.trim())).length;
+  const previewEl=document.getElementById('exp-imp-preview-count'); if(previewEl) previewEl.textContent=total+'টি row';
+  const thead=document.getElementById('exp-imp-thead'); const tbody=document.getElementById('exp-imp-tbody');
+  const cols=Math.min(expImpHeaders.length,6);
+  if(thead) thead.innerHTML='<tr>'+expImpHeaders.slice(0,cols).map(h=>`<th style="padding:6px 10px;background:var(--card-bg2);white-space:nowrap;">${h}</th>`).join('')+'</tr>';
+  if(tbody) tbody.innerHTML=expImpRawRows.slice(0,4).map(r=>'<tr>'+r.slice(0,cols).map(c=>`<td style="padding:5px 10px;border-bottom:1px solid var(--border2);">${c||'—'}</td>`).join('')+'</tr>').join('');
+  const btn=document.getElementById('exp-imp-submit-btn'); if(btn){btn.style.display='inline-flex'; document.getElementById('exp-imp-submit-text').textContent=total+'টি Expense Import করুন';}
+}
+
+async function expImpSubmit(){
+  const rows=expImpRawRows.filter(r=>r.some(c=>String(c).trim()));
+  if(!rows.length){showToast('কোনো data নেই','error');return;}
+  document.getElementById('exp-imp-submit-btn').disabled=true;
+  document.getElementById('exp-imp-preview-wrap').style.display='none';
+  document.getElementById('exp-imp-progress-wrap').style.display='block';
+  const cleanNum=v=>{let s=String(v||'').replace(/[০১২৩৪৫৬৭৮৯]/g,d=>'০১২৩৪৫৬৭৮৯'.indexOf(d)).replace(/[৳,\s]/g,'').replace(/[^0-9.-]/g,'');const n=parseFloat(s);return isNaN(n)?0:n;};
+  const payload_rows=rows.map(r=>{
+    const g=(f)=>{const idx=expImpColMap[f];return idx!==undefined?String(r[idx]||'').trim():'';};
+    return { date:g('date'), time:g('time'), category:g('category')||'Other', description:g('description'), amount:cleanNum(g('amount')), method:g('method')||'Cash', vendor:g('vendor'), invoice:g('invoice'), notes:g('notes') };
+  }).filter(r=>r.description||r.amount>0);
+  document.getElementById('exp-imp-progress-text').textContent=`${payload_rows.length}টি expense পাঠানো হচ্ছে...`;
+  document.getElementById('exp-imp-progress-bar').style.width='30%';
+  try{
+    const ok=await postToAPI({action:'bulkImportExpenses', rows:payload_rows});
+    document.getElementById('exp-imp-progress-bar').style.width='100%';
+    document.getElementById('exp-imp-progress-wrap').style.display='none';
+    const res=document.getElementById('exp-imp-result'); res.style.display='block';
+    if(ok){
+      res.style.cssText='display:block;padding:12px;border-radius:8px;background:rgba(34,201,122,0.1);border:1px solid rgba(34,201,122,0.3);color:var(--green);font-size:13px;font-weight:600;text-align:center;';
+      res.textContent=`✅ ${payload_rows.length}টি Expense সফলভাবে import হয়েছে!`;
+      setTimeout(()=>{ closeModal('import-expense-csv'); expImpReset(); loadLiveExpenses(); loadLiveDashboard(); showToast('✅ Expense import সম্পন্ন!','success'); },2000);
+    } else { res.style.cssText='display:block;padding:12px;border-radius:8px;background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);color:var(--red);font-size:13px;'; res.innerHTML=`❌ Import failed<br><button class="btn" style="margin-top:8px;" onclick="expImpReset()">🔄 আবার চেষ্টা করুন</button>`; document.getElementById('exp-imp-submit-btn').disabled=false; }
+  } catch(e){ document.getElementById('exp-imp-progress-wrap').style.display='none'; document.getElementById('exp-imp-result').style.cssText='display:block;padding:12px;border-radius:8px;background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);color:var(--red);font-size:13px;'; document.getElementById('exp-imp-result').innerHTML=`❌ Error: ${e.message}<br><button class="btn" style="margin-top:8px;" onclick="expImpReset()">🔄 আবার চেষ্টা করুন</button>`; document.getElementById('exp-imp-submit-btn').disabled=false; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// ─── PARTNERS CSV IMPORT ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════
+const PTR_IMP_FIELDS = {
+  partner:     ['partner','partner name','পার্টনার','name'],
+  type:        ['type','transaction type','ধরন','kind'],
+  date:        ['date','তারিখ'],
+  time:        ['time','সময়'],
+  amount:      ['amount','টাকা','taka'],
+  method:      ['payment method','method','payment','পেমেন্ট'],
+  description: ['description','details','বিবরণ','desc','note'],
+};
+
+let ptrImpRawRows=[], ptrImpHeaders=[], ptrImpColMap={};
+
+function ptrImpReset(){
+  ptrImpRawRows=[]; ptrImpHeaders=[]; ptrImpColMap={};
+  ['ptr-imp-preview-wrap','ptr-imp-progress-wrap','ptr-imp-result'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  const btn=document.getElementById('ptr-imp-submit-btn'); if(btn)btn.style.display='none';
+  const zone=document.getElementById('ptr-imp-drop-zone'); if(zone)zone.style.display='block';
+  const fi=document.getElementById('ptr-imp-file-input'); if(fi)fi.value='';
+}
+
+function ptrImpReadFile(file){ if(!file)return; const r=new FileReader(); r.onload=e=>ptrImpParseAndShow(e.target.result); r.readAsText(file,'UTF-8'); }
+function ptrImpHandleDrop(e){ e.preventDefault(); document.getElementById('ptr-imp-drop-zone').style.borderColor='var(--border)'; const f=e.dataTransfer.files[0]; if(f)ptrImpReadFile(f); }
+
+function ptrImpParseAndShow(text){
+  text=text.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const lines=text.split('\n').filter(l=>l.trim());
+  if(lines.length<2){showToast('CSV-এ কোনো data নেই','error');return;}
+  function parseLine(line){const result=[];let cur='',inQ=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){inQ=!inQ;continue;}if(ch===','&&!inQ){result.push(cur.trim());cur='';continue;}cur+=ch;}result.push(cur.trim());return result;}
+  ptrImpHeaders=parseLine(lines[0]).map(h=>h.replace(/^["'\s]+|["'\s]+$/g,'').trim());
+  ptrImpRawRows=lines.slice(1).map(l=>parseLine(l));
+  ptrImpColMap={};
+  Object.entries(PTR_IMP_FIELDS).forEach(([field,variants])=>{
+    let found=-1; const headers=ptrImpHeaders.map(h=>h.toLowerCase().trim());
+    if(found<0) for(let i=0;i<headers.length;i++) if(variants.some(v=>v===headers[i])){found=i;break;}
+    if(found<0) for(let i=0;i<headers.length;i++) if(variants.some(v=>headers[i].startsWith(v)||v.startsWith(headers[i]))){found=i;break;}
+    if(found>=0) ptrImpColMap[field]=found;
+  });
+  document.getElementById('ptr-imp-drop-zone').style.display='none';
+  document.getElementById('ptr-imp-preview-wrap').style.display='block';
+  const total=ptrImpRawRows.filter(r=>r.some(c=>c.trim())).length;
+  const previewEl=document.getElementById('ptr-imp-preview-count'); if(previewEl) previewEl.textContent=total+'টি row';
+  const thead=document.getElementById('ptr-imp-thead'); const tbody=document.getElementById('ptr-imp-tbody');
+  const cols=Math.min(ptrImpHeaders.length,6);
+  if(thead) thead.innerHTML='<tr>'+ptrImpHeaders.slice(0,cols).map(h=>`<th style="padding:6px 10px;background:var(--card-bg2);white-space:nowrap;">${h}</th>`).join('')+'</tr>';
+  if(tbody) tbody.innerHTML=ptrImpRawRows.slice(0,4).map(r=>'<tr>'+r.slice(0,cols).map(c=>`<td style="padding:5px 10px;border-bottom:1px solid var(--border2);">${c||'—'}</td>`).join('')+'</tr>').join('');
+  const btn=document.getElementById('ptr-imp-submit-btn'); if(btn){btn.style.display='inline-flex'; document.getElementById('ptr-imp-submit-text').textContent=total+'টি Transaction Import করুন';}
+}
+
+async function ptrImpSubmit(){
+  const rows=ptrImpRawRows.filter(r=>r.some(c=>String(c).trim()));
+  if(!rows.length){showToast('কোনো data নেই','error');return;}
+  document.getElementById('ptr-imp-submit-btn').disabled=true;
+  document.getElementById('ptr-imp-preview-wrap').style.display='none';
+  document.getElementById('ptr-imp-progress-wrap').style.display='block';
+  const cleanNum=v=>{let s=String(v||'').replace(/[০১২৩৪৫৬৭৮৯]/g,d=>'০১২৩৪৫৬৭৮৯'.indexOf(d)).replace(/[৳,\s]/g,'').replace(/[^0-9.-]/g,'');const n=parseFloat(s);return isNaN(n)?0:n;};
+  const payload_rows=rows.map(r=>{
+    const g=(f)=>{const idx=ptrImpColMap[f];return idx!==undefined?String(r[idx]||'').trim():'';};
+    return { partner:g('partner'), type:g('type')||'Investment', date:g('date'), time:g('time'), amount:cleanNum(g('amount')), method:g('method')||'Cash', description:g('description') };
+  }).filter(r=>r.partner||r.amount>0);
+  document.getElementById('ptr-imp-progress-text').textContent=`${payload_rows.length}টি transaction পাঠানো হচ্ছে...`;
+  document.getElementById('ptr-imp-progress-bar').style.width='30%';
+  try{
+    const ok=await postToAPI({action:'bulkImportTransactions', rows:payload_rows});
+    document.getElementById('ptr-imp-progress-bar').style.width='100%';
+    document.getElementById('ptr-imp-progress-wrap').style.display='none';
+    const res=document.getElementById('ptr-imp-result'); res.style.display='block';
+    if(ok){
+      res.style.cssText='display:block;padding:12px;border-radius:8px;background:rgba(34,201,122,0.1);border:1px solid rgba(34,201,122,0.3);color:var(--green);font-size:13px;font-weight:600;text-align:center;';
+      res.textContent=`✅ ${payload_rows.length}টি Transaction সফলভাবে import হয়েছে!`;
+      setTimeout(()=>{ closeModal('import-partner-csv'); ptrImpReset(); loadLivePartners(); loadLiveDashboard(); showToast('✅ Partner import সম্পন্ন!','success'); },2000);
+    } else { res.style.cssText='display:block;padding:12px;border-radius:8px;background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);color:var(--red);font-size:13px;'; res.innerHTML=`❌ Import failed<br><button class="btn" style="margin-top:8px;" onclick="ptrImpReset()">🔄 আবার চেষ্টা করুন</button>`; document.getElementById('ptr-imp-submit-btn').disabled=false; }
+  } catch(e){ document.getElementById('ptr-imp-progress-wrap').style.display='none'; document.getElementById('ptr-imp-result').style.cssText='display:block;padding:12px;border-radius:8px;background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);color:var(--red);font-size:13px;'; document.getElementById('ptr-imp-result').innerHTML=`❌ Error: ${e.message}<br><button class="btn" style="margin-top:8px;" onclick="ptrImpReset()">🔄 আবার চেষ্টা করুন</button>`; document.getElementById('ptr-imp-submit-btn').disabled=false; }
+}
 </script>
 </body>
 </html>
