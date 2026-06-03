@@ -2529,7 +2529,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbz7F--ngmysi4H4tgc0V5-UQrcXnD0D7WCgcfLKO65ZPq12BNiE7IH50AE_wWR5duOV-Q/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbwD5NJe5r6A5lVp2X8ihSUlvFrgEMNaCpl2W9kEBpsgq14cHgSuRk1wSorojSPNotFpbA/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -2891,7 +2891,7 @@ function renderSalesRows(rows){
       <td><span class="pay-badge ${(r.payment||'').toLowerCase().replace(/ /g,'')}">${r.payment}</span></td>
       <td>${r.courier||'—'}</td>
       <td class="mono muted" style="font-size:11px;">${r.tracking||'—'}</td>
-      <td><span class="status ${(r.delStatus||'').toLowerCase().replace(/ /g,'')}">${r.delStatus||'Not Sent'}</span></td>
+      <td><span class="status ${(()=>{const ds=(r.delStatus||'Not Sent').trim();if(ds==='Delivered')return 'delivered';if(ds==='Returned')return 'returned';if(ds==='Out for Delivery'||ds==='In Transit')return 'intransit';if(ds==='Sent')return 'processing';if(ds==='Failed Delivery')return 'cancelled';return 'pending';})()}">${r.delStatus||'Not Sent'}</span></td>
       <td class="muted" style="font-size:11px;max-width:120px;white-space:normal;">${r.notes||'—'}</td>
       <td style="display:flex;gap:4px;">
         <button class="btn" style="padding:4px 10px;font-size:11px;" onclick='openEditOrder(${JSON.stringify(r)})'>✏️ Edit</button>
@@ -3076,26 +3076,32 @@ function renderPartnerTxns(rows){
 }
 
 function renderCRMRows(rows){
+  // Status → CSS class mapping (HTML-এর .status.xxx CSS-এর সাথে match করো)
+  const ST_CSS = {
+    'Delivered':   'delivered',
+    'Pending':     'pending',
+    'Processing':  'processing',
+    'In Transit':  'intransit',
+    'Cancelled':   'cancelled',
+    'Returned':    'returned',
+  };
+  const ST_ICON = {
+    'Delivered':'✅','Pending':'⏳','Processing':'🔄',
+    'In Transit':'🚚','Cancelled':'❌','Returned':'↩',
+  };
+
   document.getElementById('crm-body').innerHTML = rows.map(c=>{
-    // FIX v24: Customer type badge — emoji prefix সহ check করো
     const isRepeat = String(c.type||'').includes('Repeat');
     const typeClass = isRepeat ? 'delivered' : 'pending';
     const typeLabel = isRepeat ? '🔄 Repeat' : '👤 Regular';
 
-    // FIX v24: Order status breakdown — কোন কাস্টমারের কতটা কোন অবস্থায় আছে
+    // Order status breakdown badges
     const statusMap = c.statusSummary || {};
-    const statusBadges = [
-      { key:'Delivered',   cls:'delivered', icon:'✅' },
-      { key:'Pending',     cls:'pending',   icon:'⏳' },
-      { key:'Processing',  cls:'processing',icon:'🔄' },
-      { key:'In Transit',  cls:'intransit', icon:'🚚' },
-      { key:'Cancelled',   cls:'cancelled', icon:'❌' },
-      { key:'Returned',    cls:'returned',  icon:'↩' },
-    ].filter(s => statusMap[s.key] > 0)
-     .map(s => `<span class="status ${s.cls}" style="font-size:10px;padding:2px 7px;margin:1px;">
-                  ${s.icon} ${s.key} ×${statusMap[s.key]}
-                </span>`)
-     .join('');
+    const badgeOrder = ['Delivered','Pending','Processing','In Transit','Cancelled','Returned'];
+    const statusBadges = badgeOrder
+      .filter(k => statusMap[k] > 0)
+      .map(k => `<span class="status ${ST_CSS[k]}" style="font-size:10px;padding:2px 6px;margin:1px;white-space:nowrap;">${ST_ICON[k]} ${k}${statusMap[k]>1?' ×'+statusMap[k]:''}</span>`)
+      .join('');
 
     return `<tr>
       <td class="mono muted">${c.id}</td>
@@ -3107,10 +3113,8 @@ function renderCRMRows(rows){
       </td>
       <td class="mono" style="color:var(--green);">৳${Number(c.spent||0).toLocaleString()}</td>
       <td class="mono" style="color:${c.due>0?'var(--red)':'var(--text3)'};">৳${Number(c.due||0).toLocaleString()}</td>
-      <td>
-        <div style="display:flex;flex-wrap:wrap;gap:2px;min-width:180px;">
-          ${statusBadges || `<span class="status ${typeClass}" style="font-size:10px;">${typeLabel}</span>`}
-        </div>
+      <td style="min-width:160px;">
+        ${statusBadges || `<span class="status ${typeClass}" style="font-size:10px;">${typeLabel}</span>`}
       </td>
       <td class="mono">${c.last||'—'}</td>
       <td><button class="btn" style="padding:4px 10px;font-size:11px;" onclick='openViewCustomer(${JSON.stringify(c)})'>👁 View</button></td>
