@@ -1297,6 +1297,46 @@ tbody td.muted{color:var(--text3);}
         <div class="kpi-card red"><div class="kpi-icon">💳</div><div class="kpi-label">Due Customers</div><div class="kpi-value"><span id="crm-due">—</span></div></div>
         <div class="kpi-card gold"><div class="kpi-icon">🏆</div><div class="kpi-label">Top Customer</div><div class="kpi-value" style="font-size:14px;font-family:'IBM Plex Sans',sans-serif;" id="crm-top">—</div></div>
       </div>
+
+      <!-- ── Delivery Charge Analytics ── -->
+      <div class="table-wrapper" style="margin-bottom:18px;">
+        <div class="table-header">
+          <span class="table-title">🚚 Delivery Charge Analytics</span>
+          <div class="table-actions">
+            <select id="delivery-filter-month" onchange="renderDeliveryAnalytics()" style="background:var(--bg3);color:var(--text1);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;">
+              <option value="all">সব সময়</option>
+              <option value="this_month" selected>এই মাস</option>
+              <option value="last_month">গত মাস</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:16px;">
+          <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border2);text-align:center;">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">মোট ডেলিভারি চার্জ</div>
+            <div style="font-size:22px;font-weight:700;color:var(--gold);" id="del-total-charge">—</div>
+          </div>
+          <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border2);text-align:center;">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">মোট অর্ডার সংখ্যা</div>
+            <div style="font-size:22px;font-weight:700;color:var(--green);" id="del-count">—</div>
+          </div>
+          <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border2);text-align:center;">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">গড় ডেলিভারি চার্জ/অর্ডার</div>
+            <div style="font-size:22px;font-weight:700;color:var(--blue);" id="del-avg">—</div>
+          </div>
+        </div>
+        <div style="padding:0 16px 16px;">
+          <table style="width:100%;font-size:12px;border-collapse:collapse;">
+            <thead><tr style="background:var(--bg2);">
+              <th style="padding:8px;text-align:left;color:var(--text3);font-weight:600;">মাস</th>
+              <th style="padding:8px;text-align:right;color:var(--text3);font-weight:600;">ডেলিভারি চার্জ</th>
+              <th style="padding:8px;text-align:right;color:var(--text3);font-weight:600;">অর্ডার সংখ্যা</th>
+              <th style="padding:8px;text-align:right;color:var(--text3);font-weight:600;">গড় চার্জ</th>
+            </tr></thead>
+            <tbody id="del-monthly-body"></tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="table-wrapper">
         <div class="table-header">
           <span class="table-title">Customer Database</span>
@@ -2529,7 +2569,7 @@ tbody td.muted{color:var(--text3);}
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwD5NJe5r6A5lVp2X8ihSUlvFrgEMNaCpl2W9kEBpsgq14cHgSuRk1wSorojSPNotFpbA/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbyrD37IcrdYp5YbS-nzAysxAO9-bhSkr-ZXzroYkR2CQ3KvNKwTI5SkMcPP7NPAOMROhw/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -3073,6 +3113,73 @@ function renderPartnerTxns(rows){
       </td>
     </tr>`;
   }).join('');
+}
+
+// ── Delivery Charge Analytics ─────────────────────────────────
+function renderDeliveryAnalytics(){
+  const safeN = v => { const n=parseFloat(String(v||'').replace(/[^0-9.-]/g,'')); return isNaN(n)?0:n; };
+  const filter = (document.getElementById('delivery-filter-month')||{}).value || 'this_month';
+  const now = new Date();
+  const thisY = now.getFullYear(), thisMo = now.getMonth();
+
+  let orders = (liveSalesData||[]).filter(r=>{
+    const st = String(r.status||'').trim();
+    return st !== 'Cancelled' && st !== 'Returned';
+  });
+
+  if(filter !== 'all'){
+    orders = orders.filter(r=>{
+      const raw = String(r.date||'').trim();
+      if(!raw) return false;
+      const dt = new Date(raw.replace(/(\d{2})-([A-Za-z]{3})-(\d{4})/,'$2 $1 $3'));
+      if(isNaN(dt.getTime())) return false;
+      if(filter==='this_month') return dt.getFullYear()===thisY && dt.getMonth()===thisMo;
+      if(filter==='last_month'){
+        const lm = thisMo===0?11:thisMo-1, ly = thisMo===0?thisY-1:thisY;
+        return dt.getFullYear()===ly && dt.getMonth()===lm;
+      }
+      return true;
+    });
+  }
+
+  const total = orders.reduce((s,r)=>s+safeN(r.delivery),0);
+  const count = orders.length;
+  const avg = count>0?Math.round(total/count):0;
+
+  const setEl = (id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+  setEl('del-total-charge','৳'+Math.round(total).toLocaleString());
+  setEl('del-count',count+' টি');
+  setEl('del-avg',avg>0?'৳'+avg.toLocaleString():'—');
+
+  // Monthly breakdown (last 6 months)
+  const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthMap={};
+  (liveSalesData||[]).forEach(r=>{
+    const st=String(r.status||'').trim();
+    if(st==='Cancelled'||st==='Returned') return;
+    const raw=String(r.date||'').trim(); if(!raw) return;
+    const dt=new Date(raw.replace(/(\d{2})-([A-Za-z]{3})-(\d{4})/,'$2 $1 $3'));
+    if(isNaN(dt.getTime())) return;
+    const key=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');
+    const label=MON[dt.getMonth()]+' '+dt.getFullYear();
+    if(!monthMap[key]) monthMap[key]={label,charge:0,count:0};
+    monthMap[key].charge+=safeN(r.delivery);
+    monthMap[key].count++;
+  });
+  const sorted=Object.keys(monthMap).sort().reverse().slice(0,6);
+  const tbody=document.getElementById('del-monthly-body');
+  if(tbody){
+    tbody.innerHTML = sorted.length ? sorted.map(k=>{
+      const m=monthMap[k];
+      const rowAvg=m.count>0?Math.round(m.charge/m.count):0;
+      return `<tr style="border-bottom:1px solid var(--border2);">
+        <td style="padding:8px;color:var(--text1);">${m.label}</td>
+        <td style="padding:8px;text-align:right;color:var(--gold);font-weight:700;">৳${Math.round(m.charge).toLocaleString()}</td>
+        <td style="padding:8px;text-align:right;color:var(--text2);">${m.count} টি</td>
+        <td style="padding:8px;text-align:right;color:var(--blue);">৳${rowAvg.toLocaleString()}</td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="4" style="padding:16px;text-align:center;color:var(--text3);">কোনো data নেই</td></tr>';
+  }
 }
 
 function renderCRMRows(rows){
@@ -3750,8 +3857,10 @@ async function loadLiveCRM(){
         // r.total = qty × unitPrice (stored by GS)
         // r.price = unit price, r.qty = quantity
         // Use r.total directly — এটাই সঠিক কারণ GS নিজে calculate করে লিখেছে
-        const orderTotal = safeN(r.total);
+        // FIX v25: Total Spent = product total + delivery charge
+        const orderTotal = safeN(r.total) + safeN(r.delivery);
         crmMap[key].spent += orderTotal;
+        crmMap[key].totalDelivery = (crmMap[key].totalDelivery||0) + safeN(r.delivery);
         crmMap[key].totalQty = (crmMap[key].totalQty||0) + safeN(r.qty);
         // COD/Cash/bKash/Nagad Delivered হলে due = 0 (টাকা collect হয়েছে)
         const isCollectedOnDelivery = st === 'Delivered' &&
@@ -3773,6 +3882,7 @@ async function loadLiveCRM(){
         orders: c.orders,
         spent:  Math.round(c.spent),
         due:    Math.round(c.due),
+        totalDelivery: Math.round(c.totalDelivery||0),
         avg:    c.orders > 0 ? Math.round(c.spent / c.orders) : 0,
         last:   c.last,
         type:   c.orders >= 3 ? '🔄 Repeat' : '👤 Regular',
@@ -3793,6 +3903,7 @@ async function loadLiveCRM(){
   const el2=document.getElementById('crm-repeat'); if(el2) el2.textContent=rows.filter(c=>String(c.type).includes('Repeat')).length;
   const el3=document.getElementById('crm-due');    if(el3) el3.textContent=rows.filter(c=>c.due>0).length;
   const el4=document.getElementById('crm-top');    if(el4){ const top=rows[0]||{name:'—'}; el4.textContent=top.name; }
+  renderDeliveryAnalytics();
 }
 
 // ─── CONNECTION TEST ─────────────────────────────────────────
