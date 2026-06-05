@@ -4,93 +4,64 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>InnoGix Business OS — Amanah Security</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════
-   DESIGN SYSTEM — PREMIUM v25
+   DESIGN SYSTEM
 ═══════════════════════════════════════ */
 :root {
-  --bg:         #090E17;
-  --bg2:        #0F1623;
-  --bg3:        #151D2E;
-  --bg4:        #1A2235;
-  --bg5:        #1E2840;
-  --border:     #243047;
-  --border2:    rgba(36,48,71,.55);
-  --text:       #E8EEFF;
-  --text2:      #8A9BBE;
-  --text3:      #5A6B8A;
-  --gold:       #F0B429;
-  --gold2:      rgba(240,180,41,.18);
-  --gold3:      rgba(240,180,41,.08);
-  --gold-glow:  rgba(240,180,41,.35);
-  --blue:       #4D9EFF;
-  --blue2:      rgba(77,158,255,.15);
-  --blue-glow:  rgba(77,158,255,.3);
-  --green:      #34D174;
-  --green2:     rgba(52,209,116,.15);
-  --green-glow: rgba(52,209,116,.3);
-  --red:        #FF5C5C;
-  --red2:       rgba(255,92,92,.15);
-  --red-glow:   rgba(255,92,92,.3);
-  --orange:     #FF9142;
-  --orange2:    rgba(255,145,66,.15);
-  --purple:     #B794FF;
-  --purple2:    rgba(183,148,255,.15);
-  --purple-glow:rgba(183,148,255,.3);
-  --cyan:       #34EAB9;
-  --cyan2:      rgba(52,234,185,.15);
-  --ismail:     #4D9EFF;
-  --ashik:      #34D174;
-  --rabbi:      #B794FF;
-  --sidebar-w:  268px;
-  --header-h:   64px;
-
-  /* Premium effects */
-  --card-shine: linear-gradient(135deg, rgba(255,255,255,.04) 0%, transparent 60%);
-  --glass-bg:   rgba(15,22,35,.7);
-  --shadow-sm:  0 2px 8px rgba(0,0,0,.35);
-  --shadow-md:  0 4px 20px rgba(0,0,0,.45);
-  --shadow-lg:  0 8px 40px rgba(0,0,0,.6);
-  --radius-sm:  8px;
-  --radius-md:  12px;
-  --radius-lg:  16px;
-  --radius-xl:  20px;
+  --bg:         #0D1117;
+  --bg2:        #161B22;
+  --bg3:        #1C2330;
+  --bg4:        #21262D;
+  --border:     #30363D;
+  --border2:    rgba(48,54,61,.6);
+  --text:       #E6EDF3;
+  --text2:      #8B949E;
+  --text3:      #6E7681;
+  --gold:       #D4A017;
+  --gold2:      rgba(212,160,23,.15);
+  --gold3:      rgba(212,160,23,.08);
+  --blue:       #388BFD;
+  --blue2:      rgba(56,139,253,.15);
+  --green:      #3FB950;
+  --green2:     rgba(63,185,80,.15);
+  --red:        #F85149;
+  --red2:       rgba(248,81,73,.15);
+  --orange:     #E3B341;
+  --orange2:    rgba(227,179,65,.15);
+  --purple:     #BC8CFF;
+  --purple2:    rgba(188,140,255,.15);
+  --cyan:       #39D353;
+  --ismail:     #388BFD;
+  --ashik:      #3FB950;
+  --rabbi:      #BC8CFF;
+  --sidebar-w:  260px;
+  --header-h:   60px;
 }
 .light {
-  --bg:         #F0F4FA;
+  --bg:         #F6F8FA;
   --bg2:        #FFFFFF;
-  --bg3:        #E8EEF8;
-  --bg4:        #DDE4F0;
-  --bg5:        #D5DDEE;
-  --border:     #C5CEDF;
-  --border2:    rgba(197,206,223,.6);
-  --text:       #0F1623;
-  --text2:      #4A5A7A;
-  --text3:      #7A8AAA;
-  --gold2:      rgba(240,180,41,.12);
-  --gold3:      rgba(240,180,41,.06);
-  --gold-glow:  rgba(240,180,41,.2);
-  --blue2:      rgba(77,158,255,.12);
-  --blue-glow:  rgba(77,158,255,.2);
-  --green2:     rgba(52,209,116,.12);
-  --green-glow: rgba(52,209,116,.2);
-  --red2:       rgba(255,92,92,.12);
-  --red-glow:   rgba(255,92,92,.2);
-  --orange2:    rgba(255,145,66,.12);
-  --purple2:    rgba(183,148,255,.12);
-  --purple-glow:rgba(183,148,255,.2);
-  --cyan2:      rgba(52,234,185,.12);
-  --glass-bg:   rgba(255,255,255,.75);
-  --shadow-sm:  0 2px 8px rgba(0,0,0,.08);
-  --shadow-md:  0 4px 20px rgba(0,0,0,.12);
-  --shadow-lg:  0 8px 40px rgba(0,0,0,.18);
+  --bg3:        #F0F2F5;
+  --bg4:        #EAEEF2;
+  --border:     #D0D7DE;
+  --border2:    rgba(208,215,222,.6);
+  --text:       #1F2328;
+  --text2:      #656D76;
+  --text3:      #8C959F;
+  --gold2:      rgba(212,160,23,.1);
+  --gold3:      rgba(212,160,23,.05);
+  --blue2:      rgba(56,139,253,.1);
+  --green2:     rgba(63,185,80,.1);
+  --red2:       rgba(248,81,73,.1);
+  --orange2:    rgba(227,179,65,.1);
+  --purple2:    rgba(188,140,255,.1);
 }
 
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{
-  font-family:'Inter','IBM Plex Sans',sans-serif;
+  font-family:'IBM Plex Sans',sans-serif;
   background:var(--bg);
   color:var(--text);
   display:flex;
@@ -99,21 +70,8 @@ body{
   transition:background .3s,color .3s;
 }
 
-/* Premium background mesh */
-body::before {
-  content:'';
-  position:fixed;
-  inset:0;
-  background:
-    radial-gradient(ellipse 80% 50% at 20% -10%, rgba(77,158,255,.06) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(183,148,255,.05) 0%, transparent 60%);
-  pointer-events:none;
-  z-index:0;
-}
-body > *:not(#lock-screen) { position:relative; z-index:1; }
-
 /* ═══════════════════════════════════════
-   SIDEBAR — PREMIUM
+   SIDEBAR
 ═══════════════════════════════════════ */
 .sidebar{
   width:var(--sidebar-w);
@@ -125,74 +83,42 @@ body > *:not(#lock-screen) { position:relative; z-index:1; }
   position:fixed;
   top:0;left:0;
   z-index:200;
-  transition:transform .3s cubic-bezier(.4,0,.2,1);
-  box-shadow:4px 0 32px rgba(0,0,0,.35);
-}
-/* Sidebar inner glow line */
-.sidebar::after {
-  content:'';
-  position:absolute;
-  top:0; right:-1px;
-  width:1px; height:100%;
-  background:linear-gradient(to bottom, transparent, rgba(240,180,41,.25), transparent);
-  pointer-events:none;
+  transition:transform .3s;
 }
 .sidebar-logo{
-  padding:22px 20px 18px;
+  padding:20px 20px 16px;
   border-bottom:1px solid var(--border);
-  display:flex;align-items:center;gap:12px;
-  background:linear-gradient(135deg, rgba(240,180,41,.05) 0%, transparent 100%);
+  display:flex;align-items:center;gap:10px;
 }
 .logo-icon{
-  width:40px;height:40px;
-  background:linear-gradient(135deg,var(--gold),#C8900A);
-  border-radius:11px;
+  width:38px;height:38px;
+  background:linear-gradient(135deg,var(--gold),#8B6914);
+  border-radius:10px;
   display:flex;align-items:center;justify-content:center;
   font-size:18px;flex-shrink:0;
-  box-shadow:0 0 20px var(--gold-glow), 0 4px 12px rgba(0,0,0,.4);
+  box-shadow:0 0 16px rgba(212,160,23,.3);
 }
-.logo-text h2{font-size:14px;font-weight:800;color:var(--text);letter-spacing:.3px;}
-.logo-text p{font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-top:1px;}
+.logo-text h2{font-size:14px;font-weight:700;color:var(--text);letter-spacing:.5px;}
+.logo-text p{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;}
 
-.sidebar-section{padding:14px 16px 4px;font-size:9px;font-weight:800;color:var(--text3);letter-spacing:2.5px;text-transform:uppercase;}
+.sidebar-section{padding:12px 12px 4px;font-size:10px;font-weight:700;color:var(--text3);letter-spacing:2px;text-transform:uppercase;}
 
 .nav-item{
   display:flex;align-items:center;gap:10px;
-  padding:10px 12px;border-radius:10px;
-  margin:2px 8px;
+  padding:9px 12px;border-radius:8px;
+  margin:1px 8px;
   cursor:pointer;color:var(--text2);
   font-size:13px;font-weight:500;
-  transition:all .2s cubic-bezier(.4,0,.2,1);
-  position:relative;
+  transition:all .15s;position:relative;
   border:1px solid transparent;
 }
-.nav-item:hover{
-  background:var(--bg3);
-  color:var(--text);
-  border-color:var(--border);
-  transform:translateX(2px);
-}
-.nav-item.active{
-  background:linear-gradient(135deg, var(--gold3), rgba(240,180,41,.05));
-  border-color:rgba(240,180,41,.3);
-  color:var(--gold);
-  box-shadow:0 2px 12px rgba(240,180,41,.1);
-}
+.nav-item:hover{background:var(--bg3);color:var(--text);}
+.nav-item.active{background:var(--gold3);border-color:rgba(212,160,23,.3);color:var(--gold);}
 .nav-item.active .nav-icon{color:var(--gold);}
-.nav-item.active::before{
-  content:'';
-  position:absolute;
-  left:-8px; top:50%;
-  transform:translateY(-50%);
-  width:3px; height:60%;
-  background:var(--gold);
-  border-radius:0 3px 3px 0;
-  box-shadow:0 0 8px var(--gold-glow);
-}
-.nav-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0;}
-.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;min-width:18px;text-align:center;letter-spacing:.3px;}
+.nav-icon{font-size:16px;width:20px;text-align:center;}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;min-width:18px;text-align:center;}
 .nav-badge.green{background:var(--green);}
-.nav-badge.gold{background:var(--gold);color:#000;}
+.nav-badge.gold{background:var(--gold);}
 
 .sidebar-footer{
   margin-top:auto;padding:16px;
@@ -205,13 +131,11 @@ body > *:not(#lock-screen) { position:relative; z-index:1; }
   font-size:11px;font-weight:600;
   border:1px solid var(--border);
   background:var(--bg3);
-  transition:all .2s;
 }
-.p-chip:hover{background:var(--bg4);border-color:var(--border2);}
 .p-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 
 /* ═══════════════════════════════════════
-   MAIN AREA — PREMIUM
+   MAIN AREA
 ═══════════════════════════════════════ */
 .main{
   margin-left:var(--sidebar-w);
@@ -227,248 +151,135 @@ body > *:not(#lock-screen) { position:relative; z-index:1; }
   background:var(--bg2);
   border-bottom:1px solid var(--border);
   display:flex;align-items:center;
-  padding:0 28px;gap:14px;
+  padding:0 28px;gap:16px;
   position:sticky;top:0;z-index:100;
-  box-shadow:0 1px 24px rgba(0,0,0,.3);
 }
-/* Topbar bottom gradient accent */
-.topbar::after {
-  content:'';
-  position:absolute;
-  left:0; right:0; bottom:-1px;
-  height:1px;
-  background:linear-gradient(90deg, transparent, rgba(240,180,41,.3), transparent);
-  pointer-events:none;
-}
-.topbar-title{font-size:15px;font-weight:800;color:var(--text);letter-spacing:.2px;}
-.topbar-sub{font-size:11px;color:var(--text3);margin-left:6px;font-weight:400;}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.topbar-title{font-size:16px;font-weight:700;color:var(--text);letter-spacing:.3px;}
+.topbar-sub{font-size:12px;color:var(--text3);margin-left:4px;}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
 .search-box{
   display:flex;align-items:center;gap:8px;
   background:var(--bg3);border:1px solid var(--border);
-  border-radius:10px;padding:7px 14px;
+  border-radius:8px;padding:6px 12px;
   color:var(--text2);font-size:12px;
-  transition:all .2s;
+  transition:border .2s;
 }
-.search-box input{background:none;border:none;outline:none;color:var(--text);font-size:12px;width:200px;font-family:'Inter','IBM Plex Sans',sans-serif;}
+.search-box input{background:none;border:none;outline:none;color:var(--text);font-size:12px;width:180px;font-family:'IBM Plex Sans',sans-serif;}
 .search-box input::placeholder{color:var(--text3);}
-.search-box:focus-within{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold3);}
+.search-box:focus-within{border-color:var(--gold);}
 .icon-btn{
-  width:36px;height:36px;border-radius:10px;
+  width:34px;height:34px;border-radius:8px;
   border:1px solid var(--border);
   background:var(--bg3);
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;font-size:15px;
-  transition:all .2s;color:var(--text2);
+  transition:all .15s;color:var(--text2);
 }
-.icon-btn:hover{background:var(--bg4);color:var(--text);border-color:var(--gold);box-shadow:0 0 12px var(--gold3);}
-.live-badge{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--green);font-weight:700;letter-spacing:.3px;}
-.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;box-shadow:0 0 6px var(--green-glow);}
-@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 var(--green-glow);}50%{opacity:.7;box-shadow:0 0 0 5px rgba(52,209,116,0);}}
+.icon-btn:hover{background:var(--bg4);color:var(--text);border-color:var(--gold);}
+.live-badge{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--green);font-weight:600;}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(63,185,80,.5);}50%{opacity:.7;box-shadow:0 0 0 4px rgba(63,185,80,0);}}
 
 /* CONTENT */
-.content{padding:22px 20px;flex:1;overflow-x:hidden;}
+.content{padding:28px;flex:1;overflow-x:hidden;}
 
 /* PAGE */
 .page{display:none;}
-.page.active{display:block;animation:pageFadeIn .3s ease;}
-@keyframes pageFadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.page.active{display:block;}
 
 /* ═══════════════════════════════════════
-   DASHBOARD CARDS — PREMIUM
+   DASHBOARD CARDS
 ═══════════════════════════════════════ */
 .kpi-grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:14px;margin-bottom:20px;
-  width:100%;
+  gap:16px;margin-bottom:24px;
 }
-
-/* Staggered entry animation */
-.kpi-card:nth-child(1){animation-delay:.05s;}
-.kpi-card:nth-child(2){animation-delay:.10s;}
-.kpi-card:nth-child(3){animation-delay:.15s;}
-.kpi-card:nth-child(4){animation-delay:.20s;}
-.kpi-card:nth-child(5){animation-delay:.25s;}
-.kpi-card:nth-child(6){animation-delay:.30s;}
-.kpi-card:nth-child(7){animation-delay:.35s;}
-.kpi-card:nth-child(8){animation-delay:.40s;}
-
-@keyframes cardEntry{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
-
 .kpi-card{
   background:var(--bg2);
   border:1px solid var(--border);
-  border-radius:var(--radius-lg);
-  padding:22px 20px 18px;
+  border-radius:12px;
+  padding:20px;
   position:relative;overflow:hidden;
-  transition:border-color .25s, transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s;
-  animation:cardEntry .4s ease both;
+  transition:border-color .2s,transform .2s;
 }
-/* Card inner shine overlay */
-.kpi-card::after{
-  content:'';
-  position:absolute;
-  inset:0;
-  background:var(--card-shine);
-  pointer-events:none;
-  border-radius:inherit;
-}
-.kpi-card:hover{
-  border-color:var(--gold);
-  transform:translateY(-4px);
-  box-shadow:0 12px 40px rgba(0,0,0,.5), 0 0 0 1px rgba(240,180,41,.2);
-}
-/* Top accent gradient line */
-.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;}
-.kpi-card.green::before{background:linear-gradient(90deg,transparent 5%,var(--green) 50%,transparent 95%);box-shadow:0 0 12px var(--green-glow);}
-.kpi-card.blue::before{background:linear-gradient(90deg,transparent 5%,var(--blue) 50%,transparent 95%);box-shadow:0 0 12px var(--blue-glow);}
-.kpi-card.gold::before{background:linear-gradient(90deg,transparent 5%,var(--gold) 50%,transparent 95%);box-shadow:0 0 12px var(--gold-glow);}
-.kpi-card.red::before{background:linear-gradient(90deg,transparent 5%,var(--red) 50%,transparent 95%);box-shadow:0 0 12px var(--red-glow);}
-.kpi-card.purple::before{background:linear-gradient(90deg,transparent 5%,var(--purple) 50%,transparent 95%);box-shadow:0 0 12px var(--purple-glow);}
-.kpi-card.orange::before{background:linear-gradient(90deg,transparent 5%,var(--orange) 50%,transparent 95%);box-shadow:0 0 12px rgba(255,145,66,.4);}
-
-/* Color-matched hover glow */
-.kpi-card.green:hover{border-color:var(--green);box-shadow:0 12px 40px rgba(0,0,0,.5), 0 0 20px var(--green-glow);}
-.kpi-card.blue:hover{border-color:var(--blue);box-shadow:0 12px 40px rgba(0,0,0,.5), 0 0 20px var(--blue-glow);}
-.kpi-card.gold:hover{border-color:var(--gold);box-shadow:0 12px 40px rgba(0,0,0,.5), 0 0 20px var(--gold-glow);}
-.kpi-card.red:hover{border-color:var(--red);box-shadow:0 12px 40px rgba(0,0,0,.5), 0 0 20px var(--red-glow);}
-.kpi-card.purple:hover{border-color:var(--purple);box-shadow:0 12px 40px rgba(0,0,0,.5), 0 0 20px var(--purple-glow);}
-
-.kpi-label{font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
-.kpi-value{font-size:28px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--text);line-height:1;margin-bottom:8px;letter-spacing:-.5px;}
-.kpi-value .tk{font-size:15px;color:var(--text3);font-family:'Inter',sans-serif;font-weight:600;margin-right:1px;}
-.kpi-change{font-size:11px;display:flex;align-items:center;gap:4px;font-weight:600;}
+.kpi-card:hover{border-color:var(--gold);transform:translateY(-2px);}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi-card.green::before{background:linear-gradient(90deg,transparent,var(--green),transparent);}
+.kpi-card.blue::before{background:linear-gradient(90deg,transparent,var(--blue),transparent);}
+.kpi-card.gold::before{background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.kpi-card.red::before{background:linear-gradient(90deg,transparent,var(--red),transparent);}
+.kpi-card.purple::before{background:linear-gradient(90deg,transparent,var(--purple),transparent);}
+.kpi-card.orange::before{background:linear-gradient(90deg,transparent,var(--orange),transparent);}
+.kpi-label{font-size:11px;color:var(--text3);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.kpi-value{font-size:26px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text);line-height:1.1;margin-bottom:6px;}
+.kpi-value .tk{font-size:14px;color:var(--text3);font-family:'IBM Plex Sans',sans-serif;}
+.kpi-change{font-size:11px;display:flex;align-items:center;gap:4px;}
 .kpi-change.up{color:var(--green);}
 .kpi-change.down{color:var(--red);}
+.kpi-icon{position:absolute;right:16px;top:16px;font-size:28px;opacity:.15;}
 
-/* Premium KPI icon — now a styled badge */
-.kpi-icon{
-  position:absolute;right:18px;top:18px;
-  width:38px;height:38px;
-  border-radius:10px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:18px;
-  opacity:.9;
-}
-.kpi-card.green  .kpi-icon{background:var(--green2);box-shadow:0 0 16px var(--green-glow);}
-.kpi-card.gold   .kpi-icon{background:var(--gold2); box-shadow:0 0 16px var(--gold-glow);}
-.kpi-card.red    .kpi-icon{background:var(--red2);  box-shadow:0 0 16px var(--red-glow);}
-.kpi-card.blue   .kpi-icon{background:var(--blue2); box-shadow:0 0 16px var(--blue-glow);}
-.kpi-card.orange .kpi-icon{background:var(--orange2);box-shadow:0 0 16px rgba(255,145,66,.3);}
-.kpi-card.purple .kpi-icon{background:var(--purple2);box-shadow:0 0 16px var(--purple-glow);}
-
-/* Expand hint */
-.kpi-expand-hint{font-size:10px;color:var(--text3);margin-top:4px;opacity:.7;transition:opacity .2s;}
-.kpi-card:hover .kpi-expand-hint{opacity:1;color:var(--blue);}
-
-/* CHART ROWS — PREMIUM */
-.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px;}
+/* CHART ROWS */
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
 .chart-row.three{grid-template-columns:2fr 1fr 1fr;}
 .chart-card{
   background:var(--bg2);border:1px solid var(--border);
-  border-radius:var(--radius-lg);padding:24px;
-  transition:border-color .2s, box-shadow .2s;
-  position:relative;overflow:hidden;
+  border-radius:12px;padding:22px;
 }
-.chart-card::after{
-  content:'';position:absolute;inset:0;
-  background:var(--card-shine);
-  pointer-events:none;border-radius:inherit;
-}
-.chart-card:hover{border-color:var(--border2);box-shadow:var(--shadow-md);}
-.chart-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:.1px;}
-.chart-sub{font-size:11px;color:var(--text3);margin-bottom:18px;font-weight:400;}
+.chart-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.chart-sub{font-size:11px;color:var(--text3);margin-bottom:16px;}
 .chart-area{height:180px;position:relative;display:flex;align-items:flex-end;gap:6px;overflow:hidden;}
-.bar{flex:1;border-radius:6px 6px 0 0;min-height:4px;position:relative;transition:height .6s cubic-bezier(.4,0,.2,1);cursor:pointer;}
-.bar:hover{opacity:.8;filter:brightness(1.15);}
+.bar{flex:1;border-radius:4px 4px 0 0;min-height:4px;position:relative;transition:height .5s ease;cursor:pointer;}
+.bar:hover{opacity:.85;}
 .bar-label{position:absolute;bottom:-20px;left:0;right:0;text-align:center;font-size:9px;color:var(--text3);}
 .bar-val{position:absolute;top:-18px;left:0;right:0;text-align:center;font-size:9px;color:var(--text2);font-family:'IBM Plex Mono',monospace;}
 .chart-legend{display:flex;gap:16px;margin-top:28px;}
-.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);font-weight:500;}
-.legend-dot{width:8px;height:8px;border-radius:3px;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);}
+.legend-dot{width:8px;height:8px;border-radius:2px;}
 
-/* PARTNER BALANCE CARDS — PREMIUM */
-.partner-row{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:24px;}
+/* PARTNER BALANCE CARDS */
+.partner-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
 .partner-bal-card{
-  border-radius:var(--radius-lg);padding:22px;position:relative;overflow:hidden;
+  border-radius:12px;padding:20px;position:relative;overflow:hidden;
   border:1px solid var(--border);
-  transition:transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s;
-  animation:cardEntry .4s ease both;
 }
-.partner-bal-card:hover{transform:translateY(-3px);}
-.partner-bal-card.ismail{
-  background:linear-gradient(135deg,rgba(77,158,255,.1) 0%,rgba(77,158,255,.03) 100%);
-  border-color:rgba(77,158,255,.35);
-}
-.partner-bal-card.ismail:hover{box-shadow:0 8px 32px rgba(77,158,255,.2);}
-.partner-bal-card.ashik{
-  background:linear-gradient(135deg,rgba(52,209,116,.1) 0%,rgba(52,209,116,.03) 100%);
-  border-color:rgba(52,209,116,.35);
-}
-.partner-bal-card.ashik:hover{box-shadow:0 8px 32px rgba(52,209,116,.2);}
-.partner-bal-card.rabbi{
-  background:linear-gradient(135deg,rgba(183,148,255,.1) 0%,rgba(183,148,255,.03) 100%);
-  border-color:rgba(183,148,255,.35);
-}
-.partner-bal-card.rabbi:hover{box-shadow:0 8px 32px rgba(183,148,255,.2);}
-
-/* Card inner shine */
-.partner-bal-card::after{
-  content:'';position:absolute;inset:0;
-  background:var(--card-shine);
-  pointer-events:none;border-radius:inherit;
-}
-
-/* Partner avatar circle */
-.p-avatar{
-  width:40px;height:40px;border-radius:12px;
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Playfair Display',serif;
-  font-size:18px;font-weight:900;
-  margin-bottom:10px;
-}
-.partner-bal-card.ismail .p-avatar{background:rgba(77,158,255,.2);color:var(--ismail);}
-.partner-bal-card.ashik  .p-avatar{background:rgba(52,209,116,.2);color:var(--ashik);}
-.partner-bal-card.rabbi  .p-avatar{background:rgba(183,148,255,.2);color:var(--rabbi);}
-
-.p-name{font-size:14px;font-weight:700;margin-bottom:2px;}
-.p-role{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:18px;font-weight:600;}
+.partner-bal-card.ismail{background:linear-gradient(135deg,rgba(56,139,253,.12),rgba(56,139,253,.04));border-color:rgba(56,139,253,.3);}
+.partner-bal-card.ashik{background:linear-gradient(135deg,rgba(63,185,80,.12),rgba(63,185,80,.04));border-color:rgba(63,185,80,.3);}
+.partner-bal-card.rabbi{background:linear-gradient(135deg,rgba(188,140,255,.12),rgba(188,140,255,.04));border-color:rgba(188,140,255,.3);}
+.p-name{font-size:13px;font-weight:700;margin-bottom:2px;}
+.p-role{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;}
 .p-stats{display:flex;gap:16px;}
-.p-stat label{font-size:9px;color:var(--text3);display:block;margin-bottom:4px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;}
-.p-stat span{font-size:16px;font-weight:800;font-family:'IBM Plex Mono',monospace;}
-.p-initial{position:absolute;right:-8px;bottom:-12px;font-family:'Playfair Display',serif;font-size:72px;font-weight:900;opacity:.04;line-height:1;pointer-events:none;}
+.p-stat label{font-size:10px;color:var(--text3);display:block;margin-bottom:2px;}
+.p-stat span{font-size:15px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+.p-initial{position:absolute;right:-8px;bottom:-12px;font-family:'Playfair Display',serif;font-size:72px;font-weight:900;opacity:.06;line-height:1;}
 
 /* ═══════════════════════════════════════
-   TABLE SYSTEM — PREMIUM
+   TABLE SYSTEM
 ═══════════════════════════════════════ */
 .table-wrapper{
   background:var(--bg2);border:1px solid var(--border);
-  border-radius:var(--radius-lg);overflow:hidden;margin-bottom:24px;
-  box-shadow:var(--shadow-sm);
+  border-radius:12px;overflow:hidden;margin-bottom:24px;
 }
 .table-header{
-  padding:18px 22px;border-bottom:1px solid var(--border);
+  padding:16px 20px;border-bottom:1px solid var(--border);
   display:flex;align-items:center;gap:12px;flex-wrap:wrap;
-  background:linear-gradient(135deg, var(--bg3) 0%, var(--bg2) 100%);
 }
 .table-title{font-size:14px;font-weight:700;color:var(--text);}
-.table-count{font-size:11px;color:var(--text3);background:var(--bg4);padding:2px 10px;border-radius:20px;font-family:'IBM Plex Mono',monospace;border:1px solid var(--border);}
+.table-count{font-size:11px;color:var(--text3);background:var(--bg3);padding:2px 8px;border-radius:10px;font-family:'IBM Plex Mono',monospace;}
 .table-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;}
 .btn{
   display:inline-flex;align-items:center;gap:6px;
-  padding:8px 16px;border-radius:10px;font-size:12px;font-weight:600;
+  padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;
   cursor:pointer;border:1px solid var(--border);
   background:var(--bg3);color:var(--text2);
-  transition:all .2s cubic-bezier(.4,0,.2,1);
-  font-family:'Inter','IBM Plex Sans',sans-serif;
-  white-space:nowrap;letter-spacing:.1px;
+  transition:all .15s;font-family:'IBM Plex Sans',sans-serif;
+  white-space:nowrap;
 }
-.btn:hover{background:var(--bg4);color:var(--text);border-color:var(--border2);transform:translateY(-1px);box-shadow:var(--shadow-sm);}
-.btn.primary{background:var(--gold);border-color:var(--gold);color:#000;font-weight:700;box-shadow:0 2px 12px var(--gold-glow);}
-.btn.primary:hover{background:#E8AC25;border-color:#E8AC25;transform:translateY(-2px);box-shadow:0 6px 20px var(--gold-glow);}
-.btn.success{background:var(--green2);border-color:rgba(52,209,116,.4);color:var(--green);}
-.btn.danger{background:var(--red2);border-color:rgba(255,92,92,.4);color:var(--red);}
+.btn:hover{background:var(--bg4);color:var(--text);}
+.btn.primary{background:var(--gold);border-color:var(--gold);color:#000;}
+.btn.primary:hover{background:#c4920f;border-color:#c4920f;}
+.btn.success{background:var(--green2);border-color:rgba(63,185,80,.4);color:var(--green);}
+.btn.danger{background:var(--red2);border-color:rgba(248,81,73,.4);color:var(--red);}
 
 .filter-bar{
   padding:12px 20px;border-bottom:1px solid var(--border);
@@ -563,140 +374,104 @@ tbody td.muted{color:var(--text3);}
 .page-btn:hover,.page-btn.active{background:var(--gold);border-color:var(--gold);color:#000;}
 
 /* ═══════════════════════════════════════
-   FORM / MODAL — PREMIUM
+   FORM / MODAL
 ═══════════════════════════════════════ */
 .modal-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,.75);
+  position:fixed;inset:0;background:rgba(0,0,0,.7);
   z-index:500;display:none;align-items:center;justify-content:center;
-  padding:20px;backdrop-filter:blur(4px);
+  padding:20px;
 }
 .modal-overlay.open{display:flex;}
 .modal{
   background:var(--bg2);border:1px solid var(--border);
-  border-radius:var(--radius-xl);width:100%;max-width:720px;max-height:90vh;overflow-y:auto;
-  animation:slideUp .3s cubic-bezier(.4,0,.2,1);
-  box-shadow:0 24px 80px rgba(0,0,0,.6);
+  border-radius:16px;width:100%;max-width:720px;max-height:90vh;overflow-y:auto;
+  animation:slideUp .25s ease;
 }
-@keyframes slideUp{from{transform:translateY(40px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
 .modal-header{
-  padding:22px 26px;border-bottom:1px solid var(--border);
+  padding:20px 24px;border-bottom:1px solid var(--border);
   display:flex;align-items:center;justify-content:space-between;
   position:sticky;top:0;background:var(--bg2);z-index:1;
-  background:linear-gradient(135deg, var(--bg3) 0%, var(--bg2) 100%);
 }
-.modal-title{font-size:16px;font-weight:800;}
-.modal-close{width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--text2);transition:all .2s;}
+.modal-title{font-size:16px;font-weight:700;}
+.modal-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--text2);transition:all .15s;}
 .modal-close:hover{background:var(--red2);border-color:var(--red);color:var(--red);}
-.modal-body{padding:26px;}
+.modal-body{padding:24px;}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 .form-grid.three{grid-template-columns:1fr 1fr 1fr;}
 .form-group{display:flex;flex-direction:column;gap:6px;}
 .form-group.full{grid-column:1/-1;}
-.form-label{font-size:10px;font-weight:800;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;}
+.form-label{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.5px;text-transform:uppercase;}
 .form-input,.form-select,.form-textarea{
   background:var(--bg3);border:1px solid var(--border);
-  border-radius:10px;padding:10px 14px;
+  border-radius:8px;padding:9px 12px;
   color:var(--text);font-size:13px;
-  font-family:'Inter','IBM Plex Sans',sans-serif;
-  outline:none;transition:all .2s;width:100%;
+  font-family:'IBM Plex Sans',sans-serif;
+  outline:none;transition:border .2s;width:100%;
 }
-.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold3);}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,160,23,.1);}
 .form-textarea{min-height:80px;resize:vertical;}
 .form-input[readonly]{color:var(--text3);cursor:not-allowed;}
-.modal-footer{padding:18px 26px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;}
 
 /* ═══════════════════════════════════════
-   INVENTORY CARDS — PREMIUM
+   INVENTORY CARDS
 ═══════════════════════════════════════ */
-.inv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.inv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
 .inv-card{
   background:var(--bg2);border:1px solid var(--border);
-  border-radius:var(--radius-md);padding:18px;
-  transition:all .2s cubic-bezier(.4,0,.2,1);cursor:pointer;
-  position:relative;overflow:hidden;
+  border-radius:10px;padding:16px;
+  transition:all .2s;cursor:pointer;
 }
-.inv-card::after{content:'';position:absolute;inset:0;background:var(--card-shine);pointer-events:none;}
-.inv-card:hover{border-color:var(--gold);transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.4);}
-.inv-card.low{border-color:rgba(255,92,92,.45);box-shadow:0 2px 12px rgba(255,92,92,.1);}
+.inv-card:hover{border-color:var(--gold);transform:translateY(-2px);}
+.inv-card.low{border-color:rgba(248,81,73,.4);}
 .inv-product{font-size:13px;font-weight:700;margin-bottom:4px;}
 .inv-sku{font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:12px;}
 .inv-stat{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;}
 .inv-stat label{color:var(--text3);}
-.inv-stat span{font-weight:700;font-family:'IBM Plex Mono',monospace;}
-.stock-bar{height:5px;background:var(--bg4);border-radius:3px;margin-top:10px;overflow:hidden;}
-.stock-fill{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1);}
-.stock-fill.ok{background:linear-gradient(90deg, var(--green), var(--cyan));}
-.stock-fill.warn{background:linear-gradient(90deg, var(--orange), var(--gold));}
-.stock-fill.low{background:linear-gradient(90deg, var(--red), #FF8A8A);}
-.low-badge{display:inline-block;background:var(--red2);border:1px solid rgba(255,92,92,.3);color:var(--red);font-size:9px;font-weight:700;padding:1px 7px;border-radius:20px;margin-top:6px;text-transform:uppercase;letter-spacing:.5px;}
+.inv-stat span{font-weight:600;font-family:'IBM Plex Mono',monospace;}
+.stock-bar{height:4px;background:var(--bg3);border-radius:2px;margin-top:8px;overflow:hidden;}
+.stock-fill{height:100%;border-radius:2px;transition:width .5s;}
+.stock-fill.ok{background:var(--green);}
+.stock-fill.warn{background:var(--orange);}
+.stock-fill.low{background:var(--red);}
+.low-badge{display:inline-block;background:var(--red2);border:1px solid rgba(248,81,73,.3);color:var(--red);font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;margin-top:6px;text-transform:uppercase;letter-spacing:.5px;}
 
 /* ═══════════════════════════════════════
-   PREMIUM STATS ROW (new widgets)
-═══════════════════════════════════════ */
-.stats-row{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:18px;
-  margin-bottom:24px;
-}
-.stat-widget{
-  background:var(--bg2);border:1px solid var(--border);
-  border-radius:var(--radius-lg);padding:20px 22px;
-  position:relative;overflow:hidden;
-  transition:all .25s cubic-bezier(.4,0,.2,1);
-  animation:cardEntry .5s ease both;
-  animation-delay:.45s;
-}
-.stat-widget::after{content:'';position:absolute;inset:0;background:var(--card-shine);pointer-events:none;}
-.stat-widget:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:var(--shadow-md);}
-.stat-widget-label{font-size:10px;font-weight:800;color:var(--text3);letter-spacing:1.3px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
-.stat-widget-value{font-size:26px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--text);letter-spacing:-.5px;line-height:1;margin-bottom:6px;}
-.stat-widget-sub{font-size:11px;color:var(--text3);font-weight:500;}
-/* Accent line */
-.stat-widget.cyan-accent::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent 5%,var(--cyan) 50%,transparent 95%);}
-.stat-widget.blue-accent::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent 5%,var(--blue) 50%,transparent 95%);}
-.stat-widget.gold-accent::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent 5%,var(--gold) 50%,transparent 95%);}
-/* Mini sparkline area */
-.sparkline-wrap{height:36px;margin-top:10px;display:flex;align-items:flex-end;gap:3px;}
-.spark-bar{flex:1;border-radius:3px 3px 0 0;min-height:4px;transition:height .5s ease;opacity:.7;}
-.spark-bar.active{opacity:1;}
-
-/* ═══════════════════════════════════════
-   ALERTS & TOASTS — PREMIUM
+   ALERTS & TOASTS
 ═══════════════════════════════════════ */
 .alert-box{
-  padding:14px 18px;border-radius:var(--radius-md);
-  margin-bottom:14px;display:flex;align-items:center;gap:12px;
-  font-size:13px;font-weight:500;
-  backdrop-filter:blur(8px);
+  padding:12px 16px;border-radius:10px;
+  margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;
+  font-size:13px;
 }
-.alert-box.warn{background:var(--orange2);border:1px solid rgba(255,145,66,.3);color:var(--orange);box-shadow:0 2px 16px rgba(255,145,66,.1);}
-.alert-box.danger{background:var(--red2);border:1px solid rgba(255,92,92,.3);color:var(--red);box-shadow:0 2px 16px rgba(255,92,92,.1);}
-.alert-box.success{background:var(--green2);border:1px solid rgba(52,209,116,.3);color:var(--green);box-shadow:0 2px 16px rgba(52,209,116,.1);}
-.alert-box.info{background:var(--blue2);border:1px solid rgba(77,158,255,.3);color:var(--blue);box-shadow:0 2px 16px rgba(77,158,255,.1);}
+.alert-box.warn{background:var(--orange2);border:1px solid rgba(227,179,65,.3);color:var(--orange);}
+.alert-box.danger{background:var(--red2);border:1px solid rgba(248,81,73,.3);color:var(--red);}
+.alert-box.success{background:var(--green2);border:1px solid rgba(63,185,80,.3);color:var(--green);}
+.alert-box.info{background:var(--blue2);border:1px solid rgba(56,139,253,.3);color:var(--blue);}
 
 .toast-container{position:fixed;bottom:24px;right:24px;z-index:1000;display:flex;flex-direction:column;gap:8px;}
 .toast{
   background:var(--bg2);border:1px solid var(--border);
-  border-radius:var(--radius-md);padding:14px 18px;
+  border-radius:10px;padding:12px 16px;
   font-size:13px;display:flex;align-items:center;gap:10px;
-  box-shadow:0 8px 40px rgba(0,0,0,.5);
-  animation:toastIn .3s cubic-bezier(.4,0,.2,1);
-  min-width:280px;backdrop-filter:blur(12px);
+  box-shadow:0 8px 32px rgba(0,0,0,.4);
+  animation:toastIn .3s ease;
+  min-width:260px;
 }
-.toast.success{border-left:3px solid var(--green);background:rgba(52,209,116,.06);}
-.toast.error{border-left:3px solid var(--red);background:rgba(255,92,92,.06);}
-.toast.info{border-left:3px solid var(--blue);background:rgba(77,158,255,.06);}
+.toast.success{border-left:3px solid var(--green);}
+.toast.error{border-left:3px solid var(--red);}
+.toast.info{border-left:3px solid var(--blue);}
 @keyframes toastIn{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
 
 /* ═══════════════════════════════════════
-   SECTION HEADERS — PREMIUM
+   SECTION HEADERS
 ═══════════════════════════════════════ */
-.section-head{margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--border);}
-.section-head h2{font-size:22px;font-weight:800;color:var(--text);margin-bottom:3px;letter-spacing:-.3px;}
+.section-head{margin-bottom:20px;}
+.section-head h2{font-size:20px;font-weight:700;color:var(--text);margin-bottom:2px;}
 .section-head p{font-size:13px;color:var(--text3);}
-.breadcrumb{font-size:11px;color:var(--text3);margin-bottom:14px;display:flex;align-items:center;gap:6px;font-weight:500;}
-.breadcrumb span{color:var(--gold);font-weight:700;}
+.breadcrumb{font-size:11px;color:var(--text3);margin-bottom:12px;}
+.breadcrumb span{color:var(--gold);}
 
 /* ═══════════════════════════════════════
    ARCHITECTURE PAGE
@@ -764,36 +539,32 @@ tbody td.muted{color:var(--text3);}
 /* ═══════════════════════════════════════
    RESPONSIVE
 ═══════════════════════════════════════ */
-.menu-toggle{display:none;width:36px;height:36px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;align-items:center;justify-content:center;font-size:16px;transition:all .2s;}
-.menu-toggle:hover{background:var(--bg4);border-color:var(--gold);}
+.menu-toggle{display:none;width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;align-items:center;justify-content:center;font-size:16px;}
 
 @media(max-width:1200px){
   .kpi-grid{grid-template-columns:repeat(2,1fr);}
   .inv-grid{grid-template-columns:repeat(2,1fr);}
   .expense-cats{grid-template-columns:repeat(2,1fr);}
-  .stats-row{grid-template-columns:1fr 1fr;}
 }
 @media(max-width:900px){
-  .sidebar{transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);}
-  .sidebar.open{transform:translateX(0);box-shadow:8px 0 40px rgba(0,0,0,.6);}
+  .sidebar{transform:translateX(-100%);transition:transform .3s;}
+  .sidebar.open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.5);}
   .main{margin-left:0;}
   .menu-toggle{display:flex;}
   .arch-grid{grid-template-columns:1fr;}
   .chart-row,.chart-row.three{grid-template-columns:1fr;}
   .partner-row{grid-template-columns:1fr;}
   .form-grid,.form-grid.three{grid-template-columns:1fr;}
-  .stats-row{grid-template-columns:1fr;}
   /* FIX 7: Backdrop overlay when sidebar is open on mobile */
-  .sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:199;backdrop-filter:blur(4px);}
+  .sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:199;backdrop-filter:blur(2px);}
   .sidebar-backdrop.show{display:block;}
 }
 @media(max-width:600px){
   .kpi-grid{grid-template-columns:1fr;}
   .inv-grid{grid-template-columns:1fr;}
   .content{padding:16px;}
-  .kpi-value{font-size:24px;}
+  .kpi-value{font-size:22px;}
   .table-actions{width:100%;}
-  .stats-row{grid-template-columns:1fr;}
 }
 @media print{
   .sidebar,.topbar,.modal-overlay,.toast-container,.table-actions,.filter-bar,.btn,.pagination{display:none!important;}
@@ -812,69 +583,60 @@ tbody td.muted{color:var(--text3);}
   z-index:9999;
   display:flex;align-items:center;justify-content:center;
   flex-direction:column;
-  background-image:
-    radial-gradient(ellipse 80% 50% at 20% 0%, rgba(77,158,255,.07) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 60% at 80% 100%, rgba(183,148,255,.06) 0%, transparent 55%);
 }
 #lock-screen.hidden { display:none; }
 .lock-box {
   background:var(--bg2);
   border:1px solid var(--border);
-  border-radius:24px;
-  padding:44px 36px;
-  width:340px;
+  border-radius:20px;
+  padding:40px 32px;
+  width:320px;
   text-align:center;
-  box-shadow:0 32px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(240,180,41,.08);
-  position:relative;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
 }
-.lock-box::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,var(--gold),transparent);
-}
-.lock-logo { font-size:44px; margin-bottom:14px; }
-.lock-title { font-size:20px; font-weight:800; color:var(--text); margin-bottom:4px; letter-spacing:-.3px; }
-.lock-sub { font-size:12px; color:var(--text3); margin-bottom:30px; font-weight:500; }
-.pin-dots { display:flex; justify-content:center; gap:16px; margin-bottom:30px; }
+.lock-logo { font-size:40px; margin-bottom:12px; }
+.lock-title { font-size:18px; font-weight:700; color:var(--text); margin-bottom:4px; }
+.lock-sub { font-size:12px; color:var(--text3); margin-bottom:28px; }
+.pin-dots { display:flex; justify-content:center; gap:14px; margin-bottom:28px; }
 .pin-dot {
   width:14px; height:14px; border-radius:50%;
   border:2px solid var(--border);
   background:transparent;
-  transition:all .2s cubic-bezier(.4,0,.2,1);
+  transition:all .2s;
 }
-.pin-dot.filled { background:var(--gold); border-color:var(--gold); box-shadow:0 0 12px var(--gold-glow); transform:scale(1.1); }
-.pin-dot.error { background:var(--red); border-color:var(--red); box-shadow:0 0 10px var(--red-glow); }
+.pin-dot.filled { background:var(--gold); border-color:var(--gold); box-shadow:0 0 8px rgba(212,160,23,.5); }
+.pin-dot.error { background:var(--red); border-color:var(--red); }
 .pin-keypad { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; }
 .pin-key {
-  height:58px; border-radius:12px;
+  height:56px; border-radius:12px;
   border:1px solid var(--border);
   background:var(--bg3);
   color:var(--text);
   font-size:20px; font-weight:700;
   cursor:pointer;
-  transition:all .15s cubic-bezier(.4,0,.2,1);
+  transition:all .15s;
   font-family:'IBM Plex Mono',monospace;
   user-select:none;
 }
-.pin-key:hover { background:var(--bg4); border-color:var(--gold); color:var(--gold); box-shadow:0 2px 12px rgba(0,0,0,.3); }
-.pin-key:active { transform:scale(.94); }
+.pin-key:hover { background:var(--bg4); border-color:var(--gold); color:var(--gold); }
+.pin-key:active { transform:scale(.95); }
 .pin-key.del { font-size:16px; }
-.pin-key.enter { background:linear-gradient(135deg,var(--gold),#E8AC25); border-color:var(--gold); color:#000; font-size:14px; font-weight:800; box-shadow:0 4px 16px var(--gold-glow); }
-.pin-key.enter:hover { filter:brightness(1.1); transform:translateY(-1px); box-shadow:0 6px 20px var(--gold-glow); }
-.pin-error { color:var(--red); font-size:12px; margin-top:8px; min-height:18px; font-weight:600; }
-.pin-change-link { color:var(--gold); font-size:11px; cursor:pointer; text-decoration:underline; margin-top:12px; display:inline-block; font-weight:600; }
+.pin-key.enter { background:var(--gold); border-color:var(--gold); color:#000; font-size:14px; }
+.pin-key.enter:hover { background:#c4920f; }
+.pin-error { color:var(--red); font-size:12px; margin-top:8px; min-height:18px; }
+.pin-change-link { color:var(--gold); font-size:11px; cursor:pointer; text-decoration:underline; margin-top:12px; display:inline-block; }
 
 /* Change PIN Modal */
 #modal-change-pin .form-group { margin-bottom:14px; }
 .lock-icon-btn {
   position:fixed; bottom:24px; left:24px;
-  width:42px; height:42px; border-radius:12px;
-  border:1px solid var(--border); background:var(--bg2);
+  width:40px; height:40px; border-radius:10px;
+  border:1px solid var(--border); background:var(--bg3);
   display:flex; align-items:center; justify-content:center;
   cursor:pointer; font-size:18px; z-index:150;
-  transition:all .2s; color:var(--text2);
-  box-shadow:var(--shadow-sm);
+  transition:all .15s; color:var(--text2);
 }
-.lock-icon-btn:hover { border-color:var(--gold); color:var(--gold); box-shadow:0 0 16px var(--gold-glow); }
+.lock-icon-btn:hover { border-color:var(--gold); color:var(--gold); }
 #lock-btn { display:none; }
 
 /* conn-banner handled below */
@@ -1005,136 +767,6 @@ tbody td.muted{color:var(--text3);}
 }
 .rgn-breadcrumb span { color: var(--blue); cursor: pointer; font-weight: 600; }
 .rgn-breadcrumb span:hover { text-decoration: underline; }
-
-/* ═══════════════════════════════════════
-   PREMIUM MICRO-ANIMATIONS & POLISH
-═══════════════════════════════════════ */
-
-/* Scrollbar — premium */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text3); }
-
-/* Selection color */
-::selection { background: var(--gold2); color: var(--gold); }
-
-/* Focus ring */
-button:focus-visible,
-select:focus-visible,
-input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-
-/* Table rows — premium hover */
-tbody tr { transition: background .15s; }
-tbody tr:hover { background: var(--bg3) !important; }
-thead th {
-  background: linear-gradient(135deg, var(--bg4), var(--bg3));
-  font-family: 'Inter', 'IBM Plex Sans', sans-serif;
-  letter-spacing: 1px;
-}
-
-/* Status badges — upgraded */
-.status {
-  border-radius: 20px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .3px;
-}
-
-/* Card-like table wrapper header */
-.table-header {
-  background: linear-gradient(135deg, var(--bg3), var(--bg2));
-}
-
-/* General section padding consistency */
-.page-section {
-  margin-bottom: 28px;
-}
-
-/* Typography upgrades */
-h1, h2, h3 {
-  font-family: 'Inter', 'IBM Plex Sans', sans-serif;
-  font-weight: 800;
-}
-
-/* Fade-in for all chart cards and table wrappers */
-.chart-card, .table-wrapper, .partner-bal-card, .kpi-card {
-  will-change: transform;
-}
-
-/* Stats row responsive alert */
-@media (max-width: 900px) {
-  .stats-row { grid-template-columns: 1fr 1fr; }
-}
-@media (max-width: 600px) {
-  .stats-row { grid-template-columns: 1fr; }
-  .partner-row { grid-template-columns: 1fr; }
-  .alert-box { flex-direction: column !important; gap: 8px !important; }
-  .alert-box > div { flex-wrap: wrap; gap: 6px !important; }
-}
-
-/* Glowing gold text for large values */
-.kpi-value {
-  text-shadow: none;
-  transition: color .2s;
-}
-.kpi-card.gold:hover .kpi-value {
-  text-shadow: 0 0 20px rgba(240,180,41,.3);
-}
-.kpi-card.green:hover .kpi-value {
-  text-shadow: 0 0 20px rgba(52,209,116,.25);
-}
-
-/* Clock badge in topbar */
-#bd-clock {
-  transition: color .3s;
-}
-
-/* Nav item animation stagger on load */
-.nav-item {
-  animation: navFadeIn .3s ease both;
-}
-.nav-item:nth-child(1) { animation-delay: .05s; }
-.nav-item:nth-child(2) { animation-delay: .08s; }
-.nav-item:nth-child(3) { animation-delay: .11s; }
-.nav-item:nth-child(4) { animation-delay: .14s; }
-.nav-item:nth-child(5) { animation-delay: .17s; }
-.nav-item:nth-child(6) { animation-delay: .20s; }
-.nav-item:nth-child(7) { animation-delay: .23s; }
-.nav-item:nth-child(8) { animation-delay: .26s; }
-@keyframes navFadeIn {
-  from { opacity: 0; transform: translateX(-8px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-/* Partner dot pulse */
-.p-dot {
-  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
-  animation: chipPulse 3s ease-in-out infinite;
-}
-@keyframes chipPulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: .5; }
-}
-
-/* Modal entrance improvement */
-.modal {
-  background: var(--bg2);
-}
-
-/* Stat widget value color transitions */
-.stat-widget-value {
-  transition: color .4s ease;
-}
-
-/* Live badge micro pulse */
-.live-badge {
-  animation: liveFade 2.5s ease-in-out infinite;
-}
-@keyframes liveFade {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: .75; }
-}
 </style>
 </head>
 <body>
@@ -1208,11 +840,10 @@ h1, h2, h3 {
 
 <style>
 .conn-banner{
-  display:none;background:linear-gradient(135deg,rgba(255,145,66,.12),rgba(255,145,66,.06));
-  border-bottom:1px solid rgba(255,145,66,.3);
-  padding:10px 32px;font-size:12px;color:var(--orange);
-  align-items:center;gap:10px;font-weight:500;
-  box-shadow:0 1px 12px rgba(255,145,66,.08);
+  display:none;background:var(--orange2);
+  border-bottom:1px solid rgba(227,179,65,.4);
+  padding:8px 28px;font-size:12px;color:var(--orange);
+  align-items:center;gap:10px;
 }
 .conn-banner.show{display:flex;}
 .conn-banner a{color:var(--gold);font-weight:700;cursor:pointer;text-decoration:underline;}
@@ -1232,7 +863,6 @@ h1, h2, h3 {
   <div class="sidebar-section">Main</div>
   <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">📊</span>Dashboard</div>
   <div class="nav-item" onclick="showPage('sales',this)"><span class="nav-icon">🛒</span>Sales & Orders<span class="nav-badge" id="sales-badge">—</span></div>
-  <div class="nav-item" onclick="showPage('delivery-analytics',this)"><span class="nav-icon">🚚</span>Delivery Analytics</div>
   <div class="nav-item" onclick="showPage('inventory',this)"><span class="nav-icon">📦</span>Inventory<span class="nav-badge red" id="inv-badge" style="background:var(--red);">—</span></div>
   <div class="nav-item" onclick="showPage('expense',this)"><span class="nav-icon">💸</span>Expenses</div>
   <div class="nav-item" onclick="showPage('partner',this)"><span class="nav-icon">🤝</span>Partners</div>
@@ -1268,7 +898,7 @@ h1, h2, h3 {
     </div>
     <div class="topbar-right">
       <div class="live-badge"><div class="live-dot"></div>Live</div>
-      <div id="bd-clock" style="font-size:11px;color:var(--text2);font-family:'IBM Plex Mono',monospace;white-space:nowrap;padding:5px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--border);font-weight:600;letter-spacing:.3px;"></div>
+      <div id="bd-clock" style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;white-space:nowrap;padding:4px 8px;background:var(--bg3);border-radius:6px;border:1px solid var(--border);"></div>
       <div class="search-box">
         <span>🔍</span>
         <input type="text" placeholder="Search orders, customers..." oninput="globalSearch(this.value)">
@@ -1297,70 +927,51 @@ h1, h2, h3 {
       <!-- KPI Row 1 -->
       <div class="kpi-grid">
         <div class="kpi-card green">
-          <div class="kpi-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          </div>
+          <div class="kpi-icon">💰</div>
           <div class="kpi-label">Total Revenue</div>
           <div class="kpi-value"><span class="tk">৳</span><span id="kpi-revenue">—</span></div>
           <div id="kpi-revenue-change" class="kpi-change up">▲ 18% from last month</div>
         </div>
         <div class="kpi-card gold">
-          <div class="kpi-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          </div>
+          <div class="kpi-icon">📈</div>
           <div class="kpi-label">Net Profit</div>
           <div class="kpi-value"><span class="tk">৳</span><span id="kpi-profit">—</span></div>
           <div id="kpi-profit-change" class="kpi-change up">▲ 12% from last month</div>
         </div>
         <div class="kpi-card red">
-          <div class="kpi-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          </div>
+          <div class="kpi-icon">💸</div>
           <div class="kpi-label">Total Expenses</div>
           <div class="kpi-value"><span class="tk">৳</span><span id="kpi-expense">—</span></div>
           <div id="kpi-expense-change" class="kpi-change down">▲ 5% from last month</div>
         </div>
-        <div class="kpi-card blue" onclick="openDueDetailsModal()" style="cursor:pointer;" title="ক্লিক করুন বিস্তারিত দেখতে">
-          <div class="kpi-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
+        <div class="kpi-card blue">
+          <div class="kpi-icon">⏳</div>
           <div class="kpi-label">Total Due</div>
           <div class="kpi-value"><span class="tk">৳</span><span id="kpi-due">—</span></div>
           <div id="kpi-due-change" class="kpi-change down">▼ 8% from last month</div>
-          <div class="kpi-expand-hint">⤢ Details</div>
         </div>
-        <div class="kpi-card orange" onclick="openPendingDetailsModal()" style="cursor:pointer;" title="ক্লিক করুন pending orders দেখতে">
-          <div class="kpi-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-          </div>
+        <div class="kpi-card orange">
+          <div class="kpi-icon">📦</div>
           <div class="kpi-label">Pending Orders</div>
           <div class="kpi-value"><span id="kpi-pending">—</span></div>
           <div class="kpi-change" style="color:var(--text3)">Needs action</div>
-          <div class="kpi-expand-hint">⤢ Details</div>
         </div>
-        <div class="kpi-card green" onclick="openDeliveredDetailsModal()" style="cursor:pointer;" title="ক্লিক করুন delivered orders দেখতে">
-          <div class="kpi-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
+        <div class="kpi-card green">
+          <div class="kpi-icon">✅</div>
           <div class="kpi-label">Delivered</div>
           <div class="kpi-value"><span id="kpi-delivered">—</span></div>
           <div class="kpi-change up">▲ 22 this week</div>
-          <div class="kpi-expand-hint">⤢ Details</div>
         </div>
         <div class="kpi-card purple">
-          <div class="kpi-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          </div>
+          <div class="kpi-icon">🏦</div>
           <div class="kpi-label">Business Capital</div>
           <div class="kpi-value"><span class="tk">৳</span><span id="kpi-capital">—</span></div>
           <div class="kpi-change" style="color:var(--text3)">Net Current Capital</div>
         </div>
-        <div class="kpi-card blue" id="kpi-card-top-region" onclick="openTopRegionModal()" title="Click to see full regional breakdown" style="cursor:pointer;">
-          <div class="kpi-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg>
-          </div>
+        <div class="kpi-card blue" id="kpi-card-top-region" onclick="openTopRegionModal()" title="Click to see full regional breakdown">
+          <div class="kpi-icon">🗺️</div>
           <div class="kpi-label">Top Region</div>
-          <div class="kpi-value" style="font-size:18px;font-family:'Inter',sans-serif;font-weight:800;"><span id="kpi-top-region">—</span></div>
+          <div class="kpi-value" style="font-size:18px;font-family:'IBM Plex Sans',sans-serif;"><span id="kpi-top-region">—</span></div>
           <div class="kpi-change" style="color:var(--text3)" id="kpi-top-region-sub">Loading...</div>
           <div class="kpi-expand-hint">⤢ View All</div>
         </div>
@@ -1370,7 +981,6 @@ h1, h2, h3 {
       <div class="partner-row">
         <div class="partner-bal-card ismail">
           <div class="p-initial">I</div>
-          <div class="p-avatar">I</div>
           <div class="p-name" style="color:var(--ismail);">Md Ismail Hosen</div>
           <div class="p-role">Partner & Manager</div>
           <div class="p-stats">
@@ -1381,7 +991,6 @@ h1, h2, h3 {
         </div>
         <div class="partner-bal-card ashik">
           <div class="p-initial">A</div>
-          <div class="p-avatar">A</div>
           <div class="p-name" style="color:var(--ashik);">Ashikur Rahman</div>
           <div class="p-role">Partner</div>
           <div class="p-stats">
@@ -1392,7 +1001,6 @@ h1, h2, h3 {
         </div>
         <div class="partner-bal-card rabbi">
           <div class="p-initial">G</div>
-          <div class="p-avatar">G</div>
           <div class="p-name" style="color:var(--purple);">Golam Rabbi</div>
           <div class="p-role">Partner</div>
           <div class="p-stats">
@@ -1403,104 +1011,50 @@ h1, h2, h3 {
         </div>
       </div>
 
-      <!-- Premium Stats Widgets Row -->
-      <div class="stats-row">
-        <div class="stat-widget cyan-accent">
-          <div class="stat-widget-label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            Profit Margin
-          </div>
-          <div class="stat-widget-value" id="kpi-profit-margin">—%</div>
-          <div class="stat-widget-sub">Net margin this period</div>
-          <div class="sparkline-wrap" id="margin-sparkline"></div>
-        </div>
-        <div class="stat-widget blue-accent">
-          <div class="stat-widget-label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-            MoM Growth
-          </div>
-          <div class="stat-widget-value" id="kpi-mom-growth">—%</div>
-          <div class="stat-widget-sub">Revenue vs last month</div>
-          <div class="sparkline-wrap" id="growth-sparkline"></div>
-        </div>
-        <div class="stat-widget gold-accent">
-          <div class="stat-widget-label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>
-            Total Orders
-          </div>
-          <div class="stat-widget-value" id="kpi-total-orders">—</div>
-          <div class="stat-widget-sub">All time orders processed</div>
-          <div class="sparkline-wrap" id="orders-sparkline"></div>
-        </div>
-      </div>
-
       <!-- Charts -->
       <div class="chart-row">
         <div class="chart-card">
           <!-- Header row: title + controls -->
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
             <div>
               <div class="chart-title" id="rev-chart-title">Monthly Revenue vs Profit</div>
               <div class="chart-sub" id="rev-chart-sub">Last 6 months performance</div>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
               <!-- Year dropdown -->
               <select id="chart-year-sel" onchange="onChartControlChange()"
-                style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:11px;font-family:'Inter','IBM Plex Sans',sans-serif;cursor:pointer;outline:none;transition:border-color .2s;font-weight:600;">
+                style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;outline:none;">
                 <option value="0">Rolling</option>
               </select>
               <!-- 6 / 12 month toggle -->
-              <div style="display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg3);">
+              <div style="display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;">
                 <button id="btn-6mo"  onclick="setChartMonths(6)"
-                  style="padding:5px 12px;font-size:11px;font-family:'Inter','IBM Plex Sans',sans-serif;border:none;cursor:pointer;background:var(--gold);color:#000;font-weight:700;transition:all .2s;letter-spacing:.3px;">6M</button>
+                  style="padding:3px 10px;font-size:11px;font-family:'IBM Plex Sans',sans-serif;border:none;cursor:pointer;background:var(--gold);color:#000;font-weight:700;">6M</button>
                 <button id="btn-12mo" onclick="setChartMonths(12)"
-                  style="padding:5px 12px;font-size:11px;font-family:'Inter','IBM Plex Sans',sans-serif;border:none;cursor:pointer;background:transparent;color:var(--text3);transition:all .2s;letter-spacing:.3px;">12M</button>
+                  style="padding:3px 10px;font-size:11px;font-family:'IBM Plex Sans',sans-serif;border:none;cursor:pointer;background:var(--bg3);color:var(--text3);">12M</button>
               </div>
             </div>
           </div>
-          <div class="chart-area" id="rev-chart" style="height:180px;padding-bottom:4px;"></div>
-          <div class="chart-legend" style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid var(--border2);margin-top:4px;">
-            <div style="display:flex;gap:18px;">
-              <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,var(--green),var(--cyan));border-radius:3px;"></div>Revenue</div>
-              <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,var(--gold),#F5C842);border-radius:3px;"></div>Profit</div>
+          <div class="chart-area" id="rev-chart" style="height:180px;"></div>
+          <div class="chart-legend" style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;gap:16px;">
+              <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Revenue</div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>Profit</div>
             </div>
-            <div id="rev-chart-totals" style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;letter-spacing:.2px;"></div>
+            <div id="rev-chart-totals" style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;"></div>
           </div>
         </div>
         <div class="chart-card">
           <div class="chart-title">Expense Breakdown</div>
-          <div class="chart-sub" style="margin-bottom:12px;">Category-wise distribution</div>
-          <div id="donut-chart" style="height:180px;display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
+          <div class="chart-sub">Category-wise distribution</div>
+          <div id="donut-chart" style="height:180px;display:flex;align-items:center;justify-content:center;"></div>
         </div>
       </div>
 
       <!-- Alerts -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:4px;">
-        <div class="alert-box danger" style="flex-direction:column;align-items:flex-start;gap:6px;">
-          <div style="display:flex;align-items:center;gap:8px;width:100%;">
-            <span style="font-size:16px;">⚠️</span>
-            <strong id="inv-alert-txt">3 products</strong>&nbsp;are below minimum stock level
-            <button onclick="showPage('inventory',document.querySelector('.nav-item:nth-child(4)'))" class="btn danger" style="margin-left:auto;padding:4px 10px;font-size:10px;">View Inventory</button>
-          </div>
-          <span style="font-size:10px;opacity:.75;">Check inventory for details.</span>
-        </div>
-        <div class="alert-box warn" id="pending-alert" style="flex-direction:column;align-items:flex-start;gap:6px;">
-          <div style="display:flex;align-items:center;gap:8px;width:100%;">
-            <span style="font-size:16px;">📋</span>
-            <strong id="pending-alert-count">—</strong>&nbsp;orders are pending processing
-            <button onclick="showPage('sales',document.querySelector('.nav-item:nth-child(3)'))" class="btn" style="margin-left:auto;padding:4px 10px;font-size:10px;border-color:rgba(255,145,66,.4);color:var(--orange);">View Orders</button>
-          </div>
-          <span style="font-size:10px;opacity:.75;">Last update: <span id="pending-alert-time">checking...</span></span>
-        </div>
-        <div class="alert-box success" style="flex-direction:column;align-items:flex-start;gap:6px;">
-          <div style="display:flex;align-items:center;gap:8px;width:100%;">
-            <span style="font-size:16px;">✅</span>
-            <strong>System running correctly</strong>
-            <span id="live-data-badge" style="margin-left:auto;font-size:9px;background:var(--green2);border:1px solid rgba(52,209,116,.3);color:var(--green);padding:2px 8px;border-radius:20px;font-weight:700;">LIVE</span>
-          </div>
-          <span style="font-size:10px;opacity:.75;">All formulas are active.</span>
-        </div>
-      </div>
+      <div class="alert-box danger">⚠️ <strong>3 products</strong> are below minimum stock level — check Inventory for details.</div>
+      <div class="alert-box warn" id="pending-alert">📋 <strong id="pending-alert-count">—</strong> orders are pending processing. Last update: <span id="pending-alert-time">checking...</span></div>
+      <div class="alert-box success">✅ System is running correctly. All formulas are active.</div>
     </div>
 
     <!-- ══════════════════════════════
@@ -1588,99 +1142,6 @@ h1, h2, h3 {
         <div class="table-footer">
           <span id="sales-showing">Showing 1–20 of 155</span>
           <div class="pagination" id="sales-pages"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════
-         PAGE: DELIVERY ANALYTICS
-    ══════════════════════════════ -->
-    <div class="page" id="page-delivery-analytics">
-      <div class="breadcrumb">InnoGix OS / <span>Delivery Analytics</span></div>
-      <div class="section-head">
-        <h2>🚚 Delivery Analytics</h2>
-        <p>ডেলিভারি চার্জের সম্পূর্ণ বিশ্লেষণ ও পরিসংখ্যান</p>
-      </div>
-
-      <!-- KPI Cards -->
-      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">
-        <div class="kpi-card cyan" style="--accent:var(--cyan);">
-          <div class="kpi-icon" style="background:var(--cyan2);box-shadow:0 0 16px rgba(52,234,185,.3);">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-          </div>
-          <div class="kpi-label" style="color:var(--text3);">এই মাসের ডেলিভারি চার্জ</div>
-          <div class="kpi-value"><span class="tk">৳</span><span id="da-month-charge">—</span></div>
-          <div class="kpi-change" style="color:var(--cyan);" id="da-month-orders">— টি অর্ডার</div>
-        </div>
-        <div class="kpi-card gold">
-          <div class="kpi-icon" style="background:var(--gold2);box-shadow:0 0 16px var(--gold-glow);">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          </div>
-          <div class="kpi-label">এই বছরের ডেলিভারি চার্জ</div>
-          <div class="kpi-value"><span class="tk">৳</span><span id="da-year-charge">—</span></div>
-          <div class="kpi-change up" id="da-year-orders">— টি অর্ডার</div>
-        </div>
-        <div class="kpi-card blue">
-          <div class="kpi-icon" style="background:var(--blue2);box-shadow:0 0 16px var(--blue-glow);">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          </div>
-          <div class="kpi-label">গড় ডেলিভারি চার্জ</div>
-          <div class="kpi-value"><span class="tk">৳</span><span id="da-avg-charge">—</span></div>
-          <div class="kpi-change" style="color:var(--text3);">প্রতি অর্ডারে</div>
-        </div>
-        <div class="kpi-card green">
-          <div class="kpi-icon" style="background:var(--green2);box-shadow:0 0 16px var(--green-glow);">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div class="kpi-label">মোট ডেলিভারি হয়েছে</div>
-          <div class="kpi-value"><span id="da-total-delivered">—</span></div>
-          <div class="kpi-change up" style="color:var(--green);">টি পণ্য সফলভাবে</div>
-        </div>
-      </div>
-
-      <!-- Monthly chart -->
-      <div class="chart-row" style="grid-template-columns:2fr 1fr;">
-        <div class="chart-card">
-          <div class="chart-title">মাসভিত্তিক ডেলিভারি চার্জ</div>
-          <div class="chart-sub" style="margin-bottom:12px;">প্রতি মাসে কত টাকা ডেলিভারি চার্জ গেছে</div>
-          <div id="da-monthly-chart" style="height:200px;display:flex;align-items:flex-end;gap:6px;padding:0 4px;"></div>
-          <div style="display:flex;gap:18px;margin-top:10px;padding-top:8px;border-top:1px solid var(--border2);">
-            <div class="legend-item"><div class="legend-dot" style="background:var(--cyan);border-radius:3px;"></div>ডেলিভারি চার্জ (৳)</div>
-          </div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-title">কুরিয়ার ভিত্তিক বিশ্লেষণ</div>
-          <div class="chart-sub" style="margin-bottom:14px;">কোন কুরিয়ারে কতটি ডেলিভারি</div>
-          <div id="da-courier-list" style="display:flex;flex-direction:column;gap:10px;"></div>
-        </div>
-      </div>
-
-      <!-- Delivery table -->
-      <div class="table-wrapper">
-        <div class="table-header">
-          <span class="table-title">ডেলিভারি হওয়া অর্ডার সমূহ</span>
-          <span class="table-count" id="da-table-count">0 records</span>
-          <div class="table-actions">
-            <select class="filter-select" id="da-month-filter" onchange="filterDeliveryAnalytics()" style="min-width:140px;">
-              <option value="">সব মাস</option>
-            </select>
-          </div>
-        </div>
-        <div class="table-scroll" style="max-height:380px;">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>তারিখ</th>
-                <th>কাস্টমার</th>
-                <th>পণ্য</th>
-                <th>কুরিয়ার</th>
-                <th>Qty</th>
-                <th style="text-align:right;">ডেলিভারি চার্জ</th>
-              </tr>
-            </thead>
-            <tbody id="da-table-body"></tbody>
-          </table>
         </div>
       </div>
     </div>
@@ -1836,6 +1297,46 @@ h1, h2, h3 {
         <div class="kpi-card red"><div class="kpi-icon">💳</div><div class="kpi-label">Due Customers</div><div class="kpi-value"><span id="crm-due">—</span></div></div>
         <div class="kpi-card gold"><div class="kpi-icon">🏆</div><div class="kpi-label">Top Customer</div><div class="kpi-value" style="font-size:14px;font-family:'IBM Plex Sans',sans-serif;" id="crm-top">—</div></div>
       </div>
+
+      <!-- ── Delivery Charge Analytics ── -->
+      <div class="table-wrapper" style="margin-bottom:18px;">
+        <div class="table-header">
+          <span class="table-title">🚚 Delivery Charge Analytics</span>
+          <div class="table-actions">
+            <select id="delivery-filter-month" onchange="renderDeliveryAnalytics()" style="background:var(--bg3);color:var(--text1);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;">
+              <option value="all">সব সময়</option>
+              <option value="this_month" selected>এই মাস</option>
+              <option value="last_month">গত মাস</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:16px;">
+          <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border2);text-align:center;">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">মোট ডেলিভারি চার্জ</div>
+            <div style="font-size:22px;font-weight:700;color:var(--gold);" id="del-total-charge">—</div>
+          </div>
+          <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border2);text-align:center;">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">মোট অর্ডার সংখ্যা</div>
+            <div style="font-size:22px;font-weight:700;color:var(--green);" id="del-count">—</div>
+          </div>
+          <div style="background:var(--bg3);border-radius:10px;padding:16px;border:1px solid var(--border2);text-align:center;">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">গড় ডেলিভারি চার্জ/অর্ডার</div>
+            <div style="font-size:22px;font-weight:700;color:var(--blue);" id="del-avg">—</div>
+          </div>
+        </div>
+        <div style="padding:0 16px 16px;">
+          <table style="width:100%;font-size:12px;border-collapse:collapse;">
+            <thead><tr style="background:var(--bg2);">
+              <th style="padding:8px;text-align:left;color:var(--text3);font-weight:600;">মাস</th>
+              <th style="padding:8px;text-align:right;color:var(--text3);font-weight:600;">ডেলিভারি চার্জ</th>
+              <th style="padding:8px;text-align:right;color:var(--text3);font-weight:600;">অর্ডার সংখ্যা</th>
+              <th style="padding:8px;text-align:right;color:var(--text3);font-weight:600;">গড় চার্জ</th>
+            </tr></thead>
+            <tbody id="del-monthly-body"></tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="table-wrapper">
         <div class="table-header">
           <span class="table-title">Customer Database</span>
@@ -2487,77 +1988,14 @@ h1, h2, h3 {
 <!-- ══════════════════════
      MODALS
 ══════════════════════ -->
-<!-- ══ TOTAL DUE DETAILS MODAL ══ -->
-<div class="modal-overlay" id="modal-due-details">
-  <div class="modal" style="max-width:860px;">
-    <div class="modal-header">
-      <span class="modal-title">💰 Total Due — বিস্তারিত</span>
-      <button class="modal-close" onclick="closeModal('due-details')">✕</button>
-    </div>
-    <div class="modal-body" style="padding:16px 20px;">
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px;" id="due-summary-cards"></div>
-      <div class="table-scroll" style="max-height:400px;">
-        <table>
-          <thead>
-            <tr><th>#</th><th>তারিখ</th><th>কাস্টমার</th><th>Phone</th><th>Division</th><th>Product</th><th style="text-align:right;">Total</th><th style="text-align:right;">Paid</th><th style="text-align:right;" class="mono" style="color:var(--red);">Due</th><th>Status</th></tr>
-          </thead>
-          <tbody id="due-details-body"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ PENDING ORDERS DETAILS MODAL ══ -->
-<div class="modal-overlay" id="modal-pending-details">
-  <div class="modal" style="max-width:860px;">
-    <div class="modal-header">
-      <span class="modal-title">📋 Pending Orders — বিস্তারিত</span>
-      <button class="modal-close" onclick="closeModal('pending-details')">✕</button>
-    </div>
-    <div class="modal-body" style="padding:16px 20px;">
-      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;" id="pending-status-chips"></div>
-      <div class="table-scroll" style="max-height:420px;">
-        <table>
-          <thead>
-            <tr><th>#</th><th>তারিখ</th><th>কাস্টমার</th><th>Phone</th><th>Product</th><th>Qty</th><th style="text-align:right;">Total</th><th>Payment</th><th>Status</th><th>Courier</th><th>Action</th></tr>
-          </thead>
-          <tbody id="pending-details-body"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ DELIVERED DETAILS MODAL ══ -->
-<div class="modal-overlay" id="modal-delivered-details">
-  <div class="modal" style="max-width:860px;">
-    <div class="modal-header">
-      <span class="modal-title">✅ Delivered Orders — বিস্তারিত</span>
-      <button class="modal-close" onclick="closeModal('delivered-details')">✕</button>
-    </div>
-    <div class="modal-body" style="padding:16px 20px;">
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px;" id="delivered-summary-cards"></div>
-      <div class="table-scroll" style="max-height:380px;">
-        <table>
-          <thead>
-            <tr><th>#</th><th>তারিখ</th><th>কাস্টমার</th><th>Phone</th><th>Division</th><th>Product</th><th>Qty</th><th style="text-align:right;">Total</th><th>Courier</th></tr>
-          </thead>
-          <tbody id="delivered-details-body"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
 <div class="modal-overlay" id="modal-add-order">
-  <div class="modal" style="max-width:800px;">
+  <div class="modal">
     <div class="modal-header">
       <span class="modal-title">🛒 New Order Entry</span>
       <button class="modal-close" onclick="closeModal('add-order');resetOrderModal()">✕</button>
     </div>
     <div class="modal-body">
-      <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="form-grid">
         <div class="form-group"><label class="form-label">Customer Name *</label><input class="form-input" id="order-customer" placeholder="Full name" type="text"></div>
         <div class="form-group"><label class="form-label">Phone Number *</label><input class="form-input" id="order-phone" placeholder="01XXXXXXXXX" type="text"></div>
         <div class="form-group"><label class="form-label">Division</label><select class="form-select" id="order-division" onchange="updateDistricts(this)"><option value="">Select Division</option><option>Dhaka</option><option>Chittagong</option><option>Rajshahi</option><option>Khulna</option><option>Sylhet</option><option>Barisal</option><option>Rangpur</option><option>Mymensingh</option></select></div>
@@ -3131,7 +2569,7 @@ h1, h2, h3 {
 // ✅ Partner balance REF error ছাড়া calculate
 // ═══════════════════════════════════════════════════════════════
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwEzeS9Rd1nUSKclkEC0todWSMb7hyi8RVphz45DlHRUG446dSm69WbrumPPE2dk3oryw/exec"; // ← এখানে আপনার Google Apps Script URL বসান
+const API_URL = "https://script.google.com/macros/s/AKfycbyBzsaK72oMMkLUCc_9P5ImINjDf2SymUaWXXvvwbQygj5XVQCT68CpTK7XX2A0iW0g/exec"; // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -3414,7 +2852,6 @@ function changePin() {
 // ─── NAVIGATION ──────────────────────────────────────────────
 const pageTitles = {
   dashboard:['Dashboard','— Live Overview'], sales:['Sales & Orders','— Order Management'],
-  'delivery-analytics':['Delivery Analytics','— ডেলিভারি বিশ্লেষণ'],
   inventory:['Inventory','— Stock Management'], expense:['Expenses','— Cost Tracking'],
   partner:['Partners','— Accounting'], crm:['Customers','— CRM'], calculator:['Order Calculator','— Price Calculator'],
   architecture:['Architecture','— System Guide'], formulas:['Formula Guide','— Reference'],
@@ -3423,15 +2860,10 @@ const pageTitles = {
 function showPage(id, el) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  const pg = document.getElementById('page-'+id);
-  if(!pg) return;
-  pg.classList.add('active');
+  document.getElementById('page-'+id).classList.add('active');
   el.classList.add('active');
-  const titles = pageTitles[id]||[id,''];
-  document.getElementById('page-title').textContent = titles[0];
-  document.getElementById('page-sub').textContent = titles[1];
-  // Load delivery analytics data when page shown
-  if(id==='delivery-analytics') setTimeout(loadDeliveryAnalytics, 80);
+  document.getElementById('page-title').textContent = pageTitles[id][0];
+  document.getElementById('page-sub').textContent = pageTitles[id][1];
   // FIX 7: Auto-close sidebar on mobile when nav item clicked
   if(window.innerWidth<=900) closeSidebarMobile();
 }
@@ -3683,6 +3115,73 @@ function renderPartnerTxns(rows){
   }).join('');
 }
 
+// ── Delivery Charge Analytics ─────────────────────────────────
+function renderDeliveryAnalytics(){
+  const safeN = v => { const n=parseFloat(String(v||'').replace(/[^0-9.-]/g,'')); return isNaN(n)?0:n; };
+  const filter = (document.getElementById('delivery-filter-month')||{}).value || 'this_month';
+  const now = new Date();
+  const thisY = now.getFullYear(), thisMo = now.getMonth();
+
+  let orders = (liveSalesData||[]).filter(r=>{
+    const st = String(r.status||'').trim();
+    return st !== 'Cancelled' && st !== 'Returned';
+  });
+
+  if(filter !== 'all'){
+    orders = orders.filter(r=>{
+      const raw = String(r.date||'').trim();
+      if(!raw) return false;
+      const dt = new Date(raw.replace(/(\d{2})-([A-Za-z]{3})-(\d{4})/,'$2 $1 $3'));
+      if(isNaN(dt.getTime())) return false;
+      if(filter==='this_month') return dt.getFullYear()===thisY && dt.getMonth()===thisMo;
+      if(filter==='last_month'){
+        const lm = thisMo===0?11:thisMo-1, ly = thisMo===0?thisY-1:thisY;
+        return dt.getFullYear()===ly && dt.getMonth()===lm;
+      }
+      return true;
+    });
+  }
+
+  const total = orders.reduce((s,r)=>s+safeN(r.delivery),0);
+  const count = orders.length;
+  const avg = count>0?Math.round(total/count):0;
+
+  const setEl = (id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+  setEl('del-total-charge','৳'+Math.round(total).toLocaleString());
+  setEl('del-count',count+' টি');
+  setEl('del-avg',avg>0?'৳'+avg.toLocaleString():'—');
+
+  // Monthly breakdown (last 6 months)
+  const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthMap={};
+  (liveSalesData||[]).forEach(r=>{
+    const st=String(r.status||'').trim();
+    if(st==='Cancelled'||st==='Returned') return;
+    const raw=String(r.date||'').trim(); if(!raw) return;
+    const dt=new Date(raw.replace(/(\d{2})-([A-Za-z]{3})-(\d{4})/,'$2 $1 $3'));
+    if(isNaN(dt.getTime())) return;
+    const key=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');
+    const label=MON[dt.getMonth()]+' '+dt.getFullYear();
+    if(!monthMap[key]) monthMap[key]={label,charge:0,count:0};
+    monthMap[key].charge+=safeN(r.delivery);
+    monthMap[key].count++;
+  });
+  const sorted=Object.keys(monthMap).sort().reverse().slice(0,6);
+  const tbody=document.getElementById('del-monthly-body');
+  if(tbody){
+    tbody.innerHTML = sorted.length ? sorted.map(k=>{
+      const m=monthMap[k];
+      const rowAvg=m.count>0?Math.round(m.charge/m.count):0;
+      return `<tr style="border-bottom:1px solid var(--border2);">
+        <td style="padding:8px;color:var(--text1);">${m.label}</td>
+        <td style="padding:8px;text-align:right;color:var(--gold);font-weight:700;">৳${Math.round(m.charge).toLocaleString()}</td>
+        <td style="padding:8px;text-align:right;color:var(--text2);">${m.count} টি</td>
+        <td style="padding:8px;text-align:right;color:var(--blue);">৳${rowAvg.toLocaleString()}</td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="4" style="padding:16px;text-align:center;color:var(--text3);">কোনো data নেই</td></tr>';
+  }
+}
+
 function renderCRMRows(rows){
   // Status → CSS class mapping (HTML-এর .status.xxx CSS-এর সাথে match করো)
   const ST_CSS = {
@@ -3843,24 +3342,23 @@ function drawChart(liveData) {
     const rvH = pct(rv);
     const pfH = pct(pf);
     const pfColor = pf >= 0 ? 'var(--gold)' : 'var(--red)';
-    const pfBorderRadius = pf >= 0 ? '5px 5px 0 0' : '0 0 5px 5px';
+    const pfBorderRadius = pf >= 0 ? '3px 3px 0 0' : '0 0 3px 3px';
     const pfTitle = pf >= 0 ? 'Profit' : 'Loss';
-    const isLast = i === months.length - 1;
     return `
     <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:0;height:100%;justify-content:flex-end;min-width:0;">
-      <div style="width:100%;display:flex;gap:3px;align-items:flex-end;height:160px;position:relative;">
-        <!-- Revenue bar with gradient -->
+      <div style="width:100%;display:flex;gap:2px;align-items:flex-end;height:160px;position:relative;">
+        <!-- Revenue bar -->
         <div class="bar" title="Revenue: ৳${rv.toLocaleString('en-BD')}"
-          style="background:linear-gradient(to top, rgba(52,209,116,.5), rgba(52,234,185,.85));height:${rvH}%;flex:1;position:relative;border-radius:6px 6px 0 0;box-shadow:${isLast?'0 0 12px rgba(52,209,116,.35)':'none'};">
-          ${rvH >= 14 ? `<span style="position:absolute;top:-18px;left:0;right:0;text-align:center;font-size:8px;color:var(--green);font-family:'IBM Plex Mono',monospace;white-space:nowrap;font-weight:600;">${rvLabel}</span>` : ''}
+          style="background:var(--green);opacity:.85;height:${rvH}%;flex:1;position:relative;border-radius:3px 3px 0 0;">
+          ${rvH >= 14 ? `<span style="position:absolute;top:-17px;left:0;right:0;text-align:center;font-size:8px;color:var(--green);font-family:'IBM Plex Mono',monospace;white-space:nowrap;">${rvLabel}</span>` : ''}
         </div>
-        <!-- Profit/Loss bar with gradient -->
+        <!-- Profit/Loss bar -->
         <div class="bar" title="${pfTitle}: ${fmtBar(pf)}"
-          style="background:${pf >= 0 ? 'linear-gradient(to top, rgba(240,180,41,.5), rgba(240,180,41,.9))' : 'linear-gradient(to top, rgba(255,92,92,.5), rgba(255,92,92,.85))'};height:${pfH}%;flex:1;position:relative;border-radius:${pfBorderRadius};box-shadow:${isLast?'0 0 12px '+(pf>=0?'rgba(240,180,41,.35)':'rgba(255,92,92,.35)'):'none'};">
-          ${pfH >= 14 ? `<span style="position:absolute;${pf>=0?'top:-18px':'bottom:-18px'};left:0;right:0;text-align:center;font-size:8px;color:${pfColor};font-family:'IBM Plex Mono',monospace;white-space:nowrap;font-weight:600;">${pfLabel}</span>` : ''}
+          style="background:${pfColor};height:${pfH}%;flex:1;position:relative;border-radius:${pfBorderRadius};">
+          ${pfH >= 14 ? `<span style="position:absolute;${pf>=0?'top:-17px':'bottom:-17px'};left:0;right:0;text-align:center;font-size:8px;color:${pfColor};font-family:'IBM Plex Mono',monospace;white-space:nowrap;">${pfLabel}</span>` : ''}
         </div>
       </div>
-      <span style="font-size:9px;color:${isLast?'var(--text2)':'var(--text3)'};margin-top:4px;white-space:nowrap;font-weight:${isLast?'700':'400'};">${m}</span>
+      <span style="font-size:9px;color:var(--text3);margin-top:3px;white-space:nowrap;">${m}</span>
     </div>`;
   }).join('');
 
@@ -3916,19 +3414,19 @@ function drawChart(liveData) {
     return n > 0 ? '৳' + n : '—';
   };
 
-  donut.innerHTML = `<div style="display:flex;flex-direction:column;gap:10px;width:100%;padding-top:4px;">
-    ${cats.map((c,idx) => `
-    <div style="display:flex;align-items:center;gap:10px;font-size:11px;">
-      <div style="width:10px;height:10px;border-radius:3px;background:${c.c};flex-shrink:0;box-shadow:0 0 6px ${c.c};"></div>
-      <span style="flex:1;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;">${c.name}</span>
-      <div style="flex:2;height:7px;background:var(--bg4);border-radius:4px;overflow:hidden;">
-        <div style="width:${c.pct}%;height:100%;background:${c.c};border-radius:4px;transition:width .6s cubic-bezier(.4,0,.2,1);box-shadow:0 0 6px ${c.c};opacity:.85;"></div>
+  donut.innerHTML = `<div style="display:flex;flex-direction:column;gap:7px;width:100%;padding-top:4px;">
+    ${cats.map(c => `
+    <div style="display:flex;align-items:center;gap:8px;font-size:11px;">
+      <div style="width:9px;height:9px;border-radius:2px;background:${c.c};flex-shrink:0;"></div>
+      <span style="flex:1;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name}</span>
+      <div style="flex:2;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;">
+        <div style="width:${c.pct}%;height:100%;background:${c.c};border-radius:3px;transition:width .5s ease;"></div>
       </div>
-      <span style="color:var(--text);font-weight:700;font-family:'IBM Plex Mono',monospace;min-width:56px;text-align:right;font-size:11px;">
+      <span style="color:var(--text);font-weight:700;font-family:'IBM Plex Mono',monospace;min-width:54px;text-align:right;font-size:10px;">
         ${hasExp ? fmtAmt(c.amount) : c.pct + '%'}
       </span>
     </div>`).join('')}
-    ${hasExp ? `<div style="text-align:right;font-size:9px;color:var(--text3);margin-top:4px;letter-spacing:.5px;">${cats.length} categories active</div>` : ''}
+    ${hasExp ? `<div style="text-align:right;font-size:9px;color:var(--text3);margin-top:2px;">${cats.length} categories active</div>` : ''}
   </div>`;
 }
 
@@ -4055,58 +3553,6 @@ async function loadLiveDashboard(){
   setEl('rabbi-drw',  '৳' + fmt(data.rabbi_drw));
   setEl('rabbi-bal',  '৳' + fmt(data.rabbi_bal));
 
-  // ── NEW STAT WIDGETS — populated from existing data, no new API calls ──
-  try {
-    // 1. Profit Margin %
-    const _rev  = toFloat(data.revenue);
-    const _exp  = toFloat(data.expenses);
-    const _cogs = toFloat(data.cogs);
-    const _prof = _cogs > 0 ? (_rev - _cogs - _exp) : (toFloat(data.profit) || (_rev - _exp));
-    if (_rev > 0) {
-      const margin = ((_prof / _rev) * 100).toFixed(1);
-      const marginEl = document.getElementById('kpi-profit-margin');
-      if (marginEl) {
-        marginEl.textContent = margin + '%';
-        marginEl.style.color = parseFloat(margin) >= 0 ? 'var(--cyan)' : 'var(--red)';
-      }
-    }
-
-    // 2. MoM Revenue Growth % (using monthlyChart data)
-    const _mc = data.monthlyChart;
-    if (_mc && _mc.revenue && _mc.revenue.length >= 2) {
-      const _len   = _mc.revenue.length;
-      const _cur   = _mc.revenue[_len - 1] || 0;
-      const _prev  = _mc.revenue[_len - 2] || 0;
-      const growthEl = document.getElementById('kpi-mom-growth');
-      if (growthEl && _prev > 0) {
-        const growthPct = (((_cur - _prev) / _prev) * 100).toFixed(1);
-        const isUp = parseFloat(growthPct) >= 0;
-        growthEl.textContent = (isUp ? '+' : '') + growthPct + '%';
-        growthEl.style.color = isUp ? 'var(--blue)' : 'var(--red)';
-      }
-      // Mini sparkline for both widgets
-      const sparkData = _mc.revenue.slice(-6);
-      const _sparkMax = Math.max(...sparkData, 1);
-      ['margin-sparkline', 'growth-sparkline', 'orders-sparkline'].forEach((sid, wi) => {
-        const sw = document.getElementById(sid);
-        if (!sw) return;
-        sw.innerHTML = sparkData.map((v, si) => {
-          const h = Math.max(4, Math.round((v / _sparkMax) * 34));
-          const isLast = si === sparkData.length - 1;
-          const colors = ['var(--cyan)', 'var(--blue)', 'var(--gold)'];
-          return `<div class="spark-bar${isLast?' active':''}" style="height:${h}px;background:${colors[wi]};flex:1;"></div>`;
-        }).join('');
-      });
-    }
-
-    // 3. Total Orders (from liveSalesData if available, otherwise pending+delivered)
-    const _totalOrders = document.getElementById('kpi-total-orders');
-    if (_totalOrders) {
-      const _ord = (Number(data.pending) || 0) + (Number(data.delivered) || 0);
-      _totalOrders.textContent = _ord > 0 ? _ord.toLocaleString('en-BD') : (liveSalesData ? liveSalesData.length : 0) || '—';
-    }
-  } catch(e) { /* silent — new widgets are non-critical */ }
-
   // ── Charts: pass live backend data to drawChart ──────────────
   // This replaces the hardcoded demo bars/donut with real Sheet data.
   drawChart(data);
@@ -4214,7 +3660,6 @@ async function loadLiveSales(){
   // BUG 2 FIX: Reverse so newest orders (highest SL#) appear at top
   rows.reverse();
   liveSalesData = rows; // cache for filter
-  window.liveOrders = rows; // cache globally for detail modals & delivery analytics
   renderSalesRows(rows);
   document.getElementById('sales-count').textContent = rows.length+' records';
   showToast('Sales loaded ✅','success');
@@ -4412,8 +3857,10 @@ async function loadLiveCRM(){
         // r.total = qty × unitPrice (stored by GS)
         // r.price = unit price, r.qty = quantity
         // Use r.total directly — এটাই সঠিক কারণ GS নিজে calculate করে লিখেছে
-        const orderTotal = safeN(r.total);
+        // FIX v25: Total Spent = product total + delivery charge
+        const orderTotal = safeN(r.total) + safeN(r.delivery);
         crmMap[key].spent += orderTotal;
+        crmMap[key].totalDelivery = (crmMap[key].totalDelivery||0) + safeN(r.delivery);
         crmMap[key].totalQty = (crmMap[key].totalQty||0) + safeN(r.qty);
         // COD/Cash/bKash/Nagad Delivered হলে due = 0 (টাকা collect হয়েছে)
         const isCollectedOnDelivery = st === 'Delivered' &&
@@ -4435,6 +3882,7 @@ async function loadLiveCRM(){
         orders: c.orders,
         spent:  Math.round(c.spent),
         due:    Math.round(c.due),
+        totalDelivery: Math.round(c.totalDelivery||0),
         avg:    c.orders > 0 ? Math.round(c.spent / c.orders) : 0,
         last:   c.last,
         type:   c.orders >= 3 ? '🔄 Repeat' : '👤 Regular',
@@ -4455,6 +3903,7 @@ async function loadLiveCRM(){
   const el2=document.getElementById('crm-repeat'); if(el2) el2.textContent=rows.filter(c=>String(c.type).includes('Repeat')).length;
   const el3=document.getElementById('crm-due');    if(el3) el3.textContent=rows.filter(c=>c.due>0).length;
   const el4=document.getElementById('crm-top');    if(el4){ const top=rows[0]||{name:'—'}; el4.textContent=top.name; }
+  renderDeliveryAnalytics();
 }
 
 // ─── CONNECTION TEST ─────────────────────────────────────────
@@ -4620,9 +4069,7 @@ function openEditOrder(r){
   m.querySelector('.btn.primary').textContent='✅ Update Order';
   // Pre-fill all fields
   m.querySelector('#order-customer').value=r.customer||'';
-  // FIX: Phone number — keep as string to preserve leading zero
-  const phoneStr = String(r.phone||'').trim();
-  m.querySelector('#order-phone').value = phoneStr;
+  m.querySelector('#order-phone').value=r.phone||'';
   const divSel=m.querySelector('#order-division');
   divSel.value=r.div||'';
   updateDistricts(divSel);
@@ -6573,279 +6020,6 @@ async function ptrImpSubmit(){
     } else { res.style.cssText='display:block;padding:12px;border-radius:8px;background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);color:var(--red);font-size:13px;'; res.innerHTML=`❌ Import failed<br><button class="btn" style="margin-top:8px;" onclick="ptrImpReset()">🔄 আবার চেষ্টা করুন</button>`; document.getElementById('ptr-imp-submit-btn').disabled=false; }
   } catch(e){ document.getElementById('ptr-imp-progress-wrap').style.display='none'; document.getElementById('ptr-imp-result').style.cssText='display:block;padding:12px;border-radius:8px;background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);color:var(--red);font-size:13px;'; document.getElementById('ptr-imp-result').innerHTML=`❌ Error: ${e.message}<br><button class="btn" style="margin-top:8px;" onclick="ptrImpReset()">🔄 আবার চেষ্টা করুন</button>`; document.getElementById('ptr-imp-submit-btn').disabled=false; }
 }
-
-// ─── DETAIL MODALS (Due / Pending / Delivered) ───────────────────────────────
-
-function _fmtTk(n){ return '৳'+Number(n||0).toLocaleString(); }
-function _fmtDate(d){ return d ? String(d).split(' ')[0] : '—'; }
-
-function openDueDetailsModal(){
-  const orders = (window.liveOrders||[]).filter(o=> {
-    const due = Math.max(0,(Number(o.total||0)+Number(o.delivery||0))-Number(o.paid||0));
-    return due > 0;
-  });
-  const totalDue = orders.reduce((s,o)=>s+Math.max(0,(Number(o.total||0)+Number(o.delivery||0))-Number(o.paid||0)),0);
-  const byDiv = {};
-  orders.forEach(o=>{ byDiv[o.div||'অন্যান্য']=(byDiv[o.div||'অন্যান্য']||0)+Math.max(0,(Number(o.total||0)+Number(o.delivery||0))-Number(o.paid||0)); });
-  const topDiv = Object.entries(byDiv).sort((a,b)=>b[1]-a[1])[0];
-
-  // Summary cards
-  const sc = document.getElementById('due-summary-cards');
-  sc.innerHTML = `
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
-      <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">মোট বাকি</div>
-      <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--red);">${_fmtTk(totalDue)}</div>
-    </div>
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
-      <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">বাকি অর্ডার সংখ্যা</div>
-      <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--gold);">${orders.length}</div>
-    </div>
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
-      <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">সর্বোচ্চ বাকি বিভাগ</div>
-      <div style="font-size:18px;font-weight:800;color:var(--blue);">${topDiv?topDiv[0]:'—'}</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:3px;">${topDiv?_fmtTk(topDiv[1]):''}</div>
-    </div>`;
-
-  // Table
-  const tbody = document.getElementById('due-details-body');
-  const sorted = [...orders].sort((a,b)=>{
-    const da=Math.max(0,(Number(a.total||0)+Number(a.delivery||0))-Number(a.paid||0));
-    const db=Math.max(0,(Number(b.total||0)+Number(b.delivery||0))-Number(b.paid||0));
-    return db-da;
-  });
-  tbody.innerHTML = sorted.map((o,i)=>{
-    const due = Math.max(0,(Number(o.total||0)+Number(o.delivery||0))-Number(o.paid||0));
-    return `<tr>
-      <td class="mono" style="color:var(--text3);">${i+1}</td>
-      <td style="color:var(--text2);font-size:12px;">${_fmtDate(o.date)}</td>
-      <td style="font-weight:600;">${o.customer||'—'}</td>
-      <td class="mono" style="font-size:12px;">${o.phone||'—'}</td>
-      <td style="font-size:12px;">${o.div||'—'}</td>
-      <td style="font-size:12px;">${o.product||'—'}</td>
-      <td class="mono" style="text-align:right;">${_fmtTk(o.total)}</td>
-      <td class="mono" style="text-align:right;color:var(--green);">${_fmtTk(o.paid)}</td>
-      <td class="mono" style="text-align:right;font-weight:800;color:var(--red);">${_fmtTk(due)}</td>
-      <td><span class="status ${(o.status||'').toLowerCase().replace(/\s/g,'')}">${o.status||'—'}</span></td>
-    </tr>`;
-  }).join('');
-
-  openModal('due-details');
-}
-
-function openPendingDetailsModal(){
-  const statuses = ['Pending','Processing','In Transit'];
-  const orders = (window.liveOrders||[]).filter(o=> statuses.includes(o.status));
-
-  // Status chips
-  const chips = document.getElementById('pending-status-chips');
-  const counts = {};
-  statuses.forEach(s=>{ counts[s]=orders.filter(o=>o.status===s).length; });
-  const colors = {'Pending':'var(--orange)','Processing':'var(--blue)','In Transit':'var(--gold)'};
-  chips.innerHTML = statuses.map(s=>`
-    <div style="display:inline-flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;">
-      <span style="width:8px;height:8px;border-radius:50%;background:${colors[s]};display:inline-block;"></span>
-      ${s}: <span style="color:${colors[s]};margin-left:2px;">${counts[s]}</span>
-    </div>`).join('')
-    +`<div style="display:inline-flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;">
-      মোট: <span style="color:var(--text);margin-left:2px;">${orders.length}</span>
-    </div>`;
-
-  // Table
-  const tbody = document.getElementById('pending-details-body');
-  tbody.innerHTML = orders.map((o,i)=>`<tr>
-    <td class="mono" style="color:var(--text3);">${i+1}</td>
-    <td style="color:var(--text2);font-size:12px;">${_fmtDate(o.date)}</td>
-    <td style="font-weight:600;">${o.customer||'—'}</td>
-    <td class="mono" style="font-size:12px;">${o.phone||'—'}</td>
-    <td style="font-size:12px;">${o.product||'—'}</td>
-    <td class="mono" style="text-align:center;">${o.qty||1}</td>
-    <td class="mono" style="text-align:right;">${_fmtTk(o.total)}</td>
-    <td><span class="pay-badge ${(o.payment||'cash').toLowerCase()}">${o.payment||'—'}</span></td>
-    <td><span class="status ${(o.status||'').toLowerCase().replace(/\s/g,'')}">${o.status||'—'}</span></td>
-    <td style="font-size:12px;">${o.courier||'—'}</td>
-    <td><button class="btn" style="padding:3px 10px;font-size:11px;" onclick="closeModal('pending-details');setTimeout(()=>openEditOrder(${JSON.stringify(o).replace(/"/g,'&quot;')}),200)">✏️ Edit</button></td>
-  </tr>`).join('');
-
-  openModal('pending-details');
-}
-
-function openDeliveredDetailsModal(){
-  const orders = (window.liveOrders||[]).filter(o=> o.status==='Delivered');
-  const totalRev = orders.reduce((s,o)=>s+Number(o.total||0),0);
-  const thisMonth = new Date().getMonth();
-  const thisYear  = new Date().getFullYear();
-  const monthlyDelivered = orders.filter(o=>{
-    const d=new Date(o.date||''); return d.getMonth()===thisMonth && d.getFullYear()===thisYear;
-  }).length;
-
-  // Summary cards
-  const sc = document.getElementById('delivered-summary-cards');
-  sc.innerHTML = `
-    <div style="background:var(--bg3);border:1px solid rgba(52,209,116,.3);border-radius:10px;padding:14px;text-align:center;">
-      <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">মোট Delivered</div>
-      <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--green);">${orders.length}</div>
-    </div>
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
-      <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">এই মাসে Delivered</div>
-      <div style="font-size:22px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--blue);">${monthlyDelivered}</div>
-    </div>
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
-      <div style="font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">মোট Revenue (Delivered)</div>
-      <div style="font-size:20px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:var(--gold);">${_fmtTk(totalRev)}</div>
-    </div>`;
-
-  // Table
-  const tbody = document.getElementById('delivered-details-body');
-  tbody.innerHTML = orders.map((o,i)=>`<tr>
-    <td class="mono" style="color:var(--text3);">${i+1}</td>
-    <td style="color:var(--text2);font-size:12px;">${_fmtDate(o.date)}</td>
-    <td style="font-weight:600;">${o.customer||'—'}</td>
-    <td class="mono" style="font-size:12px;">${o.phone||'—'}</td>
-    <td style="font-size:12px;">${o.div||'—'}</td>
-    <td style="font-size:12px;">${o.product||'—'}</td>
-    <td class="mono" style="text-align:center;">${o.qty||1}</td>
-    <td class="mono" style="text-align:right;color:var(--green);">${_fmtTk(o.total)}</td>
-    <td style="font-size:12px;">${o.courier||'—'}</td>
-  </tr>`).join('');
-
-  openModal('delivered-details');
-}
-
-// ─── DELIVERY ANALYTICS PAGE ──────────────────────────────────────────────────
-
-function loadDeliveryAnalytics(){
-  const orders = window.liveOrders||[];
-  const now = new Date();
-  const cm = now.getMonth(), cy = now.getFullYear();
-
-  // Filter orders with delivery charge
-  const withDelivery = orders.filter(o=>Number(o.delivery||0)>0);
-
-  // This month
-  const monthOrders = orders.filter(o=>{
-    const d=new Date(o.date||'');
-    return d.getMonth()===cm && d.getFullYear()===cy;
-  });
-  const monthCharge = monthOrders.reduce((s,o)=>s+Number(o.delivery||0),0);
-  const setEl=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
-  setEl('da-month-charge', Number(monthCharge).toLocaleString());
-  setEl('da-month-orders', monthOrders.length+' টি অর্ডার');
-
-  // This year
-  const yearOrders = orders.filter(o=>{ const d=new Date(o.date||''); return d.getFullYear()===cy; });
-  const yearCharge = yearOrders.reduce((s,o)=>s+Number(o.delivery||0),0);
-  setEl('da-year-charge', Number(yearCharge).toLocaleString());
-  setEl('da-year-orders', yearOrders.length+' টি অর্ডার');
-
-  // Average
-  const avg = withDelivery.length ? Math.round(withDelivery.reduce((s,o)=>s+Number(o.delivery||0),0)/withDelivery.length) : 0;
-  setEl('da-avg-charge', avg.toLocaleString());
-
-  // Total delivered products
-  const totalDeliveredQty = orders.filter(o=>o.status==='Delivered').reduce((s,o)=>s+Number(o.qty||1),0);
-  setEl('da-total-delivered', totalDeliveredQty.toLocaleString());
-
-  // Monthly chart — last 12 months
-  const monthlyData = {};
-  const monthNames = ['জানু','ফেব্র','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্ট','অক্টো','নভে','ডিসে'];
-  for(let i=11;i>=0;i--){
-    const d=new Date(cy, cm-i, 1);
-    const key=`${d.getFullYear()}-${d.getMonth()}`;
-    monthlyData[key]={label:monthNames[d.getMonth()]+' '+String(d.getFullYear()).slice(2), charge:0, count:0};
-  }
-  orders.forEach(o=>{
-    const d=new Date(o.date||'');
-    const key=`${d.getFullYear()}-${d.getMonth()}`;
-    if(monthlyData[key]){
-      monthlyData[key].charge+=Number(o.delivery||0);
-      monthlyData[key].count++;
-    }
-  });
-
-  const chartEl = document.getElementById('da-monthly-chart');
-  if(chartEl){
-    const vals = Object.values(monthlyData);
-    const maxV = Math.max(...vals.map(v=>v.charge), 1);
-    chartEl.innerHTML = vals.map(v=>{
-      const pct = Math.max(4, Math.round((v.charge/maxV)*100));
-      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px;cursor:default;" title="${v.label}: ৳${Number(v.charge).toLocaleString()}">
-        <div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace;">${v.charge>0?'৳'+Math.round(v.charge/1000)+'k':''}</div>
-        <div style="width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,var(--cyan),rgba(52,234,185,.4));height:${pct}%;min-height:4px;transition:height .5s ease;"></div>
-        <div style="font-size:8px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;padding:2px 0;">${v.label}</div>
-      </div>`;
-    }).join('');
-  }
-
-  // Courier breakdown
-  const courierMap = {};
-  orders.forEach(o=>{ const c=o.courier||'Unknown'; courierMap[c]=(courierMap[c]||0)+1; });
-  const courierEl = document.getElementById('da-courier-list');
-  if(courierEl){
-    const maxC = Math.max(...Object.values(courierMap),1);
-    const sorted = Object.entries(courierMap).sort((a,b)=>b[1]-a[1]).slice(0,6);
-    const clrs = ['var(--blue)','var(--green)','var(--gold)','var(--cyan)','var(--purple)','var(--orange)'];
-    courierEl.innerHTML = sorted.map(([name,cnt],i)=>`
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="font-size:12px;font-weight:600;min-width:80px;color:var(--text);">${name}</div>
-        <div style="flex:1;height:7px;background:var(--bg4);border-radius:4px;overflow:hidden;">
-          <div style="height:100%;width:${Math.round((cnt/maxC)*100)}%;background:${clrs[i%clrs.length]};border-radius:4px;transition:width .6s ease;"></div>
-        </div>
-        <div style="font-size:12px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:${clrs[i%clrs.length]};min-width:28px;text-align:right;">${cnt}</div>
-      </div>`).join('');
-  }
-
-  // Month filter for table
-  const mfEl = document.getElementById('da-month-filter');
-  if(mfEl && mfEl.options.length<=1){
-    const months = [...new Set(orders.map(o=>{
-      const d=new Date(o.date||'');
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    }).filter(Boolean))].sort().reverse();
-    months.forEach(m=>{
-      const opt=document.createElement('option');
-      opt.value=m;
-      const [yr,mo]=m.split('-');
-      opt.textContent=monthNames[parseInt(mo)-1]+' '+yr;
-      mfEl.appendChild(opt);
-    });
-  }
-
-  filterDeliveryAnalytics();
-}
-
-function filterDeliveryAnalytics(){
-  const orders = window.liveOrders||[];
-  const mf = (document.getElementById('da-month-filter')||{}).value||'';
-  const filtered = mf ? orders.filter(o=>{
-    const d=new Date(o.date||'');
-    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    return key===mf;
-  }) : orders;
-
-  const tbody = document.getElementById('da-table-body');
-  const countEl = document.getElementById('da-table-count');
-  if(!tbody) return;
-  const monthNames=['জানু','ফেব্র','মার্চ','এপ্রিল','মে','জুন','জুলাই','আগস্ট','সেপ্ট','অক্টো','নভে','ডিসে'];
-  tbody.innerHTML = filtered.map((o,i)=>`<tr>
-    <td class="mono" style="color:var(--text3);">${i+1}</td>
-    <td style="color:var(--text2);font-size:12px;">${_fmtDate(o.date)}</td>
-    <td style="font-weight:600;">${o.customer||'—'}</td>
-    <td style="font-size:12px;">${o.product||'—'}</td>
-    <td style="font-size:12px;">${o.courier||'—'}</td>
-    <td class="mono" style="text-align:center;">${o.qty||1}</td>
-    <td class="mono" style="text-align:right;font-weight:700;color:var(--cyan);">৳${Number(o.delivery||0).toLocaleString()}</td>
-  </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text3);">কোনো data নেই</td></tr>';
-  if(countEl) countEl.textContent = filtered.length+' records';
-}
-
-
-// ─── STORE live orders globally when loaded ───────────────────────────────────
-Object.defineProperty(window, 'liveOrders', {
-  configurable:true,
-  get(){ return window._liveOrdersCache||[]; },
-  set(v){ window._liveOrdersCache=v; }
-});
-
 </script>
 </body>
 </html>
