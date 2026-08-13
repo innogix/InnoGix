@@ -4957,7 +4957,7 @@ tbody td.muted{color:var(--text3);}
 // ═══════════════════════════════════════════════════════════════
 
 // ⚠️ এখানে আপনার Google Apps Script Web App URL বসান (Deploy > New Deployment > Web App)
-      const API_URL = "https://script.google.com/macros/s/AKfycbwBooed8-GsnOEHn2IHt5OAWamFO52FB9m3Q5bSLZjaKKJEdW-HZNVJb_LyqY699Vnl/exec"; // ← এই URL পরিবর্তন করুন // ← এখানে আপনার Google Apps Script URL বসান
+      const API_URL = "https://script.google.com/macros/s/AKfycbykMfmS2pfefsrne04mv0wfmekrYF4s5LhPIep9Y4ZUw90-VLttGq5ShF46n1uF6dSIGQ/exec"; // ← এই URL পরিবর্তন করুন // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -5348,25 +5348,36 @@ async function pinSubmit() {
     failedAttempts = 0;
     sessionStorage.removeItem('innogix_lockout_until');
     unlockApp(partnerAtSubmit);
-  } else {
-    failedAttempts++;
-    for (let i=0; i<4; i++) {
-      document.getElementById('d'+i).classList.add('error');
-      document.getElementById('d'+i).classList.remove('filled');
-    }
+    return;
+  }
 
-    const remaining = MAX_ATTEMPTS - failedAttempts;
-    if (failedAttempts >= MAX_ATTEMPTS) {
-      startLockout();
-    } else {
-      document.getElementById('pin-error').textContent = result
-        ? `❌ ভুল PIN — আর ${remaining} বার সুযোগ বাকি`
-        : '⚠️ সার্ভারের সাথে যোগাযোগ করা যায়নি — আবার চেষ্টা করুন';
-      setTimeout(() => {
-        pinBuffer = ''; updatePinDots();
-        document.getElementById('pin-error').textContent = '';
-      }, 1200);
-    }
+  // ⚠️ গুরুত্বপূর্ণ ফিক্স: নেটওয়ার্ক/সার্ভার সমস্যা (timeout, ধীর রেসপন্স ইত্যাদি)
+  // আর "ভুল PIN"— এই দুটো আলাদা। postToAPI() এখানে `false` মানে সার্ভারে
+  // পৌঁছানো যায়নি বা backend error — এটা ভুল PIN নয়, তাই কোনো attempt গোনা
+  // হবে না, লকআউটও হবে না। শুধু সার্ভার স্পষ্টভাবে valid:false বললেই তা "ভুল PIN"।
+  if (!result) {
+    pinBuffer = ''; updatePinDots();
+    document.getElementById('pin-error').textContent = '⚠️ সার্ভারের সাথে যোগাযোগ করা যায়নি — আবার চেষ্টা করুন';
+    setTimeout(() => { document.getElementById('pin-error').textContent = ''; }, 1800);
+    return;
+  }
+
+  // এখানে এসেছে মানে সার্ভার স্পষ্টভাবে জানিয়েছে PIN ভুল (result.valid === false)
+  failedAttempts++;
+  for (let i=0; i<4; i++) {
+    document.getElementById('d'+i).classList.add('error');
+    document.getElementById('d'+i).classList.remove('filled');
+  }
+
+  const remaining = MAX_ATTEMPTS - failedAttempts;
+  if (failedAttempts >= MAX_ATTEMPTS) {
+    startLockout();
+  } else {
+    document.getElementById('pin-error').textContent = `❌ ভুল PIN — আর ${remaining} বার সুযোগ বাকি`;
+    setTimeout(() => {
+      pinBuffer = ''; updatePinDots();
+      document.getElementById('pin-error').textContent = '';
+    }, 1200);
   }
 }
 
