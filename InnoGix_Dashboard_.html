@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="bn">
 <head>
@@ -1826,6 +1825,196 @@ tbody td.muted{color:var(--text3);}
   </div>
 </div>
 
+<!-- কুরিয়ার API Credentials Settings Modal -->
+<div class="modal-overlay" id="modal-courier-settings">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <span class="modal-title">🔐 কুরিয়ার API Settings</span>
+      <button class="modal-close" onclick="closeModal('courier-settings')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:12px;">
+        <label class="form-label">কুরিয়ার নির্বাচন করুন</label>
+        <select class="form-input" id="cs-courier" onchange="renderCourierSettingsFields()">
+          <option value="steadfast">Steadfast</option>
+          <option value="pathao">Pathao</option>
+        </select>
+      </div>
+      <div id="cs-status" style="font-size:11px;color:var(--text3);margin-bottom:12px;"></div>
+      <div id="cs-fields"></div>
+      <div class="form-group" style="margin-top:6px;margin-bottom:8px;">
+        <label class="form-label">নিশ্চিত করতে তোমার PIN দাও</label>
+        <input class="form-input" type="password" maxlength="4" id="cs-pin" placeholder="4-digit PIN">
+      </div>
+      <div class="pin-error" id="cs-error" style="margin-top:4px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="testCourierSettingsConnection()">🔎 Test Connection</button>
+      <button class="btn" onclick="closeModal('courier-settings')">Cancel</button>
+      <button class="btn primary" onclick="saveCourierSettings()">✅ সেভ করুন</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ 🎯 STRATEGY & TASK HUB — MODALS ══════ -->
+
+<!-- Add/Edit Daily Task -->
+<div class="modal-overlay" id="modal-add-task">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <span class="modal-title" id="sh-task-modal-title">✅ নতুন Task যোগ করুন</span>
+      <button class="modal-close" onclick="closeModal('add-task')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="sh-task-id">
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" type="date" id="sh-task-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Assigned To *</label>
+        <select class="form-select" id="sh-task-assigned">
+          <option value="Ismail">Ismail</option>
+          <option value="Ashik">Partner B (Ashik)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Task Description *</label>
+        <textarea class="form-input" id="sh-task-desc" rows="3" placeholder="কাজের বিস্তারিত লিখুন..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Priority</label>
+        <select class="form-select" id="sh-task-priority">
+          <option value="High">🔴 High</option>
+          <option value="Medium" selected>🟡 Medium</option>
+          <option value="Low">🟢 Low</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="sh-task-status">
+          <option value="Pending">⏳ Pending</option>
+          <option value="In Progress">🔄 In Progress</option>
+          <option value="Completed">✅ Completed</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Remarks / Notes</label>
+        <textarea class="form-input" id="sh-task-remarks" rows="2" placeholder="ঐচ্ছিক নোট..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('add-task')">Cancel</button>
+      <button class="btn primary" id="sh-task-submit-btn" onclick="submitDailyTask()">✅ সেভ করুন</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Strategy Plan -->
+<div class="modal-overlay" id="modal-add-plan">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <span class="modal-title" id="sh-plan-modal-title">🧭 নতুন Strategy Plan যোগ করুন</span>
+      <button class="modal-close" onclick="closeModal('add-plan')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="sh-plan-id">
+      <div class="form-group">
+        <label class="form-label">Type *</label>
+        <select class="form-select" id="sh-plan-type">
+          <option value="Short-Term">🎯 Short-Term</option>
+          <option value="Long-Term">🚀 Long-Term</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Plan Title *</label>
+        <input class="form-input" id="sh-plan-title" placeholder="যেমন: Q3-তে নতুন প্রোডাক্ট লঞ্চ">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Target Date</label>
+        <input class="form-input" type="date" id="sh-plan-target-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Key Milestones / Steps</label>
+        <textarea class="form-input" id="sh-plan-milestones" rows="3" placeholder="ধাপে ধাপে মাইলস্টোন লিখুন..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estimated Budget / Resource (৳)</label>
+        <input class="form-input" type="number" id="sh-plan-budget" placeholder="0" min="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="sh-plan-status">
+          <option value="Planning">📝 Planning</option>
+          <option value="Active">🔄 Active</option>
+          <option value="Achieved">✅ Achieved</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Owner</label>
+        <select class="form-select" id="sh-plan-owner">
+          <option value="Ismail">Ismail</option>
+          <option value="Ashik">Partner B (Ashik)</option>
+          <option value="Both">উভয়ে</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('add-plan')">Cancel</button>
+      <button class="btn primary" id="sh-plan-submit-btn" onclick="submitStrategyPlan()">✅ সেভ করুন</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Idea -->
+<div class="modal-overlay" id="modal-add-idea">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <span class="modal-title" id="sh-idea-modal-title">💡 নতুন Idea যোগ করুন</span>
+      <button class="modal-close" onclick="closeModal('add-idea')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="sh-idea-id">
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" type="date" id="sh-idea-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Title *</label>
+        <input class="form-input" id="sh-idea-title" placeholder="আইডিয়ার সংক্ষিপ্ত শিরোনাম">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Detailed Description</label>
+        <textarea class="form-input" id="sh-idea-desc" rows="3" placeholder="আইডিয়াটা বিস্তারিত লিখুন..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Proposed By</label>
+        <select class="form-select" id="sh-idea-proposed-by">
+          <option value="Ismail">Ismail</option>
+          <option value="Ashik">Partner B (Ashik)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="sh-idea-status">
+          <option value="New Idea">🆕 New Idea</option>
+          <option value="Under Review">🔍 Under Review</option>
+          <option value="Approved">✅ Approved</option>
+          <option value="Archived">🗄️ Archived</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Action Plan Notes</label>
+        <textarea class="form-input" id="sh-idea-action-notes" rows="2" placeholder="পরবর্তী পদক্ষেপ কী হবে..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('add-idea')">Cancel</button>
+      <button class="btn primary" id="sh-idea-submit-btn" onclick="submitIdea()">✅ সেভ করুন</button>
+    </div>
+  </div>
+</div>
+
 <style>
 .conn-banner{
   display:none;background:var(--orange2);
@@ -1858,6 +2047,7 @@ tbody td.muted{color:var(--text3);}
   <div class="nav-item" onclick="showPage('delivery-analytics',this)"><span class="nav-icon">🚚</span>Delivery Analytics</div>
   <div class="nav-item" onclick="showPage('courier-hub',this)"><span class="nav-icon">📦</span>কুরিয়ার ম্যানেজার<span class="nav-badge gold" id="courier-badge">6</span></div>
   <div class="nav-item" onclick="showPage('calculator',this)"><span class="nav-icon">🧮</span>Order Calculator</div>
+  <div class="nav-item" onclick="showPage('strategy-hub',this)"><span class="nav-icon">🎯</span>Strategy & Tasks</div>
 
   <div class="sidebar-section">System</div>
   <div class="nav-item" onclick="showPage('architecture',this)"><span class="nav-icon">🏗️</span>Architecture Guide</div>
@@ -1866,6 +2056,7 @@ tbody td.muted{color:var(--text3);}
   <div class="nav-item" onclick="showPage('activity-log',this)"><span class="nav-icon">📋</span>অ্যাক্টিভিটি লগ</div>
   <div class="nav-item" onclick="showPage('recycle-bin',this)" id="nav-recycle-bin"><span class="nav-icon">🗑️</span>রিসাইকেল বিন<span class="nav-badge" id="bin-badge" style="display:none">0</span></div>
   <div class="nav-item" onclick="openModal('change-pin')"><span class="nav-icon">🔑</span>PIN পরিবর্তন</div>
+  <div class="nav-item" onclick="openCourierSettings()"><span class="nav-icon">🔐</span>কুরিয়ার Settings</div>
 
   <div class="sidebar-footer">
     <!-- 🔒 লক ওএস বাটন -->
@@ -3176,6 +3367,124 @@ tbody td.muted{color:var(--text3);}
         </div>
       </div>
     </div><!-- /#page-courier-hub -->
+
+    <!-- ══════════════════════════════
+         PAGE: 🎯 STRATEGY & TASK HUB
+    ══════════════════════════════ -->
+    <div class="page" id="page-strategy-hub">
+      <div class="page-header">
+        <div>
+          <div class="page-title">🎯 Strategy & Task Hub</div>
+          <div class="page-sub">Daily Tasks, Strategic Roadmap ও Idea Box — এক জায়গায়</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn" onclick="loadStrategyHubAll()">🔄 রিফ্রেশ</button>
+        </div>
+      </div>
+
+      <!-- সাব-ট্যাব সিলেক্টর -->
+      <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;">
+        <button class="btn strategy-subtab active" id="sh-tab-tasks" onclick="showStrategyTab('tasks')" style="background:rgba(88,166,255,.15);border-color:rgba(88,166,255,.4);color:#58a6ff;">✅ Daily Tasks</button>
+        <button class="btn strategy-subtab" id="sh-tab-plans" onclick="showStrategyTab('plans')">🧭 Strategic Roadmap</button>
+        <button class="btn strategy-subtab" id="sh-tab-ideas" onclick="showStrategyTab('ideas')">💡 Idea Box</button>
+      </div>
+
+      <!-- ══════ SUB-SECTION 1: DAILY TASKS ══════ -->
+      <div id="sh-section-tasks" class="sh-section">
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <span style="font-weight:600;color:var(--text);">✅ Daily Operations Tracker</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <select class="form-select" id="sh-task-filter-status" onchange="renderDailyTasksTable()" style="padding:6px 10px;font-size:12px;">
+                <option value="">সব Status</option>
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+              </select>
+              <button class="btn btn-gold" style="padding:8px 14px;font-size:13px;" onclick="openAddTaskModal()">+ নতুন Task</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>#</th><th>Date</th><th>Assigned To</th><th>Task Description</th>
+                  <th>Priority</th><th>Status</th><th>Remarks</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="sh-tasks-body">
+                <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:40px;">লোড হচ্ছে...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-footer"><span id="sh-tasks-showing">Showing 0 records</span></div>
+        </div>
+      </div>
+
+      <!-- ══════ SUB-SECTION 2: STRATEGIC ROADMAP ══════ -->
+      <div id="sh-section-plans" class="sh-section" style="display:none;">
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <span style="font-weight:600;color:var(--text);">🧭 Strategic Roadmap — Short-Term & Long-Term Planning</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <select class="form-select" id="sh-plan-filter-type" onchange="renderStrategyPlansTable()" style="padding:6px 10px;font-size:12px;">
+                <option value="">সব Type</option>
+                <option value="Short-Term">Short-Term</option>
+                <option value="Long-Term">Long-Term</option>
+              </select>
+              <button class="btn btn-gold" style="padding:8px 14px;font-size:13px;" onclick="openAddPlanModal()">+ নতুন Plan</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>#</th><th>Type</th><th>Plan Title</th><th>Target Date</th>
+                  <th>Key Milestones / Steps</th><th>Est. Budget (৳)</th><th>Status</th><th>Owner</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="sh-plans-body">
+                <tr><td colspan="9" style="text-align:center;color:var(--text3);padding:40px;">লোড হচ্ছে...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-footer"><span id="sh-plans-showing">Showing 0 records</span></div>
+        </div>
+      </div>
+
+      <!-- ══════ SUB-SECTION 3: IDEA & BRAINSTORMING BOX ══════ -->
+      <div id="sh-section-ideas" class="sh-section" style="display:none;">
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <span style="font-weight:600;color:var(--text);">💡 Idea & Brainstorming Box</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <select class="form-select" id="sh-idea-filter-status" onchange="renderIdeaNotesTable()" style="padding:6px 10px;font-size:12px;">
+                <option value="">সব Status</option>
+                <option value="New Idea">New Idea</option>
+                <option value="Under Review">Under Review</option>
+                <option value="Approved">Approved</option>
+                <option value="Archived">Archived</option>
+              </select>
+              <button class="btn btn-gold" style="padding:8px 14px;font-size:13px;" onclick="openAddIdeaModal()">+ নতুন Idea</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>#</th><th>Date</th><th>Title</th><th>Description</th>
+                  <th>Proposed By</th><th>Status</th><th>Action Plan Notes</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="sh-ideas-body">
+                <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:40px;">লোড হচ্ছে...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-footer"><span id="sh-ideas-showing">Showing 0 records</span></div>
+        </div>
+      </div>
+    </div><!-- /#page-strategy-hub -->
 
     <!-- ══════════════════════════════
          PAGE: ARCHITECTURE GUIDE
@@ -4648,7 +4957,7 @@ tbody td.muted{color:var(--text3);}
 // ═══════════════════════════════════════════════════════════════
 
 // ⚠️ এখানে আপনার Google Apps Script Web App URL বসান (Deploy > New Deployment > Web App)
-      const API_URL = "https://script.google.com/macros/s/AKfycbzyOOy95sENy1LWlm8hFCEEnLIfK3cX9uHpZGq8Z942_tY2AUTpIe9mm5WLQT3tNIyVzg/exec"; // ← এই URL পরিবর্তন করুন // ← এখানে আপনার Google Apps Script URL বসান
+      const API_URL = "https://script.google.com/macros/s/AKfycbwBooed8-GsnOEHn2IHt5OAWamFO52FB9m3Q5bSLZjaKKJEdW-HZNVJb_LyqY699Vnl/exec"; // ← এই URL পরিবর্তন করুন // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -4816,11 +5125,9 @@ function safeNum(v) {
 }
 
 // ─── PARTNER LOGIN & ACTIVITY LOG SYSTEM ─────────────────────
-// পার্টনার পিন (hardcoded — পরিবর্তন করতে এখানে এডিট করুন)
-const PARTNER_PINS = {
-  'Ismail': '1111',
-  'Ashik':  '2222',
-};
+// নিরাপত্তার জন্য PIN এখন আর এখানে (client-side) রাখা হয় না।
+// সব PIN যাচাই ও পরিবর্তন সার্ভারে (.gs ব্যাকএন্ড, verifyPin/changePin
+// action) হয় — hash আকারে PropertiesService-এ সেভ থাকে।
 const PARTNER_COLORS = {
   'Ismail': 'var(--ismail)',
   'Ashik':  'var(--ashik)',
@@ -5012,7 +5319,7 @@ function updatePinDots() {
     document.getElementById('d'+i).classList.remove('error');
   }
 }
-function pinSubmit() {
+async function pinSubmit() {
   if (!selectedPartner) {
     document.getElementById('pin-error').textContent = '⚠️ পার্টনার নির্বাচন করুন';
     return;
@@ -5025,11 +5332,22 @@ function pinSubmit() {
     return;
   }
 
-  const correctPin = PARTNER_PINS[selectedPartner];
-  if (pinBuffer === correctPin) {
+  const enteredPin = pinBuffer;
+  const partnerAtSubmit = selectedPartner;
+  document.querySelectorAll('.pin-key').forEach(k => k.disabled = true);
+  document.getElementById('pin-error').textContent = '⏳ যাচাই করা হচ্ছে...';
+
+  // PIN সার্ভারে (Apps Script ব্যাকএন্ডে) পাঠিয়ে যাচাই করা হয় —
+  // PIN কখনো ব্রাউজারে স্টোর বা তুলনা করা হয় না।
+  const result = await postToAPI({ action: 'verifyPin', partner: partnerAtSubmit, pin: enteredPin });
+
+  document.querySelectorAll('.pin-key').forEach(k => k.disabled = false);
+  document.getElementById('pin-error').textContent = '';
+
+  if (result && result.valid) {
     failedAttempts = 0;
     sessionStorage.removeItem('innogix_lockout_until');
-    unlockApp(selectedPartner);
+    unlockApp(partnerAtSubmit);
   } else {
     failedAttempts++;
     for (let i=0; i<4; i++) {
@@ -5041,8 +5359,9 @@ function pinSubmit() {
     if (failedAttempts >= MAX_ATTEMPTS) {
       startLockout();
     } else {
-      document.getElementById('pin-error').textContent =
-        `❌ ভুল PIN — আর ${remaining} বার সুযোগ বাকি`;
+      document.getElementById('pin-error').textContent = result
+        ? `❌ ভুল PIN — আর ${remaining} বার সুযোগ বাকি`
+        : '⚠️ সার্ভারের সাথে যোগাযোগ করা যায়নি — আবার চেষ্টা করুন';
       setTimeout(() => {
         pinBuffer = ''; updatePinDots();
         document.getElementById('pin-error').textContent = '';
@@ -5139,30 +5458,129 @@ function _wrapForLog(origFn, description) {
 
 function openChangePinFromLock() {
   fromLock = true;
-  const grp = document.getElementById('cp-current')?.closest('.form-group');
-  if (grp) grp.style.display = 'none';
+  // নিরাপত্তার জন্য বর্তমান PIN সবসময় দিতে হবে — এই ফিল্ড আর লুকানো হয় না,
+  // কারণ এটা লুকালে PIN না জেনেই লক বাইপাস করে নতুন PIN বসানো যেত।
   document.getElementById('cp-error').textContent = '';
   openModal('change-pin');
 }
-function changePin() {
-  const currentEl = document.getElementById('cp-current');
-  const newPin    = document.getElementById('cp-new').value.trim();
-  const confirm   = document.getElementById('cp-confirm').value.trim();
-  const errEl     = document.getElementById('cp-error');
-  if (!/^\d{4}$/.test(newPin)) { errEl.textContent='❌ PIN অবশ্যই 4টি সংখ্যা হতে হবে'; return; }
-  if (newPin !== confirm) { errEl.textContent='❌ PIN মিলছে না'; return; }
-  // Partner PIN পরিবর্তন নোট করো (in-session only)
-  if (currentPartner) {
-    PARTNER_PINS[currentPartner] = newPin;
-    logAction(`PIN পরিবর্তন করেছেন`);
-  }
+async function changePin() {
+  const currentEl  = document.getElementById('cp-current');
+  const curPin     = currentEl.value.trim();
+  const newPin     = document.getElementById('cp-new').value.trim();
+  const confirmPin = document.getElementById('cp-confirm').value.trim();
+  const errEl      = document.getElementById('cp-error');
+  const partner    = currentPartner || selectedPartner;
+
+  if (!partner) { errEl.textContent = '⚠️ পার্টনার শনাক্ত করা যায়নি — আগে লগইন/নির্বাচন করুন'; return; }
+  if (!/^\d{4}$/.test(curPin)) { errEl.textContent = '❌ বর্তমান PIN দিন (4 সংখ্যা)'; return; }
+  if (!/^\d{4}$/.test(newPin)) { errEl.textContent = '❌ নতুন PIN অবশ্যই 4টি সংখ্যা হতে হবে'; return; }
+  if (newPin !== confirmPin) { errEl.textContent = '❌ PIN মিলছে না'; return; }
+
+  errEl.textContent = '⏳ যাচাই করা হচ্ছে...';
+  // বর্তমান ও নতুন PIN সার্ভারে পাঠিয়ে যাচাই ও আপডেট করা হয় —
+  // ব্যাকএন্ড শুধু hash সেভ করে, PIN কোথাও প্লেইন টেক্সটে থাকে না।
+  const result = await postToAPI({ action: 'changePin', partner, currentPin: curPin, newPin });
+  errEl.textContent = '';
+
+  if (!result) { errEl.textContent = '❌ PIN পরিবর্তন ব্যর্থ হয়েছে — বর্তমান PIN ঠিক আছে কিনা চেক করুন'; return; }
+
+  if (currentPartner) logAction('PIN পরিবর্তন করেছেন');
   closeModal('change-pin');
   currentEl.value=''; document.getElementById('cp-new').value=''; document.getElementById('cp-confirm').value='';
-  const grp = currentEl.closest('.form-group');
-  if (grp) grp.style.display='';
-  fromLock=false; errEl.textContent='';
+  fromLock=false;
   showToast('✅ PIN সফলভাবে পরিবর্তন হয়েছে!','success');
-  if (isLocked) unlockApp(selectedPartner);
+  if (isLocked && selectedPartner) unlockApp(selectedPartner);
+}
+// ─────────────────────────────────────────────────────────────
+
+// ─── কুরিয়ার API Credentials Settings ────────────────────────
+// API key/secret এখন Apps Script ব্যাকএন্ডে (PropertiesService) সেভ থাকে।
+// তাই একাউন্ট পরিবর্তন করতে চাইলে এখান থেকেই করা যায় — Apps Script
+// এডিটরে গিয়ে কোড এডিট বা নতুন Deployment করার দরকার নেই।
+const COURIER_SETTINGS_FIELDS = {
+  steadfast: [
+    { key:'api_key',    label:'API Key',    type:'text' },
+    { key:'api_secret', label:'Secret Key', type:'password' },
+  ],
+  pathao: [
+    { key:'client_id',     label:'Client ID',        type:'text' },
+    { key:'client_secret', label:'Client Secret',    type:'password' },
+    { key:'username',      label:'Email / Username', type:'text' },
+    { key:'password',      label:'Password',         type:'password' },
+    { key:'store_id',      label:'Store ID',         type:'text' },
+  ],
+};
+let courierSettingsCache = null;
+
+async function openCourierSettings() {
+  openModal('courier-settings');
+  document.getElementById('cs-pin').value = '';
+  document.getElementById('cs-error').textContent = '';
+  document.getElementById('cs-status').textContent = '⏳ লোড হচ্ছে...';
+  const result = await postToAPI({ action: 'getCourierCredentials' });
+  courierSettingsCache = result || null;
+  renderCourierSettingsFields();
+}
+
+function renderCourierSettingsFields() {
+  const courier = document.getElementById('cs-courier').value;
+  const fields  = COURIER_SETTINGS_FIELDS[courier];
+  const info    = courierSettingsCache ? courierSettingsCache[courier] : null;
+  const statusEl = document.getElementById('cs-status');
+
+  statusEl.textContent = info
+    ? (info._configured ? '✅ এই কুরিয়ার এখন সংযুক্ত আছে' : '⚠️ এখনও কনফিগার করা হয়নি')
+    : '';
+
+  const wrap = document.getElementById('cs-fields');
+  wrap.innerHTML = fields.map(f => {
+    const existing = info ? (info[f.key] || '') : '';
+    const placeholder = existing ? `বর্তমান: ${existing}` : 'নতুন মান লিখুন';
+    return `<div class="form-group" style="margin-bottom:12px;">
+      <label class="form-label">${f.label}</label>
+      <input class="form-input" type="${f.type}" id="cs-f-${f.key}" placeholder="${placeholder}">
+    </div>`;
+  }).join('');
+}
+
+async function saveCourierSettings() {
+  const courier  = document.getElementById('cs-courier').value;
+  const fields   = COURIER_SETTINGS_FIELDS[courier];
+  const pin      = document.getElementById('cs-pin').value.trim();
+  const errEl    = document.getElementById('cs-error');
+  const partner  = currentPartner;
+
+  if (!partner) { errEl.textContent = '⚠️ আগে লগইন করো'; return; }
+  if (!/^\d{4}$/.test(pin)) { errEl.textContent = '❌ 4-digit PIN দাও'; return; }
+
+  const credentials = {};
+  let anyFilled = false;
+  fields.forEach(f => {
+    const v = document.getElementById('cs-f-' + f.key).value.trim();
+    if (v) anyFilled = true;
+    credentials[f.key] = v;
+  });
+  if (!anyFilled) { errEl.textContent = '⚠️ অন্তত একটা ফিল্ড পূরণ করো'; return; }
+
+  errEl.textContent = '⏳ সেভ করা হচ্ছে...';
+  const result = await postToAPI({ action: 'saveCourierCredentials', partner, pin, courier, credentials });
+  errEl.textContent = '';
+
+  if (!result) { errEl.textContent = '❌ সেভ ব্যর্থ হয়েছে — PIN বা ইনপুট চেক করো'; return; }
+
+  document.getElementById('cs-pin').value = '';
+  showToast('✅ ' + courier + ' credentials সেভ হয়েছে!', 'success');
+  logAction(courier + ' কুরিয়ার credentials আপডেট করেছেন');
+  if (courierSettingsCache) courierSettingsCache[courier] = result.data;
+  renderCourierSettingsFields();
+}
+
+async function testCourierSettingsConnection() {
+  const courier = document.getElementById('cs-courier').value;
+  const courierName = courier === 'steadfast' ? 'Steadfast' : 'Pathao';
+  const result = await postToAPI({ action: 'testCourierConnection', courier: courierName });
+  if (result && result.message) showToast('✅ ' + result.message, 'success');
+  // ব্যর্থ হলে postToAPI নিজে থেকেই এরর টোস্ট দেখাবে
 }
 // ─────────────────────────────────────────────────────────────
 
@@ -6317,6 +6735,7 @@ const pageTitles = {
   'recycle-bin':['রিসাইকেল বিন','— মুছে ফেলা ডেটা পুনরুদ্ধার'],
   architecture:['Architecture','— System Guide'], formulas:['Formula Guide','— Reference'],
   setup:['Setup Roadmap','— Implementation Plan'],
+  'strategy-hub':['🎯 Strategy & Task Hub','— Daily Tasks, Strategic Roadmap & Idea Box'],
 };
 // OPT-C: DOM Cache for showPage — eliminates querySelectorAll on every tab click
 const _pageEls   = {};
@@ -6345,6 +6764,7 @@ function showPage(id, el) {
   if(id==='activity-log') renderActivityLog();
   if(id==='investors') loadInvestors();
   if(id==='recycle-bin') loadRecycleBin();
+  if(id==='strategy-hub') loadStrategyHubAll();
   if(window.innerWidth<=900) closeSidebarMobile();
   if(id !== 'activity-log' && id !== 'recycle-bin') logAction(`"${pageTitles[id]?.[0] || id}" পেজ ভিজিট করেছেন`);
 
@@ -7895,6 +8315,321 @@ async function loadLiveCRM(){
   const el4=document.getElementById('crm-top');    if(el4){ const top=rows[0]||{name:'—'}; el4.textContent=top.name; }
   renderDeliveryAnalytics();
 }
+
+// ═══════════════════════════════════════════════════════════════
+// 🎯 STRATEGY & TASK HUB — Daily Tasks / Strategic Roadmap / Idea Box
+// ═══════════════════════════════════════════════════════════════
+let liveDailyTasksData    = [];
+let liveStrategyPlansData = [];
+let liveIdeaNotesData     = [];
+
+const SH_STATUS_CSS = { // .status CSS ক্লাসের সাথে মিলিয়ে রঙ ব্যবহার
+  'Pending':'pending', 'In Progress':'intransit', 'Completed':'delivered',
+  'Planning':'pending', 'Active':'intransit', 'Achieved':'delivered',
+  'New Idea':'pending', 'Under Review':'processing', 'Approved':'delivered', 'Archived':'cancelled',
+};
+const SH_PRIORITY_CSS = { 'High':'cancelled', 'Medium':'processing', 'Low':'delivered' };
+
+function showStrategyTab(tab){
+  ['tasks','plans','ideas'].forEach(t=>{
+    document.getElementById('sh-section-'+t).style.display = (t===tab)?'block':'none';
+    const btn = document.getElementById('sh-tab-'+t);
+    if(btn){
+      btn.classList.toggle('active', t===tab);
+      btn.style.background = (t===tab) ? 'rgba(88,166,255,.15)' : '';
+      btn.style.borderColor = (t===tab) ? 'rgba(88,166,255,.4)' : '';
+      btn.style.color = (t===tab) ? '#58a6ff' : '';
+    }
+  });
+}
+
+async function loadStrategyHubAll(){
+  await Promise.all([loadLiveDailyTasks(), loadLiveStrategyPlans(), loadLiveIdeaNotes()]);
+}
+
+// ─── DAILY TASKS ──────────────────────────────────────────────
+async function loadLiveDailyTasks(){
+  const data = await fetchFromAPI('dailyTasks');
+  if(!data || !data.data){ liveDailyTasksData = []; renderDailyTasksTable(); return; }
+  liveDailyTasksData = data.data.map(r => ({
+    id: r[0], date: String(r[1]||''), assignedTo: String(r[2]||''),
+    description: String(r[3]||''), priority: String(r[4]||'Medium'),
+    status: String(r[5]||'Pending'), remarks: String(r[6]||''),
+  })).filter(t => t.id !== '' && t.id != null);
+  renderDailyTasksTable();
+}
+function renderDailyTasksTable(){
+  const filterStatus = document.getElementById('sh-task-filter-status')?.value || '';
+  let rows = liveDailyTasksData.slice().reverse(); // নতুনগুলো আগে
+  if(filterStatus) rows = rows.filter(t => t.status === filterStatus);
+  const body = document.getElementById('sh-tasks-body');
+  if(!rows.length){
+    body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:40px;">কোনো Task নেই — "+ নতুন Task" চাপুন</td></tr>';
+    document.getElementById('sh-tasks-showing').textContent = 'Showing 0 records';
+    return;
+  }
+  body.innerHTML = rows.map(t => `<tr>
+    <td class="mono muted">${t.id}</td>
+    <td class="mono">${t.date||'—'}</td>
+    <td><strong>${t.assignedTo==='Ashik'?'Partner B (Ashik)':t.assignedTo}</strong></td>
+    <td class="muted">${t.description||'—'}</td>
+    <td><span class="status ${SH_PRIORITY_CSS[t.priority]||'pending'}">${t.priority}</span></td>
+    <td>
+      <span class="status ${SH_STATUS_CSS[t.status]||'pending'}" style="cursor:pointer;" onclick="shCycleTaskStatus('${t.id}','${t.status}')" title="ক্লিক করে Status পরিবর্তন করুন">
+        ${t.status==='Completed'?'✅':t.status==='In Progress'?'🔄':'⏳'} ${t.status}
+      </span>
+    </td>
+    <td class="muted">${t.remarks||'—'}</td>
+    <td>
+      <button class="btn" style="padding:4px 10px;font-size:11px;" onclick='openAddTaskModal(${JSON.stringify(t)})'>✏️</button>
+      <button class="btn" style="padding:4px 8px;font-size:11px;background:var(--red);color:#fff;border-color:var(--red);" onclick="deleteDailyTaskConfirm('${t.id}','${(t.description||'').replace(/'/g,"\\'")}')">🗑️</button>
+    </td>
+  </tr>`).join('');
+  document.getElementById('sh-tasks-showing').textContent = `Showing ${rows.length} record(s)`;
+}
+// Status বাটনে ক্লিক করলে Pending → In Progress → Completed → Pending চক্রে যায় (instant toggle)
+async function shCycleTaskStatus(taskId, currentStatus){
+  const next = currentStatus==='Pending' ? 'In Progress' : currentStatus==='In Progress' ? 'Completed' : 'Pending';
+  const result = await postToAPI({ action:'updateTaskStatus', taskId, status: next });
+  if(!result) return;
+  const t = liveDailyTasksData.find(x => String(x.id)===String(taskId));
+  if(t) t.status = next;
+  renderDailyTasksTable();
+  showToast('✅ Task status: ' + next, 'success');
+  logAction('Task #'+taskId+' স্ট্যাটাস পরিবর্তন করেছেন → '+next);
+}
+function openAddTaskModal(task){
+  const isEdit = !!(task && task.id);
+  document.getElementById('sh-task-modal-title').textContent = isEdit ? '✏️ Task সম্পাদনা করুন' : '✅ নতুন Task যোগ করুন';
+  document.getElementById('sh-task-id').value = isEdit ? task.id : '';
+  document.getElementById('sh-task-date').value = isEdit ? _shToDateInput(task.date) : _shToDateInput(dNowBD_());
+  document.getElementById('sh-task-assigned').value = isEdit ? task.assignedTo : 'Ismail';
+  document.getElementById('sh-task-desc').value = isEdit ? task.description : '';
+  document.getElementById('sh-task-priority').value = isEdit ? task.priority : 'Medium';
+  document.getElementById('sh-task-status').value = isEdit ? task.status : 'Pending';
+  document.getElementById('sh-task-remarks').value = isEdit ? task.remarks : '';
+  openModal('add-task');
+}
+async function submitDailyTask(){
+  const taskId = document.getElementById('sh-task-id').value.trim();
+  const description = document.getElementById('sh-task-desc').value.trim();
+  if(!description){ showToast('Task Description লিখুন', 'error'); return; }
+  const payload = {
+    date: document.getElementById('sh-task-date').value,
+    assignedTo: document.getElementById('sh-task-assigned').value,
+    description,
+    priority: document.getElementById('sh-task-priority').value,
+    status: document.getElementById('sh-task-status').value,
+    remarks: document.getElementById('sh-task-remarks').value.trim(),
+  };
+  payload.action = taskId ? 'updateDailyTask' : 'addDailyTask';
+  if(taskId) payload.taskId = taskId;
+  const result = await postToAPI(payload);
+  if(!result) return;
+  closeModal('add-task');
+  showToast(taskId ? '✅ Task আপডেট হয়েছে!' : '✅ নতুন Task যোগ হয়েছে!', 'success');
+  logAction(taskId ? 'Task #'+taskId+' এডিট করেছেন' : 'নতুন Task যোগ করেছেন: '+description);
+  loadLiveDailyTasks();
+}
+function deleteDailyTaskConfirm(taskId, description){
+  if(!confirm(`Task মুছে ফেলতে চান?\n"${description}"\n\n(Recycle Bin-এ পাঠানো হবে — ৩০ দিন পর্যন্ত পুনরুদ্ধার করা যাবে)`)) return;
+  deleteDailyTask(taskId);
+}
+async function deleteDailyTask(taskId){
+  const result = await postToAPI({ action:'deleteDailyTask', taskId });
+  if(!result) return;
+  showToast('🗑️ Task Recycle Bin-এ পাঠানো হয়েছে', 'success');
+  logAction('Task #'+taskId+' মুছে ফেলেছেন');
+  loadLiveDailyTasks();
+}
+
+// ─── STRATEGIC ROADMAP ────────────────────────────────────────
+async function loadLiveStrategyPlans(){
+  const data = await fetchFromAPI('strategyPlans');
+  if(!data || !data.data){ liveStrategyPlansData = []; renderStrategyPlansTable(); return; }
+  liveStrategyPlansData = data.data.map(r => ({
+    id: r[0], type: String(r[1]||'Short-Term'), title: String(r[2]||''),
+    targetDate: String(r[3]||''), milestones: String(r[4]||''),
+    budget: Number(r[5])||0, status: String(r[6]||'Planning'), owner: String(r[7]||''),
+  })).filter(p => p.id !== '' && p.id != null);
+  renderStrategyPlansTable();
+}
+function renderStrategyPlansTable(){
+  const filterType = document.getElementById('sh-plan-filter-type')?.value || '';
+  let rows = liveStrategyPlansData.slice().reverse();
+  if(filterType) rows = rows.filter(p => p.type === filterType);
+  const body = document.getElementById('sh-plans-body');
+  if(!rows.length){
+    body.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:40px;">কোনো Plan নেই — "+ নতুন Plan" চাপুন</td></tr>';
+    document.getElementById('sh-plans-showing').textContent = 'Showing 0 records';
+    return;
+  }
+  body.innerHTML = rows.map(p => `<tr>
+    <td class="mono muted">${p.id}</td>
+    <td><span class="status ${p.type==='Long-Term'?'processing':'pending'}">${p.type}</span></td>
+    <td><strong>${p.title||'—'}</strong></td>
+    <td class="mono">${p.targetDate||'—'}</td>
+    <td class="muted">${p.milestones||'—'}</td>
+    <td class="mono" style="font-weight:700;color:var(--gold);">৳${p.budget.toLocaleString()}</td>
+    <td><span class="status ${SH_STATUS_CSS[p.status]||'pending'}">${p.status}</span></td>
+    <td>${p.owner==='Ashik'?'Partner B (Ashik)':(p.owner||'—')}</td>
+    <td>
+      <button class="btn" style="padding:4px 10px;font-size:11px;" onclick='openAddPlanModal(${JSON.stringify(p)})'>✏️</button>
+      <button class="btn" style="padding:4px 8px;font-size:11px;background:var(--red);color:#fff;border-color:var(--red);" onclick="deleteStrategyPlanConfirm('${p.id}','${(p.title||'').replace(/'/g,"\\'")}')">🗑️</button>
+    </td>
+  </tr>`).join('');
+  document.getElementById('sh-plans-showing').textContent = `Showing ${rows.length} record(s)`;
+}
+function openAddPlanModal(plan){
+  const isEdit = !!(plan && plan.id);
+  document.getElementById('sh-plan-modal-title').textContent = isEdit ? '✏️ Strategy Plan সম্পাদনা করুন' : '🧭 নতুন Strategy Plan যোগ করুন';
+  document.getElementById('sh-plan-id').value = isEdit ? plan.id : '';
+  document.getElementById('sh-plan-type').value = isEdit ? plan.type : 'Short-Term';
+  document.getElementById('sh-plan-title').value = isEdit ? plan.title : '';
+  document.getElementById('sh-plan-target-date').value = isEdit ? _shToDateInput(plan.targetDate) : '';
+  document.getElementById('sh-plan-milestones').value = isEdit ? plan.milestones : '';
+  document.getElementById('sh-plan-budget').value = isEdit ? plan.budget : '';
+  document.getElementById('sh-plan-status').value = isEdit ? plan.status : 'Planning';
+  document.getElementById('sh-plan-owner').value = isEdit ? plan.owner : 'Ismail';
+  openModal('add-plan');
+}
+async function submitStrategyPlan(){
+  const strategyId = document.getElementById('sh-plan-id').value.trim();
+  const title = document.getElementById('sh-plan-title').value.trim();
+  if(!title){ showToast('Plan Title লিখুন', 'error'); return; }
+  const payload = {
+    type: document.getElementById('sh-plan-type').value,
+    title,
+    targetDate: document.getElementById('sh-plan-target-date').value,
+    milestones: document.getElementById('sh-plan-milestones').value.trim(),
+    budget: Number(document.getElementById('sh-plan-budget').value) || 0,
+    status: document.getElementById('sh-plan-status').value,
+    owner: document.getElementById('sh-plan-owner').value,
+  };
+  payload.action = strategyId ? 'updateStrategyPlan' : 'addStrategyPlan';
+  if(strategyId) payload.strategyId = strategyId;
+  const result = await postToAPI(payload);
+  if(!result) return;
+  closeModal('add-plan');
+  showToast(strategyId ? '✅ Plan আপডেট হয়েছে!' : '✅ নতুন Strategy Plan যোগ হয়েছে!', 'success');
+  logAction(strategyId ? 'Strategy #'+strategyId+' এডিট করেছেন' : 'নতুন Strategy Plan যোগ করেছেন: '+title);
+  loadLiveStrategyPlans();
+}
+function deleteStrategyPlanConfirm(strategyId, title){
+  if(!confirm(`Strategy Plan মুছে ফেলতে চান?\n"${title}"\n\n(Recycle Bin-এ পাঠানো হবে — ৩০ দিন পর্যন্ত পুনরুদ্ধার করা যাবে)`)) return;
+  deleteStrategyPlan(strategyId);
+}
+async function deleteStrategyPlan(strategyId){
+  const result = await postToAPI({ action:'deleteStrategyPlan', strategyId });
+  if(!result) return;
+  showToast('🗑️ Strategy Plan Recycle Bin-এ পাঠানো হয়েছে', 'success');
+  logAction('Strategy #'+strategyId+' মুছে ফেলেছেন');
+  loadLiveStrategyPlans();
+}
+
+// ─── IDEA & BRAINSTORMING BOX ─────────────────────────────────
+async function loadLiveIdeaNotes(){
+  const data = await fetchFromAPI('ideaNotes');
+  if(!data || !data.data){ liveIdeaNotesData = []; renderIdeaNotesTable(); return; }
+  liveIdeaNotesData = data.data.map(r => ({
+    id: r[0], date: String(r[1]||''), title: String(r[2]||''),
+    description: String(r[3]||''), proposedBy: String(r[4]||''),
+    status: String(r[5]||'New Idea'), actionNotes: String(r[6]||''),
+  })).filter(i => i.id !== '' && i.id != null);
+  renderIdeaNotesTable();
+}
+function renderIdeaNotesTable(){
+  const filterStatus = document.getElementById('sh-idea-filter-status')?.value || '';
+  let rows = liveIdeaNotesData.slice().reverse();
+  if(filterStatus) rows = rows.filter(i => i.status === filterStatus);
+  const body = document.getElementById('sh-ideas-body');
+  if(!rows.length){
+    body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:40px;">কোনো Idea নেই — "+ নতুন Idea" চাপুন</td></tr>';
+    document.getElementById('sh-ideas-showing').textContent = 'Showing 0 records';
+    return;
+  }
+  body.innerHTML = rows.map(i => `<tr>
+    <td class="mono muted">${i.id}</td>
+    <td class="mono">${i.date||'—'}</td>
+    <td><strong>${i.title||'—'}</strong></td>
+    <td class="muted">${i.description||'—'}</td>
+    <td>${i.proposedBy==='Ashik'?'Partner B (Ashik)':(i.proposedBy||'—')}</td>
+    <td>
+      <select class="form-select" style="padding:4px 8px;font-size:11px;" onchange="shChangeIdeaStatus('${i.id}',this.value)">
+        ${['New Idea','Under Review','Approved','Archived'].map(s=>`<option value="${s}" ${s===i.status?'selected':''}>${s}</option>`).join('')}
+      </select>
+    </td>
+    <td class="muted">${i.actionNotes||'—'}</td>
+    <td>
+      <button class="btn" style="padding:4px 10px;font-size:11px;" onclick='openAddIdeaModal(${JSON.stringify(i)})'>✏️</button>
+      <button class="btn" style="padding:4px 8px;font-size:11px;background:var(--red);color:#fff;border-color:var(--red);" onclick="deleteIdeaConfirm('${i.id}','${(i.title||'').replace(/'/g,"\\'")}')">🗑️</button>
+    </td>
+  </tr>`).join('');
+  document.getElementById('sh-ideas-showing').textContent = `Showing ${rows.length} record(s)`;
+}
+async function shChangeIdeaStatus(ideaId, newStatus){
+  const result = await postToAPI({ action:'updateIdeaStatus', ideaId, status:newStatus });
+  if(!result) return;
+  const i = liveIdeaNotesData.find(x => String(x.id)===String(ideaId));
+  if(i) i.status = newStatus;
+  showToast('✅ Idea status: ' + newStatus, 'success');
+  logAction('Idea #'+ideaId+' স্ট্যাটাস পরিবর্তন করেছেন → '+newStatus);
+}
+function openAddIdeaModal(idea){
+  const isEdit = !!(idea && idea.id);
+  document.getElementById('sh-idea-modal-title').textContent = isEdit ? '✏️ Idea সম্পাদনা করুন' : '💡 নতুন Idea যোগ করুন';
+  document.getElementById('sh-idea-id').value = isEdit ? idea.id : '';
+  document.getElementById('sh-idea-date').value = isEdit ? _shToDateInput(idea.date) : _shToDateInput(dNowBD_());
+  document.getElementById('sh-idea-title').value = isEdit ? idea.title : '';
+  document.getElementById('sh-idea-desc').value = isEdit ? idea.description : '';
+  document.getElementById('sh-idea-proposed-by').value = isEdit ? idea.proposedBy : 'Ismail';
+  document.getElementById('sh-idea-status').value = isEdit ? idea.status : 'New Idea';
+  document.getElementById('sh-idea-action-notes').value = isEdit ? idea.actionNotes : '';
+  openModal('add-idea');
+}
+async function submitIdea(){
+  const ideaId = document.getElementById('sh-idea-id').value.trim();
+  const title = document.getElementById('sh-idea-title').value.trim();
+  if(!title){ showToast('Idea Title লিখুন', 'error'); return; }
+  const payload = {
+    date: document.getElementById('sh-idea-date').value,
+    title,
+    description: document.getElementById('sh-idea-desc').value.trim(),
+    proposedBy: document.getElementById('sh-idea-proposed-by').value,
+    status: document.getElementById('sh-idea-status').value,
+    actionNotes: document.getElementById('sh-idea-action-notes').value.trim(),
+  };
+  payload.action = ideaId ? 'updateIdea' : 'addIdea';
+  if(ideaId) payload.ideaId = ideaId;
+  const result = await postToAPI(payload);
+  if(!result) return;
+  closeModal('add-idea');
+  showToast(ideaId ? '✅ Idea আপডেট হয়েছে!' : '✅ নতুন Idea যোগ হয়েছে!', 'success');
+  logAction(ideaId ? 'Idea #'+ideaId+' এডিট করেছেন' : 'নতুন Idea যোগ করেছেন: '+title);
+  loadLiveIdeaNotes();
+}
+function deleteIdeaConfirm(ideaId, title){
+  if(!confirm(`Idea মুছে ফেলতে চান?\n"${title}"\n\n(Recycle Bin-এ পাঠানো হবে — ৩০ দিন পর্যন্ত পুনরুদ্ধার করা যাবে)`)) return;
+  deleteIdea(ideaId);
+}
+async function deleteIdea(ideaId){
+  const result = await postToAPI({ action:'deleteIdea', ideaId });
+  if(!result) return;
+  showToast('🗑️ Idea Recycle Bin-এ পাঠানো হয়েছে', 'success');
+  logAction('Idea #'+ideaId+' মুছে ফেলেছেন');
+  loadLiveIdeaNotes();
+}
+
+// ─── Helper: 'dd-MMM-yyyy...' বা যেকোনো তারিখ স্ট্রিং কে <input type=date> এর
+//     জন্য 'yyyy-MM-dd' ফরম্যাটে বদলায়; না পারলে খালি রাখে ───
+function _shToDateInput(dateStr){
+  if(!dateStr) return '';
+  const d = new Date(dateStr);
+  if(isNaN(d.getTime())) return '';
+  const yyyy = d.getFullYear(), mm = String(d.getMonth()+1).padStart(2,'0'), dd = String(d.getDate()).padStart(2,'0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+function dNowBD_(){ return new Date().toISOString(); }
 
 // ─── CONNECTION TEST ─────────────────────────────────────────
 async function testConnection(){
