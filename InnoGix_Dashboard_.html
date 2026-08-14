@@ -4957,7 +4957,7 @@ tbody td.muted{color:var(--text3);}
 // ═══════════════════════════════════════════════════════════════
 
 // ⚠️ এখানে আপনার Google Apps Script Web App URL বসান (Deploy > New Deployment > Web App)
-      const API_URL = "https://script.google.com/macros/s/AKfycbykMfmS2pfefsrne04mv0wfmekrYF4s5LhPIep9Y4ZUw90-VLttGq5ShF46n1uF6dSIGQ/exec"; // ← এই URL পরিবর্তন করুন // ← এখানে আপনার Google Apps Script URL বসান
+      const API_URL = "https://script.google.com/macros/s/AKfycbwuyu52dHidqniNMuyyiuAqFXoEuMJDcRYeXHbFRb_EntwN1o-ahMX0OX7PVzSjc83rCQ/exec"; // ← এই URL পরিবর্তন করুন // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -5319,6 +5319,34 @@ function updatePinDots() {
     document.getElementById('d'+i).classList.remove('error');
   }
 }
+// ─── Instant client-side PIN check ──────────────────────────────
+// PIN hash (salt সহ) একবার পেজ লোড হওয়ার সময় ব্যাকগ্রাউন্ডে নিয়ে আসা হয়,
+// তারপর প্রতিটা PIN চেষ্টা ব্রাউজারেই instant SHA-256 compare দিয়ে হয় —
+// কোনো নেটওয়ার্ক রাউন্ড-ট্রিপ ছাড়াই, তাই ১ সেকেন্ডের মধ্যেই লগইন হয়।
+let pinHashCache = null;        // { salt, hashes: {Ismail:'...', Ashik:'...'} }
+let pinHashCacheLoading = null;
+
+async function ensurePinHashCache() {
+  if (pinHashCache) return pinHashCache;
+  if (pinHashCacheLoading) return pinHashCacheLoading;
+  pinHashCacheLoading = postToAPI({ action: 'getPinHashes' }).then(result => {
+    pinHashCacheLoading = null;
+    if (result && result.hashes) { pinHashCache = { salt: result.salt, hashes: result.hashes }; }
+    return pinHashCache;
+  }).catch(() => { pinHashCacheLoading = null; return null; });
+  return pinHashCacheLoading;
+}
+// backend-এর _hashPin_() এর সাথে হুবহু মিলিয়ে: SHA-256("partner:pin:salt")
+// (file:// মোডের মতো secure-context-বিহীন পরিস্থিতিতে crypto.subtle না-ও
+// থাকতে পারে — তখন null ফেরত দেয়, আর pinSubmit() সার্ভার-ভেরিফাই ফলব্যাকে যায়)
+async function _computePinHashLocal(partner, pin, salt) {
+  if (!window.crypto || !window.crypto.subtle) return null;
+  const raw = `${partner}:${pin}:${salt}`;
+  const bytes = new TextEncoder().encode(raw);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 async function pinSubmit() {
   if (!selectedPartner) {
     document.getElementById('pin-error').textContent = '⚠️ পার্টনার নির্বাচন করুন';
@@ -5334,35 +5362,64 @@ async function pinSubmit() {
 
   const enteredPin = pinBuffer;
   const partnerAtSubmit = selectedPartner;
-  document.querySelectorAll('.pin-key').forEach(k => k.disabled = true);
-  document.getElementById('pin-error').textContent = '⏳ যাচাই করা হচ্ছে...';
 
-  // PIN সার্ভারে (Apps Script ব্যাকএন্ডে) পাঠিয়ে যাচাই করা হয় —
-  // PIN কখনো ব্রাউজারে স্টোর বা তুলনা করা হয় না।
-  const result = await postToAPI({ action: 'verifyPin', partner: partnerAtSubmit, pin: enteredPin });
+  // hash cache এখনো লোড না হয়ে থাকলে (যেমন পেজ লোড হওয়ার সাথে সাথেই টাইপ করলে)
+  // এই একবারই ছোট্ট অপেক্ষা লাগতে পারে — তারপর থেকে সবসময় instant।
+  if (!pinHashCache) {
+    document.getElementById('pin-error').textContent = '⏳ প্রস্তুত হচ্ছে...';
+    await ensurePinHashCache();
+  }
+  if (!pinHashCache || !pinHashCache.hashes || !pinHashCache.hashes[partnerAtSubmit]) {
+    document.getElementById('pin-error').textContent = '⚠️ সংযোগ সমস্যা — একটু পর আবার চেষ্টা করুন';
+    ensurePinHashCache(); // চুপচাপ আবার চেষ্টা করো
+    return;
+  }
 
-  document.querySelectorAll('.pin-key').forEach(k => k.disabled = false);
+  const computedHash = await _computePinHashLocal(partnerAtSubmit, enteredPin, pinHashCache.salt);
+
+  // crypto.subtle অনুপলব্ধ হলে (secure context নেই, যেমন file:// মোড) —
+  // সরাসরি সার্ভার-ভেরিফাই ফলব্যাকে যাও, instant check এখানে চলবে না
+  if (computedHash === null) {
+    document.getElementById('pin-error').textContent = '⏳ যাচাই করা হচ্ছে...';
+    const result = await postToAPI({ action: 'verifyPin', partner: partnerAtSubmit, pin: enteredPin });
+    document.getElementById('pin-error').textContent = '';
+    if (result && result.valid) {
+      failedAttempts = 0;
+      sessionStorage.removeItem('innogix_lockout_until');
+      unlockApp(partnerAtSubmit);
+      return;
+    }
+    if (!result) {
+      pinBuffer = ''; updatePinDots();
+      document.getElementById('pin-error').textContent = '⚠️ সার্ভারের সাথে যোগাযোগ করা যায়নি — আবার চেষ্টা করুন';
+      setTimeout(() => { document.getElementById('pin-error').textContent = ''; }, 1800);
+      return;
+    }
+    failedAttempts++;
+    for (let i=0; i<4; i++) {
+      document.getElementById('d'+i).classList.add('error');
+      document.getElementById('d'+i).classList.remove('filled');
+    }
+    const rem = MAX_ATTEMPTS - failedAttempts;
+    if (failedAttempts >= MAX_ATTEMPTS) { startLockout(); }
+    else {
+      document.getElementById('pin-error').textContent = `❌ ভুল PIN — আর ${rem} বার সুযোগ বাকি`;
+      setTimeout(() => { pinBuffer=''; updatePinDots(); document.getElementById('pin-error').textContent=''; }, 1200);
+    }
+    return;
+  }
+
+  const isValid = (computedHash === pinHashCache.hashes[partnerAtSubmit]);
   document.getElementById('pin-error').textContent = '';
 
-  if (result && result.valid) {
+  if (isValid) {
     failedAttempts = 0;
     sessionStorage.removeItem('innogix_lockout_until');
     unlockApp(partnerAtSubmit);
     return;
   }
 
-  // ⚠️ গুরুত্বপূর্ণ ফিক্স: নেটওয়ার্ক/সার্ভার সমস্যা (timeout, ধীর রেসপন্স ইত্যাদি)
-  // আর "ভুল PIN"— এই দুটো আলাদা। postToAPI() এখানে `false` মানে সার্ভারে
-  // পৌঁছানো যায়নি বা backend error — এটা ভুল PIN নয়, তাই কোনো attempt গোনা
-  // হবে না, লকআউটও হবে না। শুধু সার্ভার স্পষ্টভাবে valid:false বললেই তা "ভুল PIN"।
-  if (!result) {
-    pinBuffer = ''; updatePinDots();
-    document.getElementById('pin-error').textContent = '⚠️ সার্ভারের সাথে যোগাযোগ করা যায়নি — আবার চেষ্টা করুন';
-    setTimeout(() => { document.getElementById('pin-error').textContent = ''; }, 1800);
-    return;
-  }
-
-  // এখানে এসেছে মানে সার্ভার স্পষ্টভাবে জানিয়েছে PIN ভুল (result.valid === false)
+  // ভুল PIN
   failedAttempts++;
   for (let i=0; i<4; i++) {
     document.getElementById('d'+i).classList.add('error');
@@ -5494,6 +5551,11 @@ async function changePin() {
   errEl.textContent = '';
 
   if (!result) { errEl.textContent = '❌ PIN পরিবর্তন ব্যর্থ হয়েছে — বর্তমান PIN ঠিক আছে কিনা চেক করুন'; return; }
+
+  // নতুন PIN সেট হয়ে গেছে — local hash cache পুরনো হয়ে গেছে, তাই রিফ্রেশ করো
+  // (নাহলে instant client-side check পুরনো PIN দিয়েই যাচাই করবে)
+  pinHashCache = null;
+  ensurePinHashCache();
 
   if (currentPartner) logAction('PIN পরিবর্তন করেছেন');
   closeModal('change-pin');
@@ -5836,6 +5898,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof _cacheNavDOM === 'function') {
     requestAnimationFrame(_cacheNavDOM);
   }
+
+  // PIN hash আগেভাগেই ব্যাকগ্রাউন্ডে নিয়ে আসো, যাতে ইউজার PIN টাইপ করা শেষ
+  // করার আগেই cache রেডি থাকে — লগইন সবসময় instant মনে হয়।
+  ensurePinHashCache();
 });
 
 
