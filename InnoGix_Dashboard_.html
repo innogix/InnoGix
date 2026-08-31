@@ -4173,7 +4173,7 @@ tbody td.muted{color:var(--text3);}
       <div class="form-grid">
         <div class="form-group"><label class="form-label">Product ID *</label><input class="form-input" id="prod-id" placeholder="P007" type="text"></div>
         <div class="form-group"><label class="form-label">Product Name *</label><input class="form-input" id="prod-name" placeholder="Amanah ..." type="text"></div>
-        <div class="form-group"><label class="form-label">Category</label><select class="form-select" id="prod-cat"><option>Door Security</option><option>Surveillance</option><option>Alarm</option><option>Smart Security</option><option>Sensor</option><option>Other</option></select></div>
+        <div class="form-group"><label class="form-label">Category</label><input class="form-input" id="prod-cat" list="prod-cat-datalist" placeholder="বেছে নিন বা নতুন ক্যাটাগরি লিখুন" type="text" autocomplete="off"></div>
         <div class="form-group"><label class="form-label">Cost Price (৳) *</label><input class="form-input" id="prod-cost" type="number" placeholder="0"></div>
         <div class="form-group"><label class="form-label">Sell Price (৳) *</label><input class="form-input" id="prod-sell" type="number" placeholder="0"></div>
         <div class="form-group"><label class="form-label">Opening Stock</label><input class="form-input" id="prod-opening" type="number" placeholder="0"></div>
@@ -4182,6 +4182,18 @@ tbody td.muted{color:var(--text3);}
         <div class="form-group"><label class="form-label">Supplier Name</label><input class="form-input" id="prod-supplier" placeholder="Supplier name" type="text"></div>
         <div class="form-group"><label class="form-label">Supplier Phone</label><input class="form-input" id="prod-supplier-phone" placeholder="017XXXXXXXX" type="text"></div>
         <div class="form-group full"><label class="form-label">Notes</label><textarea class="form-textarea" id="prod-notes" placeholder="Optional notes..."></textarea></div>
+        <!-- v64 FIX: shared datalist so both Add & Edit Product category fields offer
+             the same fixed suggestions PLUS any custom category already used in
+             the live inventory (populated by populateCategoryDatalist()). This lets
+             the user type a brand-new category instead of being stuck with a fixed list. -->
+        <datalist id="prod-cat-datalist">
+          <option value="Door Security"></option>
+          <option value="Surveillance"></option>
+          <option value="Alarm"></option>
+          <option value="Smart Security"></option>
+          <option value="Sensor"></option>
+          <option value="Other"></option>
+        </datalist>
 
         <!-- ══ PROFIT SPLIT SECTION ══ -->
         <div class="profit-split-section">
@@ -4283,13 +4295,17 @@ tbody td.muted{color:var(--text3);}
       <div class="form-grid">
         <div class="form-group"><label class="form-label">Product ID</label><input class="form-input" id="eprod-id" readonly></div>
         <div class="form-group"><label class="form-label">Product Name</label><input class="form-input" id="eprod-name" type="text"></div>
-        <div class="form-group"><label class="form-label">Category</label><select class="form-select" id="eprod-cat"><option>Door Security</option><option>Surveillance</option><option>Alarm</option><option>Smart Security</option><option>Sensor</option><option>Other</option></select></div>
+        <div class="form-group"><label class="form-label">Category</label><input class="form-input" id="eprod-cat" list="prod-cat-datalist" placeholder="বেছে নিন বা নতুন ক্যাটাগরি লিখুন" type="text" autocomplete="off"></div>
         <div class="form-group"><label class="form-label">Cost Price (৳)</label><input class="form-input" id="eprod-cost" type="number"></div>
         <div class="form-group"><label class="form-label">Sell Price (৳)</label><input class="form-input" id="eprod-sell" type="number"></div>
         <div class="form-group"><label class="form-label">Opening Stock</label><input class="form-input" id="eprod-opening" type="number"></div>
         <div class="form-group"><label class="form-label">Stock In (এই মাসে যোগ)</label><input class="form-input" id="eprod-stockin" type="number"></div>
         <div class="form-group"><label class="form-label">Alert Level</label><input class="form-input" id="eprod-alert" type="number"></div>
         <div class="form-group"><label class="form-label">Supplier</label><input class="form-input" id="eprod-supplier" type="text"></div>
+        <!-- v64 FIX: this field existed in the Add-Product modal but was completely
+             missing here — that's why Supplier Phone "sometimes" showed and
+             "sometimes" didn't: Add had it, Edit never did. -->
+        <div class="form-group"><label class="form-label">Supplier Phone</label><input class="form-input" id="eprod-supplier-phone" placeholder="017XXXXXXXX" type="text"></div>
         <div class="form-group full"><label class="form-label">Notes</label><textarea class="form-textarea" id="eprod-notes"></textarea></div>
 
         <!-- ══ PROFIT SPLIT SECTION (Edit) ══ -->
@@ -4958,7 +4974,7 @@ tbody td.muted{color:var(--text3);}
 // ═══════════════════════════════════════════════════════════════
 
 // ⚠️ এখানে আপনার Google Apps Script Web App URL বসান (Deploy > New Deployment > Web App)
-      const API_URL = "https://script.google.com/macros/s/AKfycbyVNw35jtK0mKeXBjibcC5qTKLUNKqOS87ToR7Hfhm_haWk-WjaLsDmcs25WlB3U35t/exec"; // ← এই URL পরিবর্তন করুন // ← এখানে আপনার Google Apps Script URL বসান
+      const API_URL = "https://script.google.com/macros/s/AKfycbwSYcNniwD0NEGLZAytZEzM-S5UAH_jJF7UpQ8LeKcAoezDLqiVfV9ej4KSV89MVcw/exec"; // ← এই URL পরিবর্তন করুন // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -5082,6 +5098,14 @@ async function postToAPI(payload) {
 
   // v43 FIX: helper — base64-GET+JSONP fallback (already proven to work for
   // file:// protocol, and fully supported server-side via doGet's p.data + callback)
+  // v64 FIX: this used to be able to THROW (if jsonpFetch rejected — e.g. the
+  // <script> tag network-erroring with "Script load error"). Because that throw
+  // happened *inside* the outer catch(fetchErr) block below, it escaped straight
+  // to the outermost catch and REPLACED the real, useful error (the original POST
+  // failure) with the confusing, unrelated "Script load error" message — and since
+  // this function itself never showed anything about the true root cause, the user
+  // only ever saw the misleading message. It's now wrapped in try/catch so it always
+  // resolves to false/result and never throws, and the real fetch error is preserved.
   async function fallbackViaGet() {
     const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(jsonStr))));
     const url = `${API_URL}?action=${encodeURIComponent(payload.action||'')}&data=${encoded}`;
@@ -5089,10 +5113,15 @@ async function postToAPI(payload) {
       showToast('ডাটা অনেক বড় — Note/Address ছোট করে আবার চেষ্টা করুন','error');
       return false;
     }
-    const result = await jsonpFetch(url);
-    if (!result) return false;
-    if (result.status === 'error') { showToast('Backend error: '+(result.message||'অজানা সমস্যা'),'error'); return false; }
-    return (result.status === 'success' || result.status === 'ok') ? result : false;
+    try {
+      const result = await jsonpFetch(url);
+      if (!result) return false;
+      if (result.status === 'error') { showToast('Backend error: '+(result.message||'অজানা সমস্যা'),'error'); return false; }
+      return (result.status === 'success' || result.status === 'ok') ? result : false;
+    } catch(fbErr) {
+      console.error('postToAPI fallbackViaGet failed:', fbErr.message);
+      return false;
+    }
   }
 
   try {
@@ -5118,12 +5147,22 @@ async function postToAPI(payload) {
       // v43 FIX: real POST occasionally fails at the network/CORS level (browser
       // throws before any HTTP response — e.g. "Failed to fetch") when Apps Script's
       // internal redirect isn't handled cleanly by the browser. Instead of giving up,
-      // silently retry via the base64-GET+JSONP path, which sidesteps this entirely.
+      // retry via the base64-GET+JSONP path, which sidesteps this entirely.
+      // v64 FIX: mobile networks (2G/3G / flaky Wi-Fi) often recover within a
+      // second — so if the GET fallback also fails on the first try, wait briefly
+      // and try it once more before finally giving up. This alone resolves most
+      // transient "Script load error" failures without any user action.
       if (fetchErr.name !== 'AbortError') {
-        const fb = await fallbackViaGet();
+        let fb = await fallbackViaGet();
+        if (!fb) { await new Promise(r => setTimeout(r, 1200)); fb = await fallbackViaGet(); }
         if (fb) return fb;
       }
-      throw fetchErr;
+      // v64 FIX: no more re-throwing fetchErr here (which used to bubble up to the
+      // outer catch and fire a SECOND, redundant toast on top of the caller's own
+      // "... হয়নি — API URL চেক করুন" message). We log the real cause for
+      // debugging and return false; the caller already shows one clear toast.
+      console.error('postToAPI: POST failed and GET fallback failed:', fetchErr.message);
+      return false;
     }
     clearTimeout(timer);
     if (!res.ok) { showToast('Server error: ' + res.status, 'error'); return false; }
@@ -8218,7 +8257,29 @@ async function loadLiveInventory(){
   window.liveInventoryData = rows; // global for export
   // v31: Update order product dropdown with inventory products
   populateOrderProductDropdown();
+  // v64 FIX: keep the category datalist in sync with whatever custom categories
+  // are actually in use, so a category typed once shows up as a suggestion later
+  populateCategoryDatalist(rows);
   renderInventoryData(rows); showToast('Inventory loaded ✅','success');
+}
+// v64 FIX: Category ছিল একটা fixed <select> — নতুন কাস্টম ক্যাটাগরি যোগ করার
+// কোনো উপায় ছিল না। এখন prod-cat/eprod-cat একটা <input list="prod-cat-datalist">,
+// যেটা ফিক্সড অপশনগুলো suggest করে কিন্তু যেকোনো নতুন টেক্সটও লিখতে দেয়। এই ফাংশন
+// ইনভেন্টরিতে আগে থেকে ব্যবহৃত কাস্টম ক্যাটাগরিগুলোও datalist-এ যোগ করে দেয়,
+// যাতে সেগুলো পরের বার সাজেশন হিসেবে দেখা যায়।
+function populateCategoryDatalist(rows){
+  const dl = document.getElementById('prod-cat-datalist');
+  if(!dl) return;
+  const existing = new Set(Array.from(dl.options).map(o => o.value));
+  (rows||[]).forEach(p=>{
+    const cat = (p.cat||'').trim();
+    if(cat && !existing.has(cat)){
+      const o = document.createElement('option');
+      o.value = cat;
+      dl.appendChild(o);
+      existing.add(cat);
+    }
+  });
 }
 // Format ISO / serial date to Bangladesh readable: DD-MMM-YYYY HH:MM AM/PM
 function formatBDDate(rawDT){
@@ -9740,6 +9801,8 @@ function openEditProduct(p){
   document.getElementById('eprod-stockin').value=p.in||0;
   document.getElementById('eprod-alert').value=p.alert||5;
   document.getElementById('eprod-supplier').value=p.supplier||'';
+  // v64 FIX: was missing entirely — Supplier Phone never loaded into the Edit modal
+  document.getElementById('eprod-supplier-phone').value=p.supplierPhone||'';
   document.getElementById('eprod-notes').value=p.notes||'';
   // Load saved profit split from local DB (or from product data if available)
   const saved = _getProductSplit(p.name);
@@ -9767,6 +9830,8 @@ async function updateProduct(){
     stockIn: document.getElementById('eprod-stockin').value,
     alert: document.getElementById('eprod-alert').value,
     supplier: document.getElementById('eprod-supplier').value,
+    // v64 FIX: was missing entirely — edits to Supplier Phone were silently dropped
+    supplierPhone: document.getElementById('eprod-supplier-phone').value,
     notes: document.getElementById('eprod-notes').value,
     splitIsmail: splitI,
     splitAshik:  splitA,
