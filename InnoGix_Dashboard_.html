@@ -4987,7 +4987,7 @@ tbody td.muted{color:var(--text3);}
 // ═══════════════════════════════════════════════════════════════
 
 // ⚠️ এখানে আপনার Google Apps Script Web App URL বসান (Deploy > New Deployment > Web App)
-      const API_URL = "https://script.google.com/macros/s/AKfycbzYOieZt6KCtfRmSmdLAlODTcQp1oXXa8mcCe3WpIC5_3QCuXbSJVt2H2SJuGBeMLxK/exec"; // ← এই URL পরিবর্তন করুন // ← এখানে আপনার Google Apps Script URL বসান
+      const API_URL = "https://script.google.com/macros/s/AKfycbzBL5S1hctFKMKE1W60fp_5nuPa8fMe7AfEao1bqAQfuDU8TKhiKP2duoLqliKhVOKvtQ/exec"; // ← এই URL পরিবর্তন করুন // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -5885,8 +5885,10 @@ function _getProductSplit(productName) {
  */
 function updateProductSplitPreview(mode) {
   const prefix = mode === 'edit' ? 'eprod' : 'prod';
-  const i = parseFloat(document.getElementById(prefix+'-split-ismail')?.value||0);
-  const a = parseFloat(document.getElementById(prefix+'-split-ashik')?.value||0);
+  // v67 FIX: guard against a non-numeric field value producing undefined/NaN
+  // that could reach .toFixed() below and crash the modal.
+  const i = Number(parseFloat(document.getElementById(prefix+'-split-ismail')?.value||0)) || 0;
+  const a = Number(parseFloat(document.getElementById(prefix+'-split-ashik')?.value||0)) || 0;
   const total = i + a;
   const comp  = Math.max(0, 100 - total);
   const compEl  = document.getElementById(prefix+'-split-company-preview');
@@ -5932,7 +5934,7 @@ function onOrderProductChange(productName) {
     si.value = split.ismail;
     sa.value = split.ashik;
     updateCompanyFundPreview();
-    const comp = Math.max(0, 100 - split.ismail - split.ashik);
+    const comp = Number(Math.max(0, 100 - split.ismail - split.ashik)) || 0;
     if(banner) banner.style.display = 'block';
     if(bannerInfo) bannerInfo.textContent = `I:${split.ismail}% | A:${split.ashik}% | C:${comp.toFixed(0)}%`;
     showToast(`🔗 "${productName}"-এর প্রফিট শতাংশ লোড হয়েছে`, 'info');
@@ -5978,8 +5980,8 @@ function updateProfitDefaults() {
 }
 
 function updateCompanyFundPreview() {
-  const i  = parseFloat(document.getElementById('split-ismail')?.value||0);
-  const a  = parseFloat(document.getElementById('split-ashik')?.value||0);
+  const i  = Number(parseFloat(document.getElementById('split-ismail')?.value||0)) || 0;
+  const a  = Number(parseFloat(document.getElementById('split-ashik')?.value||0)) || 0;
   const total = i + a;
   const comp  = Math.max(0, 100 - total);
   const el = id => document.getElementById(id);
@@ -7270,9 +7272,15 @@ function renderInventoryData(rows){
   // Table
   document.getElementById('inv-body').innerHTML = rows.map(p=>{
     // Issue 1 FIX: backend এর margin ব্যবহার করো, না থাকলে JS এ হিসাব
-    const margin = (p.margin != null && p.margin > 0)
-      ? p.margin
-      : (p.sell > 0 ? Math.round((p.sell - p.cost) / p.sell * 10000) / 100 : 0);
+    // v67 FIX: hardened with Number()||0 — a raw p.margin/p.sell/p.cost that's
+    // undefined, "", or otherwise non-numeric used to be able to produce
+    // `undefined.toFixed()` below and crash the whole table render. Now it's
+    // always guaranteed to be a real number before it ever reaches .toFixed().
+    const margin = Number(
+      (p.margin != null && p.margin > 0)
+        ? p.margin
+        : (p.sell > 0 ? Math.round((p.sell - p.cost) / p.sell * 10000) / 100 : 0)
+    ) || 0;
     // Issue 4 FIX: backend এর stockStatus ব্যবহার করো
     const hasStatus = p.stockStatus && p.stockStatus.trim();
     const statusClass = p.current <= 0 ? 'cancelled' : p.current <= p.alert ? 'pending' : 'delivered';
@@ -7282,9 +7290,9 @@ function renderInventoryData(rows){
     const shortLabel  = p.current <= 0 ? 'Out of Stock' : p.current <= p.alert ? 'Low Stock' : 'In Stock';
     // Profit split badge
     const split = _getProductSplit(p.name);
-    const si = p.splitIsmail != null ? parseFloat(p.splitIsmail) : split.ismail;
-    const sa = p.splitAshik  != null ? parseFloat(p.splitAshik)  : split.ashik;
-    const sc = Math.max(0, 100 - si - sa);
+    const si = Number(p.splitIsmail != null ? parseFloat(p.splitIsmail) : split.ismail) || 0;
+    const sa = Number(p.splitAshik  != null ? parseFloat(p.splitAshik)  : split.ashik)  || 0;
+    const sc = Number(Math.max(0, 100 - si - sa)) || 0;
     const splitBadge = `<div class="profit-split-badge">
       <span class="psb-chip ismail">I:${si}%</span>
       <span class="psb-chip ashik">A:${sa}%</span>
