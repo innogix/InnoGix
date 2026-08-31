@@ -5094,6 +5094,7 @@ async function postToAPI(payload) {
   if (!API_URL || !API_URL.includes('script.google.com')) {
     showToast('Google Sheets URL সেট নেই — Setup Guide দেখুন', 'error'); return false;
   }
+  window.__lastAPIErrorReason = null; // v65 FIX: clear any stale reason from a previous call
   const jsonStr = JSON.stringify(payload);
 
   // v43 FIX: helper — base64-GET+JSONP fallback (already proven to work for
@@ -5120,6 +5121,7 @@ async function postToAPI(payload) {
       return (result.status === 'success' || result.status === 'ok') ? result : false;
     } catch(fbErr) {
       console.error('postToAPI fallbackViaGet failed:', fbErr.message);
+      window.__lastAPIErrorReason = fbErr.message;
       return false;
     }
   }
@@ -5162,6 +5164,10 @@ async function postToAPI(payload) {
       // "... হয়নি — API URL চেক করুন" message). We log the real cause for
       // debugging and return false; the caller already shows one clear toast.
       console.error('postToAPI: POST failed and GET fallback failed:', fetchErr.message);
+      // v65 FIX: surface the real technical reason (visible on mobile where nobody
+      // opens devtools) so we can actually see WHY every write is failing, instead
+      // of guessing blind. Read by the calling function's error toast.
+      window.__lastAPIErrorReason = fetchErr.message;
       return false;
     }
     clearTimeout(timer);
@@ -9786,7 +9792,8 @@ async function submitProduct(){
     showToast('✅ Product Google Sheets এ save হয়েছে!','success');
     setTimeout(loadLiveInventory,1500);
   } else {
-    showToast('Product save হয়নি — API URL চেক করুন', 'error');
+    const reason = window.__lastAPIErrorReason ? ` (${window.__lastAPIErrorReason})` : '';
+    showToast('Product save হয়নি — API URL চেক করুন'+reason, 'error');
   }
 }
 
@@ -9844,7 +9851,8 @@ async function updateProduct(){
     showToast('✅ Product updated!','success');
     setTimeout(loadLiveInventory,1500);
   } else {
-    showToast('Product update হয়নি — API URL চেক করুন','error');
+    const reason = window.__lastAPIErrorReason ? ` (${window.__lastAPIErrorReason})` : '';
+    showToast('Product update হয়নি — API URL চেক করুন'+reason,'error');
   }
 }
 
