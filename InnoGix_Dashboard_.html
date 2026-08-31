@@ -4987,7 +4987,7 @@ tbody td.muted{color:var(--text3);}
 // ═══════════════════════════════════════════════════════════════
 
 // ⚠️ এখানে আপনার Google Apps Script Web App URL বসান (Deploy > New Deployment > Web App)
-      const API_URL = "https://script.google.com/macros/s/AKfycbxxzkTaN_urgwclNGhpXUnQntpt3ay33flTP5DXqIUpXp3sn316OQk3EVjkLnDIddt3/exec"; // ← এই URL পরিবর্তন করুন // ← এখানে আপনার Google Apps Script URL বসান
+      const API_URL = "https://script.google.com/macros/s/AKfycbzYOieZt6KCtfRmSmdLAlODTcQp1oXXa8mcCe3WpIC5_3QCuXbSJVt2H2SJuGBeMLxK/exec"; // ← এই URL পরিবর্তন করুন // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -5134,16 +5134,47 @@ async function formPostFallback(payload) {
     }
   });
 }
-// v65 FIX: lightweight reachability check after the relay POST — confirms Apps
-// Script is actually up (via a plain GET, which we already know is reliable)
-// before we tell the user their edit succeeded. Doesn't verify the specific
-// field changed (that would need per-action logic), but the existing
-// post-success refresh (setTimeout(loadLiveInventory,...) etc.) already lets
-// the user visually confirm the change landed right after.
+// v66 FIX: the earlier version only checked that Apps Script was *reachable*
+// after the relay POST — not that the specific field actually changed. That's
+// exactly why "✅ Product updated!" was showing even when nothing actually
+// saved (e.g. Opening Stock never changing): a reachable-but-wrong response
+// (stale deployment still running, or the relay data malformed) was being
+// reported as success. This now re-fetches the live inventory row and checks
+// the fields we actually tried to change before claiming success.
 async function verifyWriteLanded_(payload) {
   try {
-    const data = await fetchFromAPI('settings');
-    return !!data;
+    const action = payload.action || '';
+    if (action === 'updateProduct' || action === 'addProduct') {
+      const data = await fetchFromAPI('inventory');
+      if (!data || !data.data) return false;
+      const rawRows = data.data;
+      const firstRow = rawRows[0] || [];
+      const isHeader = firstRow.length > 0 && (
+        String(firstRow[0]||'').toLowerCase().includes('id') ||
+        String(firstRow[1]||'').toLowerCase().includes('name') ||
+        String(firstRow[1]||'').toLowerCase().includes('product')
+      );
+      const rows = isHeader ? rawRows.slice(1) : rawRows;
+      const pid = String(payload.productId || payload.id || '').trim();
+      const pname = String(payload.name || '').trim().toLowerCase();
+      const row = rows.find(r => {
+        const rid = String(r[0]||'').trim();
+        const rname = String(r[1]||'').trim().toLowerCase();
+        return (pid && rid === pid) || (!pid && pname && rname === pname);
+      });
+      if (!row) return false;
+      if (payload.opening != null && String(payload.opening) !== '') {
+        const expOpening = Number(payload.opening) || 0;
+        const curOpening = Number(row[6]) || 0;
+        if (curOpening !== expOpening) return false;
+      }
+      if (payload.category != null && String(payload.category).trim() !== '') {
+        if (String(row[2]||'').trim() !== String(payload.category).trim()) return false;
+      }
+      return true;
+    }
+    const data2 = await fetchFromAPI('settings');
+    return !!data2;
   } catch(e) { return false; }
 }
 async function postToAPI(payload) {
