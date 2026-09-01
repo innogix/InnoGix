@@ -5258,7 +5258,19 @@ async function postToAPI(payload) {
           await new Promise(r => setTimeout(r, 1800));
           const verified = await verifyWriteLanded_(payload);
           if (verified) return { status: 'success', message: 'ok (via relay)' };
+          // v68 FIX: relay sent successfully but the field never changed on
+          // re-fetch — this specific combination almost always means the LIVE
+          // Apps Script deployment is still running OLD code (edited in the
+          // editor but never redeployed as a new version), since old doPost()
+          // can't decode the relay's form-encoded payload. Surface that as a
+          // distinct reason instead of the generic network message below.
+          window.__lastAPIErrorReason = 'রিলে পাঠানো হয়েছে কিন্তু ডেটা সেভ হয়নি — GS ফাইলের নতুন Deployment দেওয়া হয়েছে কিনা চেক করুন';
+          console.error('postToAPI: relay submitted but verifyWriteLanded_ failed — likely stale GS deployment');
+          return false;
         }
+        window.__lastAPIErrorReason = 'ফর্ম রিলেও ব্যর্থ: '+fetchErr.message;
+        console.error('postToAPI: form relay fallback also failed:', fetchErr.message);
+        return false;
       }
       // v64 FIX: no more re-throwing fetchErr here (which used to bubble up to the
       // outer catch and fire a SECOND, redundant toast on top of the caller's own
