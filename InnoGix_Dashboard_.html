@@ -4313,6 +4313,10 @@ tbody td.muted{color:var(--text3);}
         <div class="form-group"><label class="form-label">Sell Price (৳)</label><input class="form-input" id="eprod-sell" type="number"></div>
         <div class="form-group"><label class="form-label">Opening Stock</label><input class="form-input" id="eprod-opening" type="number"></div>
         <div class="form-group"><label class="form-label">Stock In (এই মাসে যোগ)</label><input class="form-input" id="eprod-stockin" type="number"></div>
+        <!-- v70 FIX: previously the only way to correct Current Stock (e.g. after a
+             physical stock count, damage, or a manual Google Sheet mistake) was to
+             edit the Google Sheet directly. Now it's directly editable here. -->
+        <div class="form-group"><label class="form-label">Current Stock</label><input class="form-input" id="eprod-current" type="number"></div>
         <div class="form-group"><label class="form-label">Alert Level</label><input class="form-input" id="eprod-alert" type="number"></div>
         <div class="form-group"><label class="form-label">Supplier</label><input class="form-input" id="eprod-supplier" type="text"></div>
         <!-- v64 FIX: this field existed in the Add-Product modal but was completely
@@ -4987,7 +4991,7 @@ tbody td.muted{color:var(--text3);}
 // ═══════════════════════════════════════════════════════════════
 
 // ⚠️ এখানে আপনার Google Apps Script Web App URL বসান (Deploy > New Deployment > Web App)
-      const API_URL = "https://script.google.com/macros/s/AKfycbz0UNNdx0Tw1haA-aj8_05L62M2dqndHgSvUbNBPP8hp7cH60SueFCS3HGXHNVJSidgCg/exec"; // ← এই URL পরিবর্তন করুন // ← এখানে আপনার Google Apps Script URL বসান
+      const API_URL = "https://script.google.com/macros/s/AKfycbyGhwmnRtJ0lx3KZ6ir2yr1ACDhlJ4JLlccnyYgfCtr8LTX8LZx-Ewp0nMR6PuozXMR/exec"; // ← এই URL পরিবর্তন করুন // ← এখানে আপনার Google Apps Script URL বসান
 
 // ─── CONNECTION STATE ────────────────────────────────────────
 let apiConnected = false;
@@ -5167,6 +5171,11 @@ async function verifyWriteLanded_(payload) {
         const expOpening = Number(payload.opening) || 0;
         const curOpening = Number(row[6]) || 0;
         if (curOpening !== expOpening) return false;
+      }
+      if (payload.current != null && String(payload.current) !== '') {
+        const expCurrent = Number(payload.current) || 0;
+        const curCurrent = Number(row[9]) || 0;
+        if (curCurrent !== expCurrent) return false;
       }
       if (payload.category != null && String(payload.category).trim() !== '') {
         if (String(row[2]||'').trim() !== String(payload.category).trim()) return false;
@@ -9927,6 +9936,8 @@ function openEditProduct(p){
   document.getElementById('eprod-sell').value=p.sell||0;
   document.getElementById('eprod-opening').value=p.opening||0;
   document.getElementById('eprod-stockin').value=p.in||0;
+  // v70 FIX: was missing — Current Stock could only be corrected via Google Sheets
+  document.getElementById('eprod-current').value=p.current||0;
   document.getElementById('eprod-alert').value=p.alert||5;
   document.getElementById('eprod-supplier').value=p.supplier||'';
   // v64 FIX: was missing entirely — Supplier Phone never loaded into the Edit modal
@@ -9956,6 +9967,9 @@ async function updateProduct(){
     sell: document.getElementById('eprod-sell').value,
     opening: document.getElementById('eprod-opening').value,
     stockIn: document.getElementById('eprod-stockin').value,
+    // v70 FIX: was missing entirely — Current Stock could only be corrected via
+    // Google Sheets before this
+    current: document.getElementById('eprod-current').value,
     alert: document.getElementById('eprod-alert').value,
     supplier: document.getElementById('eprod-supplier').value,
     // v64 FIX: was missing entirely — edits to Supplier Phone were silently dropped
